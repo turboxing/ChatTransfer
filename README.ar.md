@@ -51,7 +51,7 @@
 
 | النظام | اسم الملف |
 |--------|----------|
-| macOS (Intel) | `ChatTransfer-macos-x64-v{version_with_underscores}` (مثال: v2_0_8_8) |
+| macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` (مثال: v2_0_8_8) |
 | Windows | `ChatTransfer-windows-x64-v{version}.exe` |
 
 ### التشغيل

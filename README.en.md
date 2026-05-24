@@ -51,7 +51,7 @@ Go to the [Releases](../../releases) page and download the executable for your s
 
 | System | Filename |
 |--------|----------|
-| macOS (Intel) | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2_0_8_8) |
+| macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2_0_8_8) |
 | Windows | `ChatTransfer-windows-x64-v{version}.exe` |
 
 ### Run

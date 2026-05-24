@@ -51,7 +51,7 @@
 
 | 系统 | 文件名 |
 |------|--------|
-| macOS (Intel) | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2_0_8_8） |
+| macOS | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2_0_8_8） |
 | Windows | `ChatTransfer-windows-x64-v{版本号}.exe` |
 
 ### 运行
