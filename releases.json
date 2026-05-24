@@ -1,0 +1,36 @@
+{
+  "latest": {
+    "version": "2.0.8.8",
+    "date": "2026-05-24",
+    "download": {
+      "macos-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-macos-x64-v2_0_8_8",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-windows-x64-v2.0.8.8.exe"
+    },
+    "changelog": {
+      "zh-CN": [
+        "新增端口占用自动重试：端口被占用时自动 +1，最多尝试 3 次",
+        "新增 Pin 消息功能，支持将重要消息固定在顶部",
+        "新增批量文件拖拽上传功能",
+        "优化消息气泡展示效果",
+        "修复部分已知问题"
+      ],
+      "en": [
+        "Added automatic port retry when the default port is in use (increment by 1, up to 3 attempts)",
+        "Added Pin message feature to keep important messages at the top",
+        "Added batch drag-and-drop file upload",
+        "Optimized message bubble display",
+        "Fixed known issues"
+      ],
+      "ar": [
+        "تمت إضافة إعادة المحاولة تلقائيًا عند انشغال المنفذ الافتراضي (زيادة +1 حتى 3 محاولات)",
+        "تمت إضافة ميزة تثبيت الرسائل للحفاظ على الرسائل المهمة في الأعلى",
+        "تمت إضافة رفع الملفات بالسحب والإفلات بشكل مجمّع",
+        "تحسين عرض فقاعات الرسائل",
+        "إصلاح المشاكل المعروفة"
+      ]
+    }
+  },
+  "history": [
+  
+  ]
+}
