@@ -3,8 +3,8 @@
     "version": "2.0.8.8",
     "date": "2026-05-24",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-macos-x64-v2_0_8_8",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-windows-x64-v2.0.8.8.exe"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-macos-x64-v2_0_8_8.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer-Release/releases/download/v2.0.8.8/ChatTransfer-windows-x64-v2.0.8.8.exe.zip"
     },
     "changelog": {
       "zh-CN": [

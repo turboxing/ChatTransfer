@@ -2,6 +2,23 @@
 
 > A minimal LAN instant messaging and file transfer tool. Scan to connect — no app installation, no registration required.
 
+Built for developers, testers, demos, and everyday work where you need to move content from one device to another quickly, especially:
+
+- PC ↔ PC: share logs, config snippets, test builds, screenshots, and links during dev/testing
+- PC ↔ Phone: send debug links/QR codes/screenshots to your phone, or transfer photos/videos back to your PC
+- Phone ↔ Phone: quick sharing within a small team without installing complex IM or using cloud drives
+- Live demos: share materials in meetings instantly, ready to use without adding contacts
+
+Who it’s for:
+
+- Developers / QA / Ops / PM: anyone frequently moving text, images, and files across devices
+- Teams on a LAN: office intranet, labs, home networks, and other environments where going through the public internet is inconvenient
+
+Privacy & data:
+
+- Chat history and files are stored locally (on your device) and transferred only within the local network
+- No third-party cloud service and no account system; content is not uploaded to any external server by default
+
 [中文](./README.md) | [العربية](./README.ar.md)
 
 ---
@@ -17,6 +34,14 @@
 - **Chat History** — Local caching of chat history with clear option
 - **Cross-platform** — Supports Windows and macOS
 - **Multi-language** — Chinese and English interface
+
+## Problems Solved & Value
+
+- No more “temporary sharing is painful”: no login, no friend requests, just open and use
+- Less device fragmentation: fast transfers across devices on the same LAN, fewer copy/paste round-trips
+- More privacy control: no third-party cloud drive/IM involved by default
+
+If you run into any issues or have feature ideas, please open an Issue in this repository. Feedback is highly appreciated and directly helps improve ChatTransfer.
 
 ## Quick Start
 
