@@ -1,6 +1,6 @@
 # ChatTransfer
 
-> A minimal LAN instant messaging and file transfer tool. Scan to connect — no app installation, no registration required.
+> A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
 Built for developers, testers, demos, and everyday work where you need to move content from one device to another quickly, especially:
 
@@ -19,7 +19,22 @@ Privacy & data:
 - Chat history and files are stored locally (on your device) and transferred only within the local network
 - No third-party cloud service and no account system; content is not uploaded to any external server by default
 
-[中文](./README.md) | [العربية](./README.ar.md)
+## Why I Built This
+
+I’m a QA engineer. In day-to-day work, I constantly move things between my laptop and test phones: app builds, test params, and links to the phone; then logs, screenshots, and screen recordings back to the laptop. I often hear teammates say:
+
+- “How do I get that screen recording onto my computer?”
+- “I need to install this test build on a phone — do I have to set up dev tools?”
+- “Can we turn this image into a shareable link?”
+- “Can this link (deep link) be turned into a QR code so I can just scan it with our app?”
+
+These sound like small things, but when you need them right now they waste the most time. I want ChatTransfer to make these “quick share” moments effortless.
+
+These needs are always “temporary”, but the usual solutions are heavy: install an IM app, sign in, upload to a third-party platform, worry about privacy, uninstall, and clean up borrowed devices. So I built ChatTransfer on weekends — a cross‑platform, no‑install, use‑and‑leave LAN transfer tool that makes this workflow simple and low‑friction. After iterating for about 2 years, it has proven effective across multiple real scenarios, so I decided to share it here.
+
+I use it every day and keep iterating based on real scenarios. It will stay free. If you run into issues or have better ideas, please open an Issue — your feedback directly helps it grow.
+
+[中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 
 ---
 
@@ -31,6 +46,7 @@ Privacy & data:
 - **Batch Upload** — Drag and drop multiple files at once
 - **Pin Messages** — Pin important messages to the top for easy access
 - **Top Messages** — Highlight key messages at the top of the chat
+- **Message QR Code** — Generate a QR code for any message for easy sharing
 - **Chat History** — Local caching of chat history with clear option
 - **Cross-platform** — Supports Windows and macOS
 - **Multi-language** — Chinese and English interface
@@ -40,8 +56,6 @@ Privacy & data:
 - No more “temporary sharing is painful”: no login, no friend requests, just open and use
 - Less device fragmentation: fast transfers across devices on the same LAN, fewer copy/paste round-trips
 - More privacy control: no third-party cloud drive/IM involved by default
-
-If you run into any issues or have feature ideas, please open an Issue in this repository. Feedback is highly appreciated and directly helps improve ChatTransfer.
 
 ## Quick Start
 
@@ -54,12 +68,26 @@ Go to the [Releases](../../releases) page and download the executable for your s
 | macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2_0_8_8) |
 | Windows | `ChatTransfer-windows-x64-v{version}.exe` |
 
-### Run
+### Install & Run
 
-1. Double-click the downloaded executable
-2. A browser window will open automatically with a QR code
-3. Scan the QR code with your phone to open the chat in your mobile browser
-4. Type messages or upload files on either side — they sync in real time
+**Windows**
+
+1. Download the Windows executable
+2. Double-click to run
+3. If Windows shows a security prompt, choose “Run anyway”
+
+**macOS**
+
+1. Download the macOS executable and move it to your preferred location (e.g., Applications)
+2. On first launch, if macOS says it can’t verify the developer, click “Cancel”
+3. Open System Settings → Privacy & Security → in the Security section, click “Allow Anyway” and enter your password
+4. Go back to the file and open it again; when prompted, click “Open”
+
+After the app starts:
+
+1. A browser window will open automatically with a QR code
+2. Scan the QR code with your phone to open the chat in your mobile browser
+3. Type messages or upload files on either side — they sync in real time
 
 ### Tips
 

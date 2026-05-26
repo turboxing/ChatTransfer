@@ -1,99 +1,121 @@
-# 聊天快传（ChatTransfer）
+# ChatTransfer
 
-> 一款极简的局域网即时通讯与文件传输工具。扫码即连，无需安装 App，无需注册登录。
+> A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
-适合在开发、测试、演示与日常办公中快速把内容从一个设备“传到另一个设备”，尤其是这些场景：
+Built for developers, testers, demos, and everyday work where you need to move content from one device to another quickly, especially:
 
-- 电脑 ↔ 电脑：开发联调时互传日志、配置片段、测试包、截图、链接
-- 电脑 ↔ 手机：把调试链接/二维码/截图发到手机，或把手机拍摄的图片/视频回传到电脑
-- 手机 ↔ 手机：小团队临时共享图片、文件、文字内容，不想安装复杂 IM 或云盘
-- 临时演示：会议现场把资料发给同事，开箱即用、无需加好友
+- PC ↔ PC: share logs, config snippets, test builds, screenshots, and links during dev/testing
+- PC ↔ Phone: send debug links/QR codes/screenshots to your phone, or transfer photos/videos back to your PC
+- Phone ↔ Phone: quick sharing within a small team without installing complex IM or using cloud drives
+- Live demos: share materials in meetings instantly, ready to use without adding contacts
 
-面向人群：
+Who it’s for:
 
-- 开发 / 测试 / 运维 / 产品：需要频繁在多端流转文本、图片、文件的同学
-- 小团队 / 局域网环境：公司内网、实验室、家庭局域网等不方便走外网的场景
+- Developers / QA / Ops / PM: anyone frequently moving text, images, and files across devices
+- Teams on a LAN: office intranet, labs, home networks, and other environments where going through the public internet is inconvenient
 
-数据与隐私：
+Privacy & data:
 
-- 所有聊天记录与文件默认仅保存在本地（本机缓存目录）与局域网内传输
-- 不经过第三方云服务，不做账号体系与内容上传，隐私风险更低
+- Chat history and files are stored locally (on your device) and transferred only within the local network
+- No third-party cloud service and no account system; content is not uploaded to any external server by default
 
-[English](./README.en.md) | [العربية](./README.ar.md)
+## Why I Built This
+
+I’m a QA engineer. In day-to-day work, I constantly move things between my laptop and test phones: app builds, test params, and links to the phone; then logs, screenshots, and screen recordings back to the laptop. I often hear teammates say:
+
+- “How do I get that screen recording onto my computer?”
+- “I need to install this test build on a phone — do I have to set up dev tools?”
+- “Can we turn this image into a shareable link?”
+- “Can this link (deep link) be turned into a QR code so I can just scan it with our app?”
+
+These sound like small things, but when you need them right now they waste the most time. I want ChatTransfer to make these “quick share” moments effortless.
+
+These needs are always “temporary”, but the usual solutions are heavy: install an IM app, sign in, upload to a third-party platform, worry about privacy, uninstall, and clean up borrowed devices. So I built ChatTransfer on weekends — a cross‑platform, no‑install, use‑and‑leave LAN transfer tool that makes this workflow simple and low‑friction. After iterating for about 2 years, it has proven effective across multiple real scenarios, so I decided to share it here.
+
+I use it every day and keep iterating based on real scenarios. It will stay free. If you run into issues or have better ideas, please open an Issue — your feedback directly helps it grow.
+
+[中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 
 ---
 
-## 功能特性
+## Features
 
-- **扫码即连** - 启动后自动生成二维码，手机扫码即可在浏览器中打开聊天页面
-- **实时群聊** - 支持多人同时在线，消息实时同步
-- **文件传输** - 支持文本、图片、各类文件的秒级互传
-- **批量上传** - 支持拖拽批量上传文件
-- **Pin 消息** - 将重要消息固定在顶部，方便查看
-- **消息置顶** - 将关键消息置顶显示
-- **聊天记录** - 本地缓存聊天记录，支持清空操作
-- **跨平台** - 支持 Windows、macOS 系统
-- **多语言** - 支持中文、英文界面切换
+- **Scan to Connect** — Generates a QR code on startup; scan with your phone to open the chat in your browser
+- **Real-time Group Chat** — Multiple users online simultaneously with instant message sync
+- **File Transfer** — Send text, images, and files in seconds
+- **Batch Upload** — Drag and drop multiple files at once
+- **Pin Messages** — Pin important messages to the top for easy access
+- **Top Messages** — Highlight key messages at the top of the chat
+- **Message QR Code** — Generate a QR code for any message for easy sharing
+- **Chat History** — Local caching of chat history with clear option
+- **Cross-platform** — Supports Windows and macOS
+- **Multi-language** — Chinese and English interface
 
-## 解决的问题与价值
+## Problems Solved & Value
 
-- 解决“临时互传很麻烦”：不依赖加好友、建群、登录账号，打开就能用
-- 解决“资料在多端割裂”：同一局域网内多设备之间快速互传，减少复制粘贴与中转
-- 解决“隐私担忧”：内容不走第三方云盘/IM，传输更可控
+- No more “temporary sharing is painful”: no login, no friend requests, just open and use
+- Less device fragmentation: fast transfers across devices on the same LAN, fewer copy/paste round-trips
+- More privacy control: no third-party cloud drive/IM involved by default
 
-如果你在使用中遇到任何问题、或者对功能有更好的想法，欢迎在仓库的 Issues 里提建议；你的反馈会直接帮助它变得更好。
+## Quick Start
 
-## 快速开始
+### Download
 
-### 下载
+Go to the [Releases](../../releases) page and download the package for your system:
 
-前往 [Releases](../../releases) 页面，下载对应系统的可执行文件：
+| System | Filename |
+|--------|----------|
+| macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2_0_8_8) |
+| Windows | `ChatTransfer-windows-x64-v{version}.exe` |
 
-| 系统 | 文件名 |
-|------|--------|
-| macOS | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2_0_8_8） |
-| Windows | `ChatTransfer-windows-x64-v{版本号}.exe` |
+### Install & Run
 
-### 运行
+**Windows**
 
-1. 双击运行下载的可执行文件
-2. 浏览器会自动打开并显示二维码
-3. 使用手机扫描二维码，即可在手机浏览器中打开聊天页面
-4. 在任意端输入消息或上传文件，对方将实时收到
+1. Download the Windows executable
+2. Double-click to run
+3. If Windows shows a security prompt, choose “Run anyway”
 
-### 使用技巧
+**macOS**
 
-- 在设置中可以切换语言（中文/英文）
-- 支持拖拽文件到聊天窗口快速上传
-- 双击 `/` 键可以快速聚焦输入框
-- 右上角设置中可以查看版本更新记录
+1. Download the macOS executable and move it to your preferred location (e.g., Applications)
+2. On first launch, if macOS says it can’t verify the developer, click “Cancel”
+3. Open System Settings → Privacy & Security → in the Security section, click “Allow Anyway” and enter your password
+4. Go back to the file and open it again; when prompted, click “Open”
 
-## 版本更新
+### Tips
 
-当前最新版本：**v2.0.8.8**
+- Switch language (Chinese/English) in Settings
+- Drag files onto the chat window for quick upload
+- Press `/` twice to quickly focus the input box
+- View changelog in the top-right Settings menu
 
-详细的版本更新记录请查看 [CHANGELOG.md](./CHANGELOG.md)（中文） | [CHANGELOG.en.md](./CHANGELOG.en.md)（English）
+## Changelog
 
-## 系统要求
+Current version: **v2.0.8.8**
 
-- macOS 10.15+ 或 Windows 10+
-- 无需安装 Node.js 或其他依赖
+See [CHANGELOG.en.md](./CHANGELOG.en.md) for the full changelog.
 
-## 常见问题
+## System Requirements
 
-**Q: 扫码后无法打开页面？**
-A: 请确保手机和电脑在同一局域网下。
+- macOS 10.15+ or Windows 10+
+- No Node.js or other dependencies required
 
-**Q: 文件传输失败？**
-A: 请检查文件大小是否超过限制，或尝试重新上传。
+## FAQ
 
-**Q: 如何切换语言？**
-A: 点击右上角设置图标，在语言选项中选择。
+**Q: The page won't open after scanning the QR code?**
+A: Make sure your phone and computer are on the same local network.
 
-## 许可证
+**Q: File transfer failed?**
+A: Check if the file size exceeds the limit, or try uploading again.
+
+**Q: How do I switch languages?**
+A: Click the Settings icon in the top-right corner and choose your language.
+
+## License
 
 ISC License
 
-## 作者
+## Author
 
 created by suncx
