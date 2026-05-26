@@ -2,6 +2,12 @@
 
 > A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
+[中文](./README.zh-CN.md) | [العربية](./README.ar.md)
+
+## Keywords
+
+LAN transfer, file sharing, text sharing, image sharing, PC–phone transfer, chat-style sharing, developer tool, QA/testing helper, no-install, cross-platform (Windows/macOS), QR sharing, real-time communication, minimal IM.
+
 Built for developers, testers, demos, and everyday work where you need to move content from one device to another quickly, especially:
 
 - PC ↔ PC: share logs, config snippets, test builds, screenshots, and links during dev/testing
