@@ -1,5 +1,7 @@
 # ChatTransfer
 
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer-Release/total?style=flat-square\&logo=github\&color=44cc11)![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer-Release?style=flat-square\&color=fe7d37)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer-Release?style=flat-square\&color=a4a61d)](https://github.com/turboxing/ChatTransfer-Release/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer-Release?style=flat-square\&color=dfb317)](https://github.com/turboxing/ChatTransfer-Release/stargazers)
+
 > A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
 [中文](./README.zh-CN.md) | [العربية](./README.ar.md)
@@ -42,7 +44,7 @@ I use it every day and keep iterating based on real scenarios. It will stay free
 
 [中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 
----
+***
 
 ## Features
 
@@ -69,10 +71,10 @@ I use it every day and keep iterating based on real scenarios. It will stay free
 
 Go to the [Releases](../../releases) page and download the package for your system:
 
-| System | Filename |
-|--------|----------|
-| macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2_0_8_8) |
-| Windows | `ChatTransfer-windows-x64-v{version}.exe` |
+| System  | Filename                                                                    |
+| ------- | --------------------------------------------------------------------------- |
+| macOS   | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2\_0\_8\_8) |
+| Windows | `ChatTransfer-windows-x64-v{version}.exe`                                   |
 
 ### Install & Run
 
@@ -97,8 +99,6 @@ Go to the [Releases](../../releases) page and download the package for your syst
 - View changelog in the top-right Settings menu
 
 ## Changelog
-
-Current version: **v2.0.8.8**
 
 See [CHANGELOG.en.md](./CHANGELOG.en.md) for the full changelog.
 

@@ -1,4 +1,5 @@
 # 聊天快传（ChatTransfer）
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer-Release/total?style=flat-square&logo=github&color=44cc11)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer-Release?style=flat-square&color=fe7d37)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer-Release?style=flat-square&color=a4a61d)](https://github.com/turboxing/ChatTransfer-Release/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer-Release?style=flat-square&color=dfb317)](https://github.com/turboxing/ChatTransfer-Release/stargazers)
 
 > 一款主要为 **开发** 和 **测试** 场景设计的极简局域网互传与实时通讯工具。
 
@@ -25,21 +26,20 @@
 - 所有聊天记录与文件默认仅保存在本地（本机缓存目录）与局域网内传输
 - 不经过第三方云服务，不做账号体系与内容上传，隐私风险更低
 
----
+***
 
 ## 我为什么做它
 
 我本职是一名测试工程师。日常工作里，我经常要在电脑和测试手机之间来回传东西：安装包、测试参数、链接要发到手机；日志、截图、录屏又要从手机回传到电脑。很多时候同事也会随口来一句：
 “刚刚录屏怎么传到电脑上？”
-“测试包要装手机上，是不是还得装开发工具？” 
+“测试包要装手机上，是不是还得装开发工具？”
 “能把这张图片生成一个链接吗？”
-“这个链接能不能直接生成二维码？我用咱们 App 扫一下就打开。” 
+“这个链接能不能直接生成二维码？我用咱们 App 扫一下就打开。”
 这些看似小事，往往临时要用的时候最费时间。我希望 ChatTransfer 能把这类“随手分享”的动作做到足够简单。
 
 这些需求都很“临时”，但解决起来总是很“重”：装个 IM、登账号、传三方平台、传完怕隐私还得卸载，借来的测试机还要恢复干净……反复折腾，浪费时间。于是我在周末开发了 ChatTransfer：一个跨平台、免安装、用完即走的局域网互传工具，尽量把“临时跨设备传输”这件事做得简单、可控、无负担。经过我长达 2 年的迭代，ChatTransfer 已经在多个场景下被证明是有效的。所以决定把它上传到这里，分享给大家！
 
 这个工具我自己每天都在用，也会持续根据真实场景迭代。软件长期免费，如果你在使用中遇到任何问题、或者对功能有更好的想法，欢迎在仓库的 Issues 里提建议；你的反馈会直接帮助它变得更好。
-
 
 - **扫码即连** - 启动后自动生成二维码，手机扫码即可在浏览器中打开聊天页面
 - **实时群聊** - 支持多人同时在线，消息实时同步
@@ -58,17 +58,16 @@
 - 解决“资料在多端割裂”：同一局域网内多设备之间快速互传，减少复制粘贴与中转
 - 解决“隐私担忧”：内容不走第三方云盘/IM，传输更可控
 
-
 ## 快速开始
 
 ### 下载
 
 前往 [Releases](../../releases) 页面，下载对应系统的可执行文件：
 
-| 系统 | 文件名 |
-|------|--------|
-| macOS | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2_0_8_8） |
-| Windows | `ChatTransfer-windows-x64-v{版本号}.exe` |
+| 系统      | 文件名                                                 |
+| ------- | --------------------------------------------------- |
+| macOS   | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2\_0\_8\_8） |
+| Windows | `ChatTransfer-windows-x64-v{版本号}.exe`               |
 
 ### 安装与运行
 
@@ -94,7 +93,6 @@
 
 ## 版本更新
 
-当前最新版本：**v2.0.8.8**
 
 详细的版本更新记录请查看 [CHANGELOG.md](./CHANGELOG.md)（中文） | [CHANGELOG.en.md](./CHANGELOG.en.md)（English）
 

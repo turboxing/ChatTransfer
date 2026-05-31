@@ -1,5 +1,5 @@
 # ChatTransfer
-
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer-Release/total?style=flat-square&logo=github&color=44cc11)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer-Release?style=flat-square&color=fe7d37)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer-Release?style=flat-square&color=a4a61d)](https://github.com/turboxing/ChatTransfer-Release/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer-Release?style=flat-square&color=dfb317)](https://github.com/turboxing/ChatTransfer-Release/stargazers)
 > A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
 [中文](./README.zh-CN.md) | [العربية](./README.ar.md)
@@ -104,7 +104,6 @@ After the app starts:
 
 ## Changelog
 
-Current version: **v2.0.8.8**
 
 See [CHANGELOG.en.md](./CHANGELOG.en.md) for the full changelog.
 

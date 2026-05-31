@@ -1,5 +1,5 @@
 # ChatTransfer
-
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer-Release/total?style=flat-square&logo=github&color=44cc11)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer-Release?style=flat-square&color=fe7d37)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer-Release?style=flat-square&color=a4a61d)](https://github.com/turboxing/ChatTransfer-Release/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer-Release?style=flat-square&color=dfb317)](https://github.com/turboxing/ChatTransfer-Release/stargazers)
 > أداة بسيطة لنقل الملفات والدردشة الفورية عبر الشبكة المحلية، صُممت بالأساس لسيناريوهات التطوير والاختبار.
 
 [中文](./README.zh-CN.md) | [English](./README.md)
@@ -104,7 +104,6 @@
 
 ## سجل التغييرات
 
-الإصدار الحالي: **v2.0.8.8**
 
 راجع [CHANGELOG.ar.md](./CHANGELOG.ar.md) لسجل التغييرات الكامل.
 
