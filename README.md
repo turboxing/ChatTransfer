@@ -1,10 +1,16 @@
 # ChatTransfer
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer-Release/total?style=flat-square\&logo=github\&color=44cc11)![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer-Release?style=flat-square\&color=fe7d37)](https://github.com/turboxing/ChatTransfer-Release/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer-Release?style=flat-square\&color=a4a61d)](https://github.com/turboxing/ChatTransfer-Release/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer-Release?style=flat-square\&color=dfb317)](https://github.com/turboxing/ChatTransfer-Release/stargazers)
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&amp;logo=github&amp;color=44cc11)![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer?style=flat-square&amp;color=fe7d37)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer?style=flat-square&amp;color=a4a61d)](https://github.com/turboxing/ChatTransfer/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer?style=flat-square&amp;color=dfb317)](https://github.com/turboxing/ChatTransfer/stargazers)
 
-> A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
+&gt; A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
 
 [中文](./README.zh-CN.md) | [العربية](./README.ar.md)
+
+## Demo
+
+📺 Watch the demo video on YouTube: [ChatTransfer Demo](https://www.youtube.com/watch?v=gZxeBqd7vbY)
+
+🇨🇳 Bilibili Version (Chinese): [ChatTransfer Demo](https://www.bilibili.com/video/BV13QJp6vE3r/?vd_source=b4939bcf1ffecbca608b946bbdd9c475)
 
 ## Keywords
 
