@@ -2,7 +2,7 @@
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&amp;logo=github&amp;color=44cc11)![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer?style=flat-square&amp;color=fe7d37)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer?style=flat-square&amp;color=a4a61d)](https://github.com/turboxing/ChatTransfer/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer?style=flat-square&amp;color=dfb317)](https://github.com/turboxing/ChatTransfer/stargazers)
 
-&gt; A minimal LAN file transfer and real-time chat tool built mainly for development and testing.
+&gt; A minimal, efficient LAN cross-device transfer tool designed specifically for **development** and **testing** scenarios. Scan to connect, supports real-time transfer of files, images, and text.
 
 [中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 

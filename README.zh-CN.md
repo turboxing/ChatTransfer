@@ -1,7 +1,7 @@
 # 聊天快传（ChatTransfer）
 [![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&amp;logo=github&amp;color=44cc11)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer?style=flat-square&amp;color=fe7d37)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer?style=flat-square&amp;color=a4a61d)](https://github.com/turboxing/ChatTransfer/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer?style=flat-square&amp;color=dfb317)](https://github.com/turboxing/ChatTransfer/stargazers)
 
-&gt; 一款主要为 **开发** 和 **测试** 场景设计的极简局域网互传与实时通讯工具。
+&gt; 一款专为 **开发** 和 **测试** 场景设计的极简、高效的局域网跨设备传输工具。扫码即用，支持文件、图片及文字的实时互传。
 
 [English](./README.md) | [العربية](./README.ar.md)
 

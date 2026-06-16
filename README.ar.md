@@ -1,6 +1,6 @@
 # ChatTransfer
 [![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&amp;logo=github&amp;color=44cc11)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer?style=flat-square&amp;color=fe7d37)](https://github.com/turboxing/ChatTransfer/releases)[![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer?style=flat-square&amp;color=a4a61d)](https://github.com/turboxing/ChatTransfer/commits/main)[![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer?style=flat-square&amp;color=dfb317)](https://github.com/turboxing/ChatTransfer/stargazers)
-&gt; أداة بسيطة لنقل الملفات والدردشة الفورية عبر الشبكة المحلية، صُممت بالأساس لسيناريوهات التطوير والاختبار.
+&gt; أداة بسيطة وفعالة لنقل الملفات عبر الشبكة المحلية بين الأجهزة، مصممة خصيصًا لسيناريوهات **التطوير** و **الاختبار**. امسح للاتصال، يدعم النقل الفوري للملفات والصور والنصوص.
 
 [中文](./README.zh-CN.md) | [English](./README.md)
 
