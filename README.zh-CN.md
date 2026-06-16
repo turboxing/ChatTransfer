@@ -70,7 +70,7 @@
 
 | 系统      | 文件名                                                 |
 | ------- | --------------------------------------------------- |
-| macOS   | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2\_0\_8\_8） |
+| macOS   | `ChatTransfer-macos-x64-v{版本号_下划线}`（示例：v2\_0\_8\_9） |
 | Windows | `ChatTransfer-windows-x64-v{版本号}.exe`               |
 
 ### 安装与运行

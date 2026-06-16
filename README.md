@@ -79,7 +79,7 @@ Go to the [Releases](../../releases) page and download the package for your syst
 
 | System  | Filename                                                                    |
 | ------- | --------------------------------------------------------------------------- |
-| macOS   | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2\_0\_8\_8) |
+| macOS   | `ChatTransfer-macos-x64-v{version_with_underscores}` (example: v2\_0\_8\_9) |
 | Windows | `ChatTransfer-windows-x64-v{version}.exe`                                   |
 
 ### Install & Run
