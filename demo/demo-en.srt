@@ -1,0 +1,36 @@
+
+1
+00:00:00,000 --&gt; 00:00:08,000
+This is ChatTransfer, a LAN file transfer and chat tool designed for development and testing. No installation required, scan to connect, use and go.
+
+2
+00:00:08,000 --&gt; 00:00:28,000
+After launching on your computer, it will automatically open a page and generate a QR code. Scan with your phone to enter the chat page directly.
+
+3
+00:00:28,000 --&gt; 00:00:48,000
+Sending text and links is very fast. Configuration snippets, debug links from development can be sent directly from computer to phone.
+
+4
+00:00:48,000 --&gt; 00:01:15,000
+Drag and drop images and files for upload. Test packages, screenshots, screen recordings can all be directly dragged and transferred.
+
+5
+00:01:15,000 --&gt; 00:01:35,000
+Every message can generate a QR code. You can turn links or content into QR codes for colleagues to scan and open directly.
+
+6
+00:01:35,000 --&gt; 00:01:55,000
+Supports Pin and Pin to Top features. Important messages can be pinned, and clicking them quickly navigates to the message.
+
+7
+00:01:55,000 --&gt; 00:02:15,000
+Supports one-to-many file transfer. Multiple devices online simultaneously, files can be sent to everyone at once.
+
+8
+00:02:15,000 --&gt; 00:02:30,000
+All content is only saved locally by default and only transferred within the LAN. No third-party cloud services, more secure.
+
+9
+00:02:30,000 --&gt; 00:02:40,000
+The software is free forever. Welcome to download and try, and feel free to give suggestions in Issues to help it improve.

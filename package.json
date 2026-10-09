@@ -1,0 +1,48 @@
+{
+  "name": "chattransfer",
+  "version": "2.0.9.1",
+  "description": "LAN instant messaging and file transfer tool",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "node server/index.js",
+    "release:check": "sh -c 'set -e; VERSION=$(node -p \"require(\\\"./package.json\\\").version\"); TAG=v$VERSION; if git rev-parse -q --verify \"$TAG\" >/dev/null; then echo \"Tag $TAG already exists\"; exit 1; fi; echo \"Version $VERSION is ready for tag $TAG\"'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/turboxing/ChatTransfer.git"
+  },
+  "author": "suncx",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/turboxing/ChatTransfer/issues"
+  },
+  "homepage": "https://github.com/turboxing/ChatTransfer",
+  "dependencies": {
+    "axios": "^1.13.5",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.4.0",
+    "moment": "^2.27.0",
+    "node-machine-id": "^1.1.12",
+    "qr-image": "^3.2.0",
+    "socket.io": "^4.8.3",
+    "underscore": "^1.10.2",
+    "urlencode": "^1.1.0"
+  },
+  "bin": "server/index.js",
+  "pkg": {
+    "assets": [
+      "frontend/dist/**/*"
+    ],
+    "scripts": [
+      "server/**/*.js"
+    ],
+    "outputPath": "dist"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1",
+    "supertest": "^7.2.2",
+    "vitest": "^1.6.1"
+  }
+}

@@ -1,0 +1,191 @@
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background-color: #f2f3f5;
+  position: fixed;
+  inset: 0;
+}
+
+.chat-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.message-link {
+  color: var(--el-color-primary);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.message-link:hover {
+  opacity: 0.8;
+}
+
+.user-avatar {
+  font-size: 12px;
+  background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.header-wrapper.is-sender {
+  flex-direction: row-reverse;
+}
+
+.header-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.header-name {
+  font-size: 12px;
+  color: #909399;
+}
+
+.header-ip {
+  font-size: 11px;
+  color: #c0c4cc;
+  line-height: 1;
+}
+
+.content-wrapper {
+  max-width: 100%;
+}
+
+.content-text {
+  background-color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #303133;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.content-wrapper.is-pinned-content .content-text,
+.content-wrapper.is-pinned-content .content-image,
+.content-wrapper.is-pinned-content .content-file {
+  background-color: #fffbe6;
+  border: 1px solid #f5d48c;
+}
+
+.content-wrapper.is-topped-content .content-text,
+.content-wrapper.is-topped-content .content-image,
+.content-wrapper.is-topped-content .content-file {
+  background-color: #ecf5ff;
+  border: 1px solid #b3d8ff;
+}
+
+.content-image,
+.content-file {
+  display: inline-flex;
+}
+
+.content-image .message-image {
+  max-width: 200px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.content-wrapper.is-pinned-content .content-image,
+.content-wrapper.is-pinned-content .content-file {
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.content-wrapper.is-topped-content .content-image,
+.content-wrapper.is-topped-content .content-file {
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.file-card {
+  width: 240px;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.footer-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 4px;
+  gap: 4px;
+}
+
+.footer-wrapper.is-sender {
+  align-items: flex-end;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.footer-actions .el-button + .el-button {
+  margin-left: 0;
+}
+
+.footer-time {
+  font-size: 12px;
+  color: #909399;
+  white-space: nowrap;
+}
+
+.action-more {
+  display: inline-flex;
+}
+
+.pin-btn,
+.top-btn {
+  color: #909399;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.pin-btn:hover,
+.top-btn:hover {
+  opacity: 1;
+}
+
+.pin-btn.is-pinned {
+  opacity: 1;
+  color: #f59e0b;
+}
+
+.pin-btn .pin-icon-small {
+  filter: grayscale(1) brightness(0.65);
+}
+
+.pin-btn.is-pinned .pin-icon-small {
+  filter: invert(72%) sepia(64%) saturate(716%) hue-rotate(348deg) brightness(95%) contrast(93%);
+}
+
+.pin-icon-small {
+  width: 14px;
+  height: 14px;
+}
+
+.top-btn.is-topped {
+  opacity: 1;
+  color: #409eff;
+}
+
+@media (max-width: 640px) {
+  .footer-actions {
+    gap: 4px;
+  }
+}
