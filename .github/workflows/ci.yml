@@ -15,9 +15,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
       - run: npm test
       - name: Build frontend
         run: |
           cd frontend
-          npm ci
           npm run build

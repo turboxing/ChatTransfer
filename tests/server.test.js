@@ -4,14 +4,6 @@ import request from 'supertest';
 const serverModule = await import('../server/index');
 const app = serverModule.createApp();
 
-app.get('/debug', (req, res) => res.send('ok'));
-
-it('has debug route', async () => {
-  const response = await request(app).get('/debug');
-  expect(response.status).toBe(200);
-});
-
-
 describe('server API', () => {
   afterAll(() => {
     // Express apps created here do not retain persistent listeners.
