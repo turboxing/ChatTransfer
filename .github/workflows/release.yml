@@ -25,14 +25,28 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          SAFE_VERSION=${VERSION//./_}
+          echo "SAFE_VERSION=$SAFE_VERSION" >> "$GITHUB_ENV"
+      - name: Package executables
+        run: |
+          mkdir -p dist
+          npx pkg package.json -t node18-macos-x64 --output "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
+          npx pkg package.json -t node18-win-x64 --output "dist/ChatTransfer-windows-x64-v${VERSION}.exe"
+          zip -q "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}.zip" "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
+          zip -q "dist/ChatTransfer-windows-x64-v${VERSION}.exe.zip" "dist/ChatTransfer-windows-x64-v${VERSION}.exe"
       - name: Create checksums
         run: |
           mkdir -p release-assets
-          echo "Checksums for ${GITHUB_REF_NAME}" > release-assets/SHA256SUMS.txt
+          (cd dist && shasum -a 256 \
+            "ChatTransfer-macos-x64-v${SAFE_VERSION}.zip" \
+            "ChatTransfer-windows-x64-v${VERSION}.exe.zip") > release-assets/SHA256SUMS.txt
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: v${{ env.VERSION }}
-          draft: true
-          files: release-assets/SHA256SUMS.txt
+          draft: false
+          files: |
+            dist/ChatTransfer-macos-x64-v${{ env.SAFE_VERSION }}.zip
+            dist/ChatTransfer-windows-x64-v${{ env.VERSION }}.exe.zip
+            release-assets/SHA256SUMS.txt

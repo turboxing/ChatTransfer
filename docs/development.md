@@ -16,6 +16,19 @@ cd frontend && npm run dev
 cd frontend && npm run build
 ```
 
+## Branch Workflow
+
+Use GitHub Flow:
+
+1. Keep `main` releasable and protected.
+2. Create a short-lived branch from `main` for each change.
+3. Push the branch and open a pull request.
+4. Require CI and review before merging.
+5. Delete the branch after it merges.
+6. Tag releases from `main`.
+
+Branch prefixes: `feature/`, `fix/`, `docs/`, and `hotfix/`.
+
 ## Layout
 
 - `server/` contains backend code.

@@ -27,7 +27,7 @@ describe('HTTP API', () => {
 
     const version = await request(app).get('/getVersionInfo');
     expect(version.status).toBe(200);
-    expect(version.body.data.version).toBe('2.0.9.1');
+    expect(version.body.data.version).toBe('2.0.9.2');
 
     const scan = await request(app).get('/scanLogin?sender=A&receiver=group_chat');
     expect(scan.status).toBe(200);

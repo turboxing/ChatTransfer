@@ -1,5 +1,19 @@
 export const changelog = [
   {
+    version: '2.0.9.2',
+    date: "2026-10-09",
+    changes: {
+      "zh-CN": [
+        "开源源码仓库，新增三语 README、MIT License、贡献指南和开发文档",
+        "修复 CI 测试依赖安装顺序，确保测试先安装前端依赖"
+      ],
+      en: [
+        "Open-source source repository with trilingual README, MIT License, contribution guide, and development docs",
+        "Fix CI dependency installation order so frontend dependencies are installed before tests"
+      ]
+    }
+  },
+  {
     version: '2.0.9.1',
     date: '2026-08-25',
     changes: {

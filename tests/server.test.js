@@ -14,7 +14,7 @@ describe('server API', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.code).toBe(0);
-    expect(response.body.data.version).toBe('2.0.9.1');
+    expect(response.body.data.version).toBe('2.0.9.2');
   });
 
   it('returns login target URL', async () => {

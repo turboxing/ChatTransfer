@@ -1,27 +1,49 @@
 {
   "latest": {
-    "version": "2.0.9.1",
-    "date": "2026-08-25",
+    "version": "2.0.9.2",
+    "date": "2026-10-09",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.1/ChatTransfer-macos-x64-v2_0_9_1.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.1/ChatTransfer-windows-x64-v2.0.9.1.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.2/ChatTransfer-macos-x64-v2_0_9_2.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.2/ChatTransfer-windows-x64-v2.0.9.2.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "新增自定义缓存目录：可在设置中修改缓存（上传文件）目录，支持迁移已有文件，重启后生效",
-        "缓存路径区域显示「自定义」标识，区分默认与自定义路径"
+        "开源源码仓库，新增三语 README、MIT License、贡献指南和开发文档",
+        "修复 CI 测试依赖安装顺序，确保测试先安装前端依赖"
       ],
       "en": [
-        "Added custom cache folder: change the cache (uploads) folder in Settings, with optional file migration, applied after restart",
-        "Cache path now shows a \"(custom)\" tag to distinguish custom paths from the default"
+        "Open-source source repository with trilingual README, MIT License, contribution guide, and development docs",
+        "Fix CI dependency installation order so frontend dependencies are installed before tests"
       ],
       "ar": [
-        "إضافة مجلد تخزين مؤقت مخصص: يمكن تغيير مجلد التخزين المؤقت (الرفع) في الإعدادات، مع خيار نقل الملفات الموجودة، يُطبق بعد إعادة التشغيل",
-        "يعرض مسار التخزين المؤقت الآن علامة «(مخصص)» للتمييز بين المسارات المخصصة والافتراضية"
+        "فتح مستودع الشيفرة المصدرية مع README بثلاث لغات ورخصة MIT ودليل المساهمة ووثائق التطوير",
+        "إصلاح ترتيب تثبيت تبعيات CI بحيث تُثبَّت تبعيات الواجهة قبل تشغيل الاختبارات"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.9.1",
+      "date": "2026-08-25",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.1/ChatTransfer-macos-x64-v2_0_9_1.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.9.1/ChatTransfer-windows-x64-v2.0.9.1.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "新增自定义缓存目录：可在设置中修改缓存（上传文件）目录，支持迁移已有文件，重启后生效",
+          "缓存路径区域显示「自定义」标识，区分默认与自定义路径"
+        ],
+        "en": [
+          "Added custom cache folder: change the cache (uploads) folder in Settings, with optional file migration, applied after restart",
+          "Cache path now shows a \"(custom)\" tag to distinguish custom paths from the default"
+        ],
+        "ar": [
+          "إضافة مجلد تخزين مؤقت مخصص: يمكن تغيير مجلد التخزين المؤقت (الرفع) في الإعدادات، مع خيار نقل الملفات الموجودة، يُطبق بعد إعادة التشغيل",
+          "يعرض مسار التخزين المؤقت الآن علامة «(مخصص)» للتمييز بين المسارات المخصصة والافتراضية"
+        ]
+      }
+    },
     {
       "version": "2.0.9.0",
       "date": "2026-08-08",

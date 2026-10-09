@@ -1,10 +1,15 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.9.1**
+All notable changes to this project. Current version: **v2.0.9.2**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.9.2 (2026-10-09)
+
+- Open-source source repository with trilingual README, MIT License, contribution guide, and development docs
+- Fix CI dependency installation order so frontend dependencies are installed before tests
 
 ## v2.0.9.1 (2026-08-25)
 

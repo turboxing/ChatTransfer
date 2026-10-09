@@ -13,11 +13,24 @@ cd frontend && npm run build
 
 ## Branching
 
-Create short-lived feature branches from `main`:
+ChatTransfer uses GitHub Flow. `main` is the only long-lived branch and must stay releasable.
+
+Create short-lived branches from `main`:
 
 ```bash
-git checkout -b feat/your-feature
+git switch main
+git pull
+git switch -c feature/your-feature
 ```
+
+Use these prefixes:
+
+- `feature/` for new functionality
+- `fix/` for bug fixes
+- `docs/` for documentation changes
+- `hotfix/` for urgent production fixes
+
+Push the branch, open a pull request, let CI pass, request review, and merge into `main`. Delete the branch after merge.
 
 ## Pull Request Checklist
 

@@ -21,8 +21,7 @@ npm run release:check
 3. Update changelog data and generated release metadata.
 4. Create a tag: `v<package-version>`.
 5. Push the tag to GitHub.
-6. GitHub Actions runs tests, builds the frontend and creates a draft Release.
-7. Upload platform assets and checksums, then publish the Release.
+6. GitHub Actions runs tests, builds the frontend, packages executables, and publishes the Release with assets and checksums.
 
 ## Asset Naming
 
