@@ -1,5 +1,23 @@
 export const changelog = [
   {
+    version: '2.0.9.3',
+    date: '2026-10-11',
+    changes: {
+      'zh-CN': [
+        '新增服务端 SQLite 聊天历史：群聊和私聊消息落盘，新设备与离线设备上线后可同步历史',
+        '新增历史消息游标增量同步与消息去重，修复历史文本气泡空白问题',
+        '新增「清空我的本地记录」和「清空服务器会话历史」，后者会删除会话消息及关联文件',
+        '优化发布流程：SQLite 原生模块随包发布，并在 macOS/Windows 原生环境打包'
+      ],
+      en: [
+        'Added server-side SQLite chat history: group and private messages are persisted, so new and offline devices can sync history after coming online',
+        'Added cursor-based incremental history sync and message deduplication, and fixed blank text bubbles for restored messages',
+        'Added "Clear my local history" and "Clear server conversation history"; the latter removes conversation messages and related files',
+        'Improved release packaging: the SQLite native module is bundled and packages are built on native macOS/Windows runners'
+      ]
+    }
+  },
+  {
     version: '2.0.9.2',
     date: "2026-10-09",
     changes: {

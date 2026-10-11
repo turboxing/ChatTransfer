@@ -1,10 +1,17 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.9.2**
+All notable changes to this project. Current version: **v2.0.9.3**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.9.3 (2026-10-11)
+
+- Added server-side SQLite chat history: group and private messages are persisted, so new and offline devices can sync history after coming online
+- Added cursor-based incremental history sync and message deduplication, and fixed blank text bubbles for restored messages
+- Added "Clear my local history" and "Clear server conversation history"; the latter removes conversation messages and related files
+- Improved release packaging: the SQLite native module is bundled and packages are built on native macOS/Windows runners
 
 ## v2.0.9.2 (2026-10-09)
 
