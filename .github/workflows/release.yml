@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15-intel
             platform: macos-x64
             target: node18-macos-x64
           - os: windows-latest
