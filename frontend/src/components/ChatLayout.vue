@@ -73,7 +73,8 @@
       @open-cache-path-dialog="openCachePathDialog"
       @show-changelog="showChangelog"
       @open-feedback="openFeedback"
-      @clear-history="handleClearHistory"
+      @clear-local-history="handleClearLocalHistory"
+      @clear-server-history="handleClearServerHistory"
     />
 
     <QrCodeDialog v-model="qrDialogVisible" :loading="qrLoading" :url="qrCodeUrl"
@@ -188,14 +189,110 @@ const {
 
 const {
   rawMessages,
+  historyCursor,
   loadHistory,
   saveMessage: saveMessageToLocal,
+  clearHistory: clearLocalHistory,
+  applyServerHistory,
+  resetHistoryCursor,
 } = useMessages({ currentUser, targetUser })
 
 const cachePathController = {
   openCachePathEditor,
   useDefaultCachePath,
   confirmChangeCachePath,
+}
+
+const handleIncomingMessage = (data) => {
+  console.log('收到消息:', data)
+  const isGroupMessage = data.receiver === 'group_chat' && targetUser.value === 'group_chat'
+  const isPrivateMessage = (
+    (data.sender === targetUser.value && data.receiver === currentUser.value) ||
+    (data.sender === currentUser.value && data.receiver === targetUser.value)
+  )
+
+  if (isGroupMessage || isPrivateMessage) {
+    const message = { ...data, status: 'success' }
+    const index = rawMessages.value.findIndex((item) => item.msgId === message.msgId)
+
+    if (index === -1) {
+      rawMessages.value.push(message)
+    } else {
+      rawMessages.value[index] = message
+    }
+
+    if (message.seq) {
+      historyCursor.value = message.seq
+    }
+
+    saveMessageToLocal(message)
+  }
+}
+
+const handleHistoryCleared = (data) => {
+  const isCurrentGroup = data.chatType === 'group' && targetUser.value === 'group_chat'
+  const isCurrentPrivate = data.chatType === 'private' && data.targetUser === targetUser.value
+
+  if (!isCurrentGroup && !isCurrentPrivate) return
+
+  clearLocalHistory()
+  resetHistoryCursor()
+}
+
+const {
+  socket,
+  isConnected,
+  connect: connectSocket,
+  requestHistory,
+  clearServerHistory,
+} = useSocket({
+  currentUser,
+  targetUser,
+  myNickname,
+  onConnect: () => {
+    fetchCachePath()
+    loadServerHistory()
+  },
+  onUserList: (users) => {
+    onlineUsers.value = users
+  },
+  onGroupName: (name) => {
+    if (!name) return
+    groupName.value = name
+    localStorage.setItem(GROUPNAME_STORAGE_KEY, name)
+  },
+  onMessage: handleIncomingMessage,
+  onHistoryCleared: handleHistoryCleared,
+})
+
+const loadServerHistory = async () => {
+  if (!socket.value?.connected) return
+
+  const chatType = targetUser.value === 'group_chat' ? 'group' : 'private'
+  const result = await requestHistory({
+    requester: currentUser.value,
+    chatType,
+    targetUser: targetUser.value,
+    cursor: historyCursor.value,
+    limit: 100
+  })
+
+  if (result.code !== 0) {
+    ElMessage.error(t('chat.historyLoadFailed'))
+    return
+  }
+
+  applyServerHistory(result.data)
+}
+
+const clearServerHistoryForCurrentSession = () => {
+  const chatType = targetUser.value === 'group_chat' ? 'group' : 'private'
+
+  return clearServerHistory({
+    requester: currentUser.value,
+    chatType,
+    targetUser: targetUser.value
+  })
 }
 
 const {
@@ -209,50 +306,18 @@ const {
   openCachePathDialog,
   applyDefaultCachePath,
   confirmCachePathChange,
-  handleClearHistory,
+  handleClearLocalHistory,
+  handleClearServerHistory,
   openFeedback,
 } = useChatTools({
   route,
-  rawMessages,
   cachePathController,
+  clearLocalHistory,
+  clearServerHistory: clearServerHistoryForCurrentSession,
   t,
   notify: ElMessage,
   alert: ElMessageBox.alert,
   confirm: ElMessageBox.confirm,
-})
-
-const handleIncomingMessage = (data) => {
-  console.log('收到消息:', data)
-  const isGroupMessage = data.receiver === 'group_chat' && targetUser.value === 'group_chat'
-  const isPrivateMessage = (
-    (data.sender === targetUser.value && data.receiver === currentUser.value) ||
-    (data.sender === currentUser.value && data.receiver === targetUser.value)
-  )
-
-  if (isGroupMessage || isPrivateMessage) {
-    rawMessages.value.push({ ...data, status: 'success' })
-    saveMessageToLocal(data)
-  }
-}
-
-const {
-  socket,
-  isConnected,
-  connect: connectSocket,
-} = useSocket({
-  currentUser,
-  targetUser,
-  myNickname,
-  onConnect: () => fetchCachePath(),
-  onUserList: (users) => {
-    onlineUsers.value = users
-  },
-  onGroupName: (name) => {
-    if (!name) return
-    groupName.value = name
-    localStorage.setItem(GROUPNAME_STORAGE_KEY, name)
-  },
-  onMessage: handleIncomingMessage,
 })
 
 const {

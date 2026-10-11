@@ -71,4 +71,32 @@ describe('useSocket', () => {
     expect(onGroupName).toHaveBeenCalledWith('Team');
     expect(onMessage).toHaveBeenCalledWith({ content: 'hello' });
   });
+
+  it('registers history clear events and emits history requests with ack', async () => {
+    const onHistoryCleared = vi.fn();
+    const { connect, socket, requestHistory } = useSocket({
+      currentUser: { value: 'A' },
+      targetUser: { value: 'group_chat' },
+      myNickname: { value: 'Tester' },
+      onHistoryCleared
+    });
+
+    connect();
+    socket.value.connected = true;
+    emit.mockImplementation((event, payload, ack) => ack?.({ code: 0, data: payload }));
+
+    handlers.get('history_cleared')?.forEach((handler) => handler({ sessionId: 'group' }));
+    const result = await requestHistory({
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+
+    expect(onHistoryCleared).toHaveBeenCalledWith({ sessionId: 'group' });
+    expect(emit).toHaveBeenCalledWith(
+      'history_query',
+      { chatType: 'group', targetUser: 'group_chat' },
+      expect.any(Function)
+    );
+    expect(result.code).toBe(0);
+  });
 });

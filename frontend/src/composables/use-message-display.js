@@ -48,7 +48,9 @@ export function useMessageDisplay({
         key: message.msgId,
         role: isSelf ? 'user' : 'ai',
         placement: isSelf ? 'end' : 'start',
-        content: message.text || message.msg || (message.msgType === 'FILE' ? t('chat.fileTag') : ''),
+        content: message.text || message.msg || message.content || (
+          message.msgType === 'FILE' ? t('chat.fileTag') : ''
+        ),
         time: message.time || message.createTime,
         rawType: message.msgType,
         fileUrl: message.fileUrl,

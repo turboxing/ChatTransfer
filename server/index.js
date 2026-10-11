@@ -4,6 +4,7 @@ const { getIPAddress, openDefaultBrowser, initCachePath } = require('./tool');
 const { getCachePath } = require('./config');
 const registerRoutes = require('./routes/index');
 const registerSocket = require('./socket/index');
+const { MessageHistoryService } = require('./services/message-history-service');
 const { trackEvent } = require('./telemetry/compat');
 
 const DEFAULT_PORT = 55555;
@@ -50,8 +51,16 @@ async function start() {
 
   const server = http.createServer(app);
   const uploadsDir = getCachePath();
+  const historyService = new MessageHistoryService({ cachePath: uploadsDir });
 
-  registerSocket(server);
+  try {
+    await historyService.init();
+  } catch (error) {
+    console.error('[History] initialization failed:', error.message);
+    return;
+  }
+
+  registerSocket(server, historyService);
 
   server.listen(port, () => {
     const homeUrl = `http://${clientIpAddress}:${port}`;

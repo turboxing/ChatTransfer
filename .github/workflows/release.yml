@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,36 +22,72 @@ jobs:
         run: cd frontend && npm ci
       - run: npm test
       - name: Build frontend
+        run: cd frontend && npm run build
+
+  package:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            platform: macos-x64
+            target: node18-macos-x64
+          - os: windows-latest
+            platform: windows-x64
+            target: node18-win-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build frontend
         run: |
           cd frontend
           npm ci
           npm run build
-      - name: Prepare release metadata
+      - name: Package executable
+        shell: bash
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           SAFE_VERSION=${VERSION//./_}
-          echo "SAFE_VERSION=$SAFE_VERSION" >> "$GITHUB_ENV"
-      - name: Package executables
-        run: |
           mkdir -p dist
-          npx pkg package.json -t node18-macos-x64 --output "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
-          npx pkg package.json -t node18-win-x64 --output "dist/ChatTransfer-windows-x64-v${VERSION}.exe"
-          zip -q "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}.zip" "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
-          zip -q "dist/ChatTransfer-windows-x64-v${VERSION}.exe.zip" "dist/ChatTransfer-windows-x64-v${VERSION}.exe"
+
+          if [[ "${{ matrix.platform }}" == "macos-x64" ]]; then
+            npx pkg package.json -t ${{ matrix.target }} --output "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
+            zip -q "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}.zip" "dist/ChatTransfer-macos-x64-v${SAFE_VERSION}"
+          else
+            npx pkg package.json -t ${{ matrix.target }} --output "dist/ChatTransfer-windows-x64-v${VERSION}.exe"
+            powershell Compress-Archive -Path "dist/ChatTransfer-windows-x64-v${VERSION}.exe" -DestinationPath "dist/ChatTransfer-windows-x64-v${VERSION}.exe.zip"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChatTransfer-${{ matrix.platform }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ChatTransfer-*
+          path: release-packages
+          merge-multiple: true
       - name: Create checksums
         run: |
           mkdir -p release-assets
-          (cd dist && shasum -a 256 \
-            "ChatTransfer-macos-x64-v${SAFE_VERSION}.zip" \
-            "ChatTransfer-windows-x64-v${VERSION}.exe.zip") > release-assets/SHA256SUMS.txt
+          (cd release-packages && shasum -a 256 *.zip) > release-assets/SHA256SUMS.txt
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: v${{ env.VERSION }}
+          name: ${{ github.ref_name }}
           draft: false
           files: |
-            dist/ChatTransfer-macos-x64-v${{ env.SAFE_VERSION }}.zip
-            dist/ChatTransfer-windows-x64-v${{ env.VERSION }}.exe.zip
+            release-packages/*.zip
             release-assets/SHA256SUMS.txt

@@ -1,14 +1,26 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createServer } from 'node:http';
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 import { io as createClient } from 'socket.io-client';
 const registerSocket = require('../server/socket/index');
+const {
+  MessageHistoryService
+} = require('../server/services/message-history-service');
 
 let server;
 let serverUrl;
+let historyService;
+let historyCachePath;
+const clients = [];
 
 beforeAll(async () => {
   server = createServer();
-  registerSocket(server);
+  historyCachePath = fs.mkdtempSync(path.join(os.tmpdir(), 'chattransfer-socket-history-'));
+  historyService = new MessageHistoryService({ cachePath: historyCachePath });
+  await historyService.init();
+  registerSocket(server, historyService);
 
   await new Promise((resolve) => {
     server.listen(0, '127.0.0.1', resolve);
@@ -19,6 +31,14 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await new Promise((resolve) => server.close(resolve));
+  await historyService.close();
+  fs.rmSync(historyCachePath, { recursive: true, force: true });
+});
+
+afterEach(() => {
+  clients.forEach((client) => {
+    if (client.connected) client.disconnect();
+  });
 });
 
 function createChatClient(name) {
@@ -42,6 +62,8 @@ function createChatClient(name) {
     socket.messages.push(message);
   });
 
+  clients.push(socket);
+
   return socket;
 }
 
@@ -61,6 +83,10 @@ function waitFor(predicate, timeout = 5000) {
 
     check();
   });
+}
+
+function emitWithAck(socket, event, payload) {
+  return new Promise((resolve) => socket.emit(event, payload, resolve));
 }
 
 describe('Socket.IO multi-client chat', () => {
@@ -158,5 +184,81 @@ describe('Socket.IO multi-client chat', () => {
 
     sender.disconnect();
     receiver.disconnect();
+  });
+
+  it('persists offline private and group messages for later clients', { timeout: 15000 }, async () => {
+    const sender = createChatClient('HistorySender');
+    await new Promise((resolve) => sender.once('connect', resolve));
+    sender.emit('group_online', 'history-sender', 'History Sender');
+
+    await emitWithAck(sender, 'private_chat', {
+      sender: 'history-sender',
+      receiver: 'history-receiver',
+      msgType: 'TEXT',
+      content: 'offline-private-message'
+    });
+    await emitWithAck(sender, 'group_chat', {
+      sender: 'history-sender',
+      receiver: 'group_chat',
+      msgType: 'TEXT',
+      content: 'offline-group-message'
+    });
+
+    const receiver = createChatClient('HistoryReceiver');
+    await new Promise((resolve) => receiver.once('connect', resolve));
+    receiver.emit('group_online', 'history-receiver', 'History Receiver');
+
+    const privateHistory = await emitWithAck(receiver, 'history_query', {
+      chatType: 'private',
+      targetUser: 'history-sender'
+    });
+    const groupHistory = await emitWithAck(receiver, 'history_query', {
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+
+    expect(privateHistory.code).toBe(0);
+    expect(privateHistory.data.messages.map((message) => message.content)).toContain('offline-private-message');
+    expect(groupHistory.code).toBe(0);
+    expect(groupHistory.data.messages.map((message) => message.content)).toContain('offline-group-message');
+
+    sender.disconnect();
+    receiver.disconnect();
+  });
+
+  it('clears server history and notifies connected clients', { timeout: 15000 }, async () => {
+    const userA = createChatClient('ClearA');
+    const userB = createChatClient('ClearB');
+    await Promise.all([
+      new Promise((resolve) => userA.once('connect', resolve)),
+      new Promise((resolve) => userB.once('connect', resolve))
+    ]);
+    userA.emit('group_online', 'clear-user-a', 'Clear A');
+    userB.emit('group_online', 'clear-user-b', 'Clear B');
+
+    await emitWithAck(userA, 'group_chat', {
+      sender: 'clear-user-a',
+      receiver: 'group_chat',
+      msgType: 'TEXT',
+      content: 'message-before-clear'
+    });
+
+    const cleared = new Promise((resolve) => userB.once('history_cleared', resolve));
+    const result = await emitWithAck(userA, 'history_clear', {
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+    const event = await cleared;
+    const history = await emitWithAck(userB, 'history_query', {
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+
+    expect(result.code).toBe(0);
+    expect(event.sessionId).toBe('group');
+    expect(history.data.messages.map((message) => message.content)).not.toContain('message-before-clear');
+
+    userA.disconnect();
+    userB.disconnect();
   });
 });

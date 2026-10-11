@@ -3,8 +3,9 @@ import { getLocaleSetting, setLocaleSetting } from '../i18n'
 
 export function useChatTools({
   route,
-  rawMessages,
   cachePathController,
+  clearLocalHistory,
+  clearServerHistory,
   t,
   notify,
   alert,
@@ -62,20 +63,44 @@ export function useChatTools({
     if (!result.ok) notify?.warning(t(result.message))
   }
 
-  const handleClearHistory = () => {
-    confirm(
-      t('messages.confirmClearHistoryText'),
-      t('messages.confirmClearHistoryTitle'),
-      {
-        confirmButtonText: t('messages.confirmOk'),
-        cancelButtonText: t('messages.confirmCancel'),
-        type: 'warning'
+  const handleClearLocalHistory = async () => {
+    try {
+      await confirm(
+        t('messages.confirmClearLocalHistoryText'),
+        t('messages.confirmClearHistoryTitle'),
+        {
+          confirmButtonText: t('messages.confirmOk'),
+          cancelButtonText: t('messages.confirmCancel')
+        }
+      )
+
+      clearLocalHistory()
+      notify?.success(t('chat.clearLocalHistoryDone'))
+    } catch {
+    }
+  }
+
+  const handleClearServerHistory = async () => {
+    try {
+      await confirm(
+        t('messages.confirmClearServerHistoryText'),
+        t('messages.confirmClearHistoryTitle'),
+        {
+          confirmButtonText: t('messages.confirmOk'),
+          cancelButtonText: t('messages.confirmCancel'),
+          type: 'warning'
+        }
+      )
+
+      const result = await clearServerHistory()
+      if (result.code === 0) {
+        notify?.success(t('chat.clearServerHistoryDone'))
+      } else {
+        notify?.error(t('chat.clearServerHistoryFailed'))
       }
-    ).then(() => {
-      localStorage.removeItem('im_chat_record')
-      rawMessages.value = []
-      notify?.success(t('chat.clearHistoryDone'))
-    }).catch(() => {})
+    } catch {
+      notify?.error(t('chat.clearServerHistoryFailed'))
+    }
   }
 
   const openFeedback = () => {
@@ -93,7 +118,8 @@ export function useChatTools({
     openCachePathDialog,
     applyDefaultCachePath,
     confirmCachePathChange,
-    handleClearHistory,
+    handleClearLocalHistory,
+    handleClearServerHistory,
     openFeedback
   }
 }

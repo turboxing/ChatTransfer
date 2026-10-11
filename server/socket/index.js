@@ -6,7 +6,11 @@ const {
   decoratePrivateMessage
 } = require('../services/message-service');
 
-module.exports = function registerSocket(server) {
+module.exports = function registerSocket(server, historyService) {
+  if (!historyService) {
+    throw new Error('historyService is required');
+  }
+
   const io = socketIo(server, {
     cors: {
       origin: true,
@@ -40,6 +44,30 @@ module.exports = function registerSocket(server) {
     });
   };
 
+  const persistMessage = async (message) => {
+    try {
+      return { message: await historyService.saveMessage(message), error: null };
+    } catch (error) {
+      console.error('[History] save message failed:', error.message);
+      return { message, error };
+    }
+  };
+
+  const broadcastHistoryCleared = ({ chatType, targetUser, sessionId }, sourceSocket) => {
+    const payload = { chatType, targetUser, sessionId };
+
+    if (chatType === 'group') {
+      io.to(chatRoom).emit('history_cleared', payload);
+      return;
+    }
+
+    sourceSocket.emit('history_cleared', payload);
+    const receiver = roomManager.getUser(targetUser);
+    if (receiver && receiver.status === roomManager.getOnline()) {
+      io.to(receiver.socketId).emit('history_cleared', payload);
+    }
+  };
+
   io.on('connection', (socket) => {
     console.log(`[Socket] connected: ${socket.id}`);
 
@@ -59,19 +87,22 @@ module.exports = function registerSocket(server) {
       broadcastUserList();
     });
 
-    socket.on('private_chat', (params, ack) => {
+    socket.on('private_chat', async (params, ack) => {
       const decorated = decoratePrivateMessage(params, roomManager.getUser(params.sender));
+      const { message: savedMessage, error } = await persistMessage(decorated);
 
       if (typeof ack === 'function') {
-        ack(decorated);
+        ack(error ? { ...decorated, status: 'failed', error: 'Message persistence failed' } : savedMessage);
       }
+
+      if (error) return;
 
       trackMessage('private', 'send', decorated, socket);
 
-      const receiver = roomManager.getUser(decorated.receiver);
+      const receiver = roomManager.getUser(savedMessage.receiver);
 
       if (receiver && receiver.status === roomManager.getOnline()) {
-        socket.to(receiver.socketId).emit('reply_private_chat', decorated);
+        socket.to(receiver.socketId).emit('reply_private_chat', savedMessage);
 
         trackEvent('message_action', {
           chat_type: 'private',
@@ -115,15 +146,18 @@ module.exports = function registerSocket(server) {
       });
     });
 
-    socket.on('group_chat', (params, ack) => {
+    socket.on('group_chat', async (params, ack) => {
       const decorated = decorateGroupMessage(params, roomManager.getUser(params.sender));
+      const { message: savedMessage, error } = await persistMessage(decorated);
 
       if (typeof ack === 'function') {
-        ack(decorated);
+        ack(error ? { ...decorated, status: 'failed', error: 'Message persistence failed' } : savedMessage);
       }
 
+      if (error) return;
+
       trackMessage('group', 'send', decorated, socket);
-      socket.broadcast.to(chatRoom).emit('reply_group_chat', decorated);
+      socket.broadcast.to(chatRoom).emit('reply_group_chat', savedMessage);
 
       trackEvent('message_action', {
         chat_type: 'group',
@@ -131,6 +165,60 @@ module.exports = function registerSocket(server) {
         direction: 'broadcast',
         user_agent: socket.handshake.headers['user-agent']
       });
+    });
+
+    socket.on('history_query', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const requester = socket.username || params.requester;
+        const chatType = params.chatType || (
+          params.targetUser === 'group_chat' ? 'group' : 'private'
+        );
+        const data = await historyService.queryHistory({
+          requester,
+          chatType,
+          targetUser: params.targetUser,
+          cursor: params.cursor,
+          limit: params.limit
+        });
+
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[History] query failed:', error.message);
+        ack({ code: -1, message: 'Failed to load history' });
+      }
+    });
+
+    socket.on('history_clear', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const requester = socket.username || params.requester;
+        const chatType = params.chatType || (
+          params.targetUser === 'group_chat' ? 'group' : 'private'
+        );
+        const conversation = historyService.getConversation({
+          requester,
+          chatType,
+          targetUser: params.targetUser
+        });
+        const data = await historyService.clearHistory({
+          requester,
+          chatType,
+          targetUser: params.targetUser
+        });
+
+        broadcastHistoryCleared({
+          chatType,
+          targetUser: params.targetUser,
+          sessionId: conversation.sessionId
+        }, socket);
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[History] clear failed:', error.message);
+        ack({ code: -1, message: 'Failed to clear history' });
+      }
     });
 
     socket.on('disconnect', () => {

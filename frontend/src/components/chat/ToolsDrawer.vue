@@ -57,9 +57,13 @@
         <el-icon><ChatDotRound /></el-icon>
         <span>{{ t('tools.feedback') }}</span>
       </div>
-      <div class="danger tool-item" @click="emit('clear-history')">
+      <div class="tool-item" @click="emit('clear-local-history')">
+        <el-icon><Brush /></el-icon>
+        <span>{{ t('tools.clearLocalHistory') }}</span>
+      </div>
+      <div class="danger tool-item" @click="emit('clear-server-history')">
         <el-icon><Delete /></el-icon>
-        <span>{{ t('tools.clearHistory') }}</span>
+        <span>{{ t('tools.clearServerHistory') }}</span>
       </div>
     </div>
 
@@ -91,6 +95,7 @@
 
 <script setup>
 import {
+  Brush,
   ChatDotRound,
   CopyDocument,
   Delete,
@@ -125,7 +130,8 @@ const emit = defineEmits([
   'open-cache-path-dialog',
   'show-changelog',
   'open-feedback',
-  'clear-history'
+  'clear-local-history',
+  'clear-server-history'
 ])
 
 const { t } = useI18n()

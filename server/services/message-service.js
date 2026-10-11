@@ -1,10 +1,12 @@
 const moment = require('moment');
+const crypto = require('crypto');
 
 function decorateMessage(message, sender) {
   const decorated = { ...message };
 
   decorated.createTime = moment().format('YYYY-MM-DD HH:mm:ss');
-  decorated.msgId = Date.now().toString();
+  decorated.msgId = crypto.randomUUID();
+  decorated.createdAt = Date.now();
   decorated.senderPhotoNickname = decorated.sender.slice(0, 2);
 
   if (sender) {

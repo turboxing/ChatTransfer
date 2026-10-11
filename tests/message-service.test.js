@@ -11,7 +11,7 @@ describe('message service', () => {
       { nickname: 'A', ip: '192.168.0.10' }
     );
 
-    expect(message.msgId).toMatch(/^\d+$/);
+    expect(message.msgId).toMatch(/^[0-9a-f-]{36}$/);
     expect(message.createTime).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
     expect(message.senderPhotoNickname).toBe('se');
     expect(message.sender_nickname).toBe('A');

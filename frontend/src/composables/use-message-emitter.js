@@ -6,7 +6,10 @@ export function useMessageEmitter({ socket, isConnected, targetUser, rawMessages
       socket.value.emit(eventName, messageData, (data) => {
         const index = rawMessages.value.findIndex((message) => message.msgId === messageData.msgId)
         if (index !== -1) {
-          rawMessages.value[index] = { ...data, status: 'success' }
+          rawMessages.value[index] = {
+            ...data,
+            status: data.status === 'failed' ? 'failed' : 'success'
+          }
           saveMessage(rawMessages.value[index])
         }
       })

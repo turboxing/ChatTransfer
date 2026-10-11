@@ -1,7 +1,16 @@
 import { onUnmounted, ref } from 'vue';
 import io from 'socket.io-client';
 
-export function useSocket({ currentUser, targetUser, myNickname, onConnect, onUserList, onGroupName, onMessage }) {
+export function useSocket({
+  currentUser,
+  targetUser,
+  myNickname,
+  onConnect,
+  onUserList,
+  onGroupName,
+  onMessage,
+  onHistoryCleared
+}) {
   const socket = ref(null);
   const isConnected = ref(false);
 
@@ -38,9 +47,29 @@ export function useSocket({ currentUser, targetUser, myNickname, onConnect, onUs
     socket.value.on('reply_private_chat', onMessage);
     socket.value.on('reply_group_chat', onMessage);
     socket.value.on('update_msg', onMessage);
+    socket.value.on('history_cleared', (data) => onHistoryCleared?.(data));
   };
+
+  const emitWithAck = (eventName, payload) => new Promise((resolve) => {
+    if (!socket.value || !socket.value.connected) {
+      resolve({ code: -1, message: 'Socket not connected' });
+      return;
+    }
+
+    socket.value.emit(eventName, payload, resolve);
+  });
+
+  const requestHistory = (payload) => emitWithAck('history_query', payload);
+
+  const clearServerHistory = (payload) => emitWithAck('history_clear', payload);
 
   onUnmounted(() => socket.value?.disconnect());
 
-  return { socket, isConnected, connect };
+  return {
+    socket,
+    isConnected,
+    connect,
+    requestHistory,
+    clearServerHistory
+  };
 }

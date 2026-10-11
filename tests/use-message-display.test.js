@@ -19,13 +19,14 @@ describe('useMessageDisplay', () => {
       ],
       rawMessages: [
         { msgId: '1', sender: 'user-a', receiver: 'group_chat', text: 'hello', msgType: 'TEXT', time: 'now' },
-        { msgId: '2', sender: 'user-b', receiver: 'group_chat', msgType: 'FILE', fileUrl: '/uploads/a%20b.txt' }
+        { msgId: '2', sender: 'user-b', receiver: 'group_chat', content: 'history hello', msgType: 'TEXT', time: 'history now' },
+        { msgId: '3', sender: 'user-c', receiver: 'group_chat', msgType: 'FILE', fileUrl: '/uploads/a%20b.txt' }
       ]
     })
 
     const display = useMessageDisplay({
       ...refs,
-      isMessagePinned: (msgId) => msgId === '2',
+      isMessagePinned: (msgId) => msgId === '3',
       parseFileName,
       t: (key) => key
     })
@@ -33,8 +34,8 @@ describe('useMessageDisplay', () => {
     expect(display.onlineCount.value).toBe(1)
     expect(display.displayGroupName.value).toBe('chat.defaultGroupName')
     expect(display.getDisplayName(refs.rawMessages.value[0])).toBe('My Nickname')
-    expect(display.getDisplayName(refs.rawMessages.value[1])).toBe('User B')
-    expect(display.getDisplayIp(refs.rawMessages.value[1])).toBe('192.168.1.2')
+    expect(display.getDisplayName(refs.rawMessages.value[2])).toBe('User C')
+    expect(display.getDisplayIp(refs.rawMessages.value[2])).toBe('192.168.1.3')
     expect(display.bubbleItems.value[0]).toMatchObject({
       role: 'user',
       placement: 'end',
@@ -43,6 +44,10 @@ describe('useMessageDisplay', () => {
       isPinned: false
     })
     expect(display.bubbleItems.value[1]).toMatchObject({
+      content: 'history hello',
+      status: 'success'
+    })
+    expect(display.bubbleItems.value[2]).toMatchObject({
       role: 'ai',
       placement: 'start',
       content: 'chat.fileTag',

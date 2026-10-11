@@ -26,6 +26,7 @@
     "moment": "^2.27.0",
     "node-machine-id": "^1.1.12",
     "qr-image": "^3.2.0",
+    "sqlite3": "5.1.7",
     "socket.io": "^4.8.3",
     "underscore": "^1.10.2",
     "urlencode": "^1.1.0"
@@ -33,7 +34,8 @@
   "bin": "server/index.js",
   "pkg": {
     "assets": [
-      "frontend/dist/**/*"
+      "frontend/dist/**/*",
+      "node_modules/sqlite3/build/Release/node_sqlite3.node"
     ],
     "scripts": [
       "server/**/*.js"
