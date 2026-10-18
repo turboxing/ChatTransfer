@@ -1,6 +1,6 @@
 # Release Guide
 
-This is the reusable process for developing a change, merging it to `main`, and publishing macOS and Windows binaries to GitHub Releases.
+This is the reusable process for developing a change, merging it to `main`, and publishing the npm package plus macOS and Windows binaries to GitHub Releases.
 
 ## Repository
 
@@ -126,9 +126,12 @@ Replace `2.0.9.3` with the actual release version.
 
 ## 6. Automated GitHub Release
 
-Pushing a `v*.*.*` tag triggers `.github/workflows/release.yml`.
+Pushing a `v*.*.*` tag triggers:
 
-The workflow automatically:
+1. `.github/workflows/release.yml` for GitHub Release binaries.
+2. `.github/workflows/npm-publish.yml` for the npm package.
+
+The release workflow automatically:
 
 1. Installs root and frontend dependencies.
 2. Runs tests.
@@ -136,6 +139,15 @@ The workflow automatically:
 4. Packages macOS and Windows executables with `pkg`.
 5. Creates `SHA256SUMS.txt`.
 6. Publishes the GitHub Release with all assets.
+
+The npm workflow automatically:
+
+1. Installs root and frontend dependencies.
+2. Runs tests and builds the frontend.
+3. Verifies the package contents with `npm pack --dry-run`.
+4. Publishes `chattransfer` to npm with provenance.
+
+Before the first npm release, configure an npm automation token in the GitHub repository as the `NPM_TOKEN` secret. The npm account must have 2FA enabled.
 
 Monitor the run:
 
@@ -154,7 +166,14 @@ After the workflow succeeds:
    - `ChatTransfer-windows-x64-v<version>.exe.zip`
    - `SHA256SUMS.txt`
 4. Download both binaries and perform a smoke test.
-5. Verify the checksums:
+5. Verify the npm package:
+
+```bash
+npx chattransfer@<version> --version
+npx chattransfer@<version> --no-browser
+```
+
+6. Verify the checksums:
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt

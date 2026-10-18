@@ -3,10 +3,15 @@
   "version": "2.0.9.3",
   "description": "LAN instant messaging and file transfer tool",
   "main": "server/index.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "node server/index.js",
+    "build:frontend": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "prepublishOnly": "npm test && npm run build:frontend && npm pack --dry-run",
     "release:check": "sh -c 'set -e; VERSION=$(node -p \"require(\\\"./package.json\\\").version\"); TAG=v$VERSION; if git rev-parse -q --verify \"$TAG\" >/dev/null; then echo \"Tag $TAG already exists\"; exit 1; fi; echo \"Version $VERSION is ready for tag $TAG\"'"
   },
   "repository": {
@@ -31,7 +36,16 @@
     "underscore": "^1.10.2",
     "urlencode": "^1.1.0"
   },
-  "bin": "server/index.js",
+  "bin": {
+    "chattransfer": "bin/chattransfer.js"
+  },
+  "files": [
+    "bin",
+    "server",
+    "frontend/dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "pkg": {
     "assets": [
       "frontend/dist/**/*",

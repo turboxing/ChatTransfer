@@ -1,14 +1,16 @@
 const fs = require('fs');
 const path = require('path');
-const { getAppWritableRoot } = require('./tool.js');
+const {
+  getConfigFile,
+  getDefaultDataDir
+} = require('./utils/runtime-paths');
 
-const CONFIG_FILE = path.join(getAppWritableRoot(), 'config.json');
 const DEFAULT_CONFIG = { cachePath: null };
 
-function loadConfig() {
+function loadConfig(configFile = getConfigFile()) {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
+    if (fs.existsSync(configFile)) {
+      const raw = fs.readFileSync(configFile, 'utf8');
       const parsed = raw ? JSON.parse(raw) : {};
       return { ...DEFAULT_CONFIG, ...parsed };
     }
@@ -18,14 +20,16 @@ function loadConfig() {
   return { ...DEFAULT_CONFIG };
 }
 
-function saveConfig(cfg) {
-  const tmp = CONFIG_FILE + '.tmp';
+function saveConfig(cfg, configFile = getConfigFile()) {
+  const tmp = `${configFile}.tmp`;
+
+  fs.mkdirSync(path.dirname(configFile), { recursive: true });
   fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2), 'utf8');
-  fs.renameSync(tmp, CONFIG_FILE);
+  fs.renameSync(tmp, configFile);
 }
 
 function getDefaultCachePath() {
-  return path.join(getAppWritableRoot(), 'uploads');
+  return path.join(getDefaultDataDir(), 'uploads');
 }
 
 function getCachePath() {
@@ -48,12 +52,12 @@ function setCachePath(p) {
 }
 
 module.exports = {
+  getConfigFile,
   loadConfig,
   saveConfig,
   getCachePath,
   setCachePath,
   getDefaultCachePath,
   isCustomized,
-  CONFIG_FILE,
   DEFAULT_CONFIG
 };

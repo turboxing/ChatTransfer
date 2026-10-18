@@ -53,6 +53,27 @@
 
 حمّل أحدث ملف تنفيذي من صفحة [الإصدارات](https://github.com/turboxing/ChatTransfer/releases).
 
+### npm
+
+إذا كنت تستخدم Node.js 20 أو أحدث، يمكنك تشغيل ChatTransfer مباشرة:
+
+```bash
+npx chattransfer
+```
+
+أو تثبيته عالميًا:
+
+```bash
+npm install -g chattransfer
+chattransfer
+```
+
+لخادم Linux بدون واجهة رسومية:
+
+```bash
+chattransfer --no-browser
+```
+
 | النظام | الملف |
 |--------|--------|
 | macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` |
