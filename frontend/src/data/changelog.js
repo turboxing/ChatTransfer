@@ -1,6 +1,6 @@
 export const changelog = [
   {
-    version: '2.0.10.0',
+    version: '2.0.10',
     date: '2026-10-18',
     changes: {
       'zh-CN': [

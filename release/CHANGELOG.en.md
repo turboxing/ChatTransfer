@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.10.0**
+All notable changes to this project. Current version: **v2.0.10**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
 
-## v2.0.10.0 (2026-10-18)
+## v2.0.10 (2026-10-18)
 
 - Added npm distribution with `npx chattransfer` and `npm install -g chattransfer`
 - Added CLI options: `--host`, `--port`, `--data-dir`, `--public-url`, `--no-browser`, `--version`, and `--help`

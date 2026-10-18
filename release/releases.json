@@ -1,10 +1,10 @@
 {
   "latest": {
-    "version": "2.0.10.0",
+    "version": "2.0.10",
     "date": "2026-10-18",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.10.0/ChatTransfer-macos-x64-v2_0_10_0.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.10.0/ChatTransfer-windows-x64-v2.0.10.0.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.10/ChatTransfer-macos-x64-v2_0_10.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.10/ChatTransfer-windows-x64-v2.0.10.exe.zip"
     },
     "changelog": {
       "zh-CN": [

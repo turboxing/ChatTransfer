@@ -1,12 +1,12 @@
 # 版本更新记录
 
-所有版本的更新记录。当前最新版本：**v2.0.10.0**
+所有版本的更新记录。当前最新版本：**v2.0.10**
 
 [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
 
-## v2.0.10.0 (2026-10-18)
+## v2.0.10 (2026-10-18)
 
 - 新增 npm 分发方式：支持 `npx chattransfer` 和 `npm install -g chattransfer`
 - 新增 CLI 参数：`--host`、`--port`、`--data-dir`、`--public-url`、`--no-browser`、`--version`、`--help`
