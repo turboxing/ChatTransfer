@@ -29,7 +29,10 @@ async function main() {
     process.env.CHATTRANSFER_PUBLIC_URL = options.publicUrl;
   }
 
-  await start(options);
+  const server = await start(options);
+  if (!server) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((error) => {

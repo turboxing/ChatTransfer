@@ -111,7 +111,7 @@ cd ..
 npm run dev
 ```
 
-The app starts at `http://localhost:55555`.
+The app starts at `http://localhost:55556`.
 
 For frontend development:
 

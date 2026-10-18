@@ -1,5 +1,21 @@
 export const changelog = [
   {
+    version: '2.0.11',
+    date: '2026-10-18',
+    changes: {
+      'zh-CN': [
+        '修复 CLI 默认端口被误判为显式指定的问题，端口不可用时恢复自动递增重试',
+        '默认端口从 55555 调整为 55556，避开 macOS 系统保留端口',
+        'CLI 启动失败时返回非零退出码，便于脚本和自动化流程判断'
+      ],
+      en: [
+        'Fixed the CLI treating the default port as explicitly specified, restoring automatic incremental retry when the port is unavailable',
+        'Changed the default port from 55555 to 55556 to avoid a macOS system-reserved port',
+        'CLI startup failures now return a non-zero exit code for scripts and automation'
+      ]
+    }
+  },
+  {
     version: '2.0.10',
     date: '2026-10-18',
     changes: {

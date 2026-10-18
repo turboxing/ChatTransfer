@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.10**
+All notable changes to this project. Current version: **v2.0.11**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.11 (2026-10-18)
+
+- Fixed the CLI treating the default port as explicitly specified, restoring automatic incremental retry when the port is unavailable
+- Changed the default port from 55555 to 55556 to avoid a macOS system-reserved port
+- CLI startup failures now return a non-zero exit code for scripts and automation
 
 ## v2.0.10 (2026-10-18)
 

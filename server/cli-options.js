@@ -46,7 +46,7 @@ function getHelpText() {
     '',
     'Options:',
     '  --host <host>              Listen host (default: 0.0.0.0)',
-    '  --port <port>              Listen port (default: 55555)',
+    '  --port <port>              Listen port (default: 55556)',
     '  --data-dir <path>          Runtime data directory',
     '  --public-url <url>         Public URL used by QR codes and links',
     '  --no-browser               Do not open the local browser',

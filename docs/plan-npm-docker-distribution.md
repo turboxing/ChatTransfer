@@ -48,7 +48,7 @@ npm 包应支持：
 docker run -d \
   --name chattransfer \
   --restart unless-stopped \
-  -p 55555:55555 \
+  -p 55556:55556 \
   -v chattransfer-data:/data \
   ghcr.io/turboxing/chattransfer:latest
 ```
@@ -116,7 +116,7 @@ npx chattransfer --no-browser
 docker run -d \
   --name chattransfer \
   --restart unless-stopped \
-  -p 55555:55555 \
+  -p 55556:55556 \
   -v chattransfer-data:/data \
   ghcr.io/turboxing/chattransfer:latest
 ```
@@ -143,7 +143,7 @@ chattransfer
 | 参数 | 说明 | 默认值 |
 | --- | --- | --- |
 | `--host` | 监听地址 | `0.0.0.0` |
-| `--port` | 监听端口 | `55555` |
+| `--port` | 监听端口 | `55556` |
 | `--data-dir` | 数据目录 | 按操作系统自动选择 |
 | `--public-url` | 对外访问地址，用于二维码和页面链接 | 自动检测局域网地址 |
 | `--no-browser` | 不打开本机浏览器 | 自动检测桌面环境 |
@@ -229,13 +229,13 @@ tmp/
 因此必须支持：
 
 ```bash
-chattransfer --public-url http://192.168.1.10:55555
+chattransfer --public-url http://192.168.1.10:55556
 ```
 
 或：
 
 ```bash
-CHATTRANSFER_PUBLIC_URL=http://192.168.1.10:55555
+CHATTRANSFER_PUBLIC_URL=http://192.168.1.10:55556
 ```
 
 ### 5.5 npm 包内容
@@ -278,7 +278,7 @@ Docker 镜像要求：
 5. 默认数据目录为 `/data`。
 6. 默认不打开浏览器。
 7. 使用非 root 用户运行。
-8. 暴露 `55555` 端口。
+8. 暴露 `55556` 端口。
 9. 提供健康检查。
 10. 镜像推送到 GitHub Container Registry。
 
@@ -414,7 +414,7 @@ Dockerfile 采用多阶段构建：
 
 ```text
 CHATTRANSFER_HOST=0.0.0.0
-CHATTRANSFER_PORT=55555
+CHATTRANSFER_PORT=55556
 CHATTRANSFER_DATA_DIR=/data
 CHATTRANSFER_NO_BROWSER=1
 ```
@@ -504,7 +504,7 @@ chattransfer --no-browser
 
 ```bash
 docker build -t chattransfer:test .
-docker run -d --name chattransfer-test -p 55555:55555 -v chattransfer-test-data:/data chattransfer:test
+docker run -d --name chattransfer-test -p 55556:55556 -v chattransfer-test-data:/data chattransfer:test
 ```
 
 验证：

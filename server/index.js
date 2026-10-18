@@ -15,7 +15,7 @@ const {
 } = require('./utils/runtime-paths');
 const { resolveStartOptions } = require('./utils/runtime-options');
 
-const DEFAULT_PORT = 55555;
+const DEFAULT_PORT = 55556;
 const MAX_RETRY = 3;
 const clientIpAddress = getIPAddress() || '127.0.0.1';
 const pkg = require('../package.json');

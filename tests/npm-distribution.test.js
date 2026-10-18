@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import net from 'node:net';
 import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { parseCliArguments, toStartOptions } from '../server/cli-options';
@@ -68,6 +70,34 @@ describe('npm distribution', () => {
     expect(options.explicitPort).toBe(true);
 
     vi.unstubAllEnvs();
+  });
+
+  it('keeps the default CLI port implicit after resolving options twice', () => {
+    const options = toStartOptions({});
+    const resolvedAgain = resolveStartOptions(options);
+
+    expect(resolvedAgain.port).toBe(55556);
+    expect(resolvedAgain.explicitPort).toBe(false);
+  });
+
+  it('returns a non-zero exit code when the explicit port is unavailable', async () => {
+    const blocker = net.createServer();
+    await new Promise((resolve) => blocker.listen(0, '0.0.0.0', resolve));
+    const { port } = blocker.address();
+    const child = spawn(process.execPath, [
+      'bin/chattransfer.js',
+      '--no-browser',
+      '--port',
+      String(port)
+    ], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', (chunk) => { output += chunk; });
+    child.stderr.on('data', (chunk) => { output += chunk; });
+    const exitCode = await new Promise((resolve) => child.once('exit', resolve));
+    await new Promise((resolve) => blocker.close(resolve));
+
+    expect(exitCode).toBe(1);
+    expect(output).toContain(`Port ${port} is in use`);
   });
 
   it('rejects invalid ports and public URLs', () => {

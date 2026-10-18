@@ -111,7 +111,7 @@ cd ..
 npm run dev
 ```
 
-应用默认运行在 `http://localhost:55555`。
+应用默认运行在 `http://localhost:55556`。
 
 前端单独开发：
 

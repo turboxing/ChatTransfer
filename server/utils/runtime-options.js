@@ -1,7 +1,7 @@
 const path = require('path');
 
 const DEFAULT_HOST = '0.0.0.0';
-const DEFAULT_PORT = 55555;
+const DEFAULT_PORT = 55556;
 
 function isTruthy(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
@@ -70,7 +70,9 @@ function resolveStartOptions(overrides = {}, env = process.env) {
   return {
     host: host.trim(),
     port,
-    explicitPort: overrides.port !== undefined || env.CHATTRANSFER_PORT !== undefined,
+    explicitPort: overrides.explicitPort ?? (
+      overrides.port !== undefined || env.CHATTRANSFER_PORT !== undefined
+    ),
     dataDir: dataDir ? path.resolve(String(dataDir)) : null,
     publicUrl,
     openBrowser
