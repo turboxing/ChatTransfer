@@ -1,5 +1,25 @@
 export const changelog = [
   {
+    version: '2.0.10.0',
+    date: '2026-10-18',
+    changes: {
+      'zh-CN': [
+        '新增 npm 分发方式：支持 npx chattransfer 和 npm install -g chattransfer',
+        '新增 CLI 参数：--host、--port、--data-dir、--public-url、--no-browser、--version、--help',
+        '新增 npm 自动发布流程，发布前自动测试、构建前端并校验包内容',
+        '优化 npm 运行时数据目录，配置、上传文件和 SQLite 数据不再写入全局包目录',
+        '修复 Linux 无桌面环境启动兼容性，并支持通过 xdg-open 打开浏览器和缓存目录'
+      ],
+      en: [
+        'Added npm distribution with npx chattransfer and npm install -g chattransfer',
+        'Added CLI options: --host, --port, --data-dir, --public-url, --no-browser, --version, and --help',
+        'Added an automated npm publication workflow that tests, builds the frontend, and verifies package contents before publishing',
+        'Improved npm runtime data directories so configuration, uploads, and SQLite data are no longer written to the global package directory',
+        'Fixed headless Linux startup compatibility and enabled xdg-open support for browsers and cache folders'
+      ]
+    }
+  },
+  {
     version: '2.0.9.3',
     date: '2026-10-11',
     changes: {

@@ -1,6 +1,6 @@
 {
   "name": "chattransfer",
-  "version": "2.0.9.3",
+  "version": "2.0.10.0",
   "description": "LAN instant messaging and file transfer tool",
   "main": "server/index.js",
   "engines": {

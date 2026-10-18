@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.9.3**
+All notable changes to this project. Current version: **v2.0.10.0**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.10.0 (2026-10-18)
+
+- Added npm distribution with `npx chattransfer` and `npm install -g chattransfer`
+- Added CLI options: `--host`, `--port`, `--data-dir`, `--public-url`, `--no-browser`, `--version`, and `--help`
+- Added an automated npm publication workflow that tests, builds the frontend, and verifies package contents before publishing
+- Improved npm runtime data directories so configuration, uploads, and SQLite data are no longer written to the global package directory
+- Fixed headless Linux startup compatibility and enabled `xdg-open` support for browsers and cache folders
 
 ## v2.0.9.3 (2026-10-11)
 
