@@ -53,6 +53,27 @@
 
 前往 [Releases](https://github.com/turboxing/ChatTransfer/releases) 页面下载最新可执行文件。
 
+### npm
+
+如果你使用 Node.js 20 或更高版本，可以直接运行：
+
+```bash
+npx chattransfer
+```
+
+也可以全局安装：
+
+```bash
+npm install -g chattransfer
+chattransfer
+```
+
+无桌面 Linux 服务器可使用：
+
+```bash
+chattransfer --no-browser
+```
+
 | 系统 | 文件 |
 |------|------|
 | macOS | `ChatTransfer-macos-x64-v{版本号_下划线}` |

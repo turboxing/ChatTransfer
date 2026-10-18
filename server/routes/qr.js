@@ -1,5 +1,6 @@
 const express = require('express');
 const { geneQR } = require('../tool');
+const { getRequestBaseUrl } = require('../utils/request-url');
 const router = express.Router();
 
 router.get('/geneQR', (req, res) => {
@@ -18,7 +19,7 @@ router.get('/geneBUserQR', (req, res) => {
 });
 
 router.get('/getIndexInfo', (req, res) => {
-  const homeUrl = `${req.protocol}://${req.headers.host}`;
+  const homeUrl = getRequestBaseUrl(req);
   const aUrl = `${homeUrl}/chat?sender=A&receiver=B`;
   const bUrl = `${homeUrl}/chat?sender=B&receiver=A`;
 
@@ -35,7 +36,7 @@ router.get('/getIndexInfo', (req, res) => {
 });
 
 router.get('/getIndexInfo2', (req, res) => {
-  const homeUrl = `${req.protocol}://${req.headers.host}`;
+  const homeUrl = getRequestBaseUrl(req);
   const loginUrl = `${homeUrl}/login?receiver=${req.query.receiver || 'group_chat'}`;
 
   res.send({
@@ -48,7 +49,7 @@ router.get('/getIndexInfo2', (req, res) => {
 });
 
 router.get('/scanLogin', (req, res) => {
-  const homeUrl = `${req.protocol}://${req.headers.host}`;
+  const homeUrl = getRequestBaseUrl(req);
   const receiver = req.query.receiver || 'group_chat';
   const targetUrl = `${homeUrl}/chat?sender=${req.query.sender}&receiver=${receiver}`;
 

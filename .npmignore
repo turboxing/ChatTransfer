@@ -1,0 +1,4 @@
+dist
+!frontend/dist
+!frontend/dist/**
+frontend/package-lock.json

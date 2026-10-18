@@ -1,6 +1,5 @@
 const fs = require('fs');
-const path = require('path');
-const { getAppWritableRoot } = require('../utils/app-root');
+const { getTelemetryConfigFile } = require('../utils/runtime-paths');
 
 const DEFAULT_CONFIG = {
   analytics: {
@@ -10,7 +9,7 @@ const DEFAULT_CONFIG = {
 };
 
 function loadConfig() {
-  const configPath = path.join(getAppWritableRoot(), 'config', 'local.json');
+  const configPath = getTelemetryConfigFile();
 
   try {
     if (!fs.existsSync(configPath)) {

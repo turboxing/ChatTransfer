@@ -1,9 +1,15 @@
 const express = require('express');
 const path = require('path');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const router = express.Router();
-const { getCachePath, getDefaultCachePath, isCustomized, setCachePath, CONFIG_FILE } = require('../config');
-const { getAppWritableRoot } = require('../utils/app-root');
+const {
+  getCachePath,
+  getConfigFile,
+  getDefaultCachePath,
+  isCustomized,
+  setCachePath
+} = require('../config');
+const { getDefaultDataDir } = require('../utils/runtime-paths');
 const { trackEvent } = require('../telemetry/compat');
 
 router.get('/getHomeDir', (req, res) => {
@@ -16,7 +22,7 @@ router.get('/getHomeDir', (req, res) => {
       uploadsDir,
       defaultDir: getDefaultCachePath(),
       isCustomized: isCustomized(),
-      configFile: CONFIG_FILE
+      configFile: getConfigFile()
     }
   });
 });
@@ -40,16 +46,23 @@ router.post('/openCachePath', express.json(), (req, res) => {
     data: { platform: process.platform, path: uploadsDir }
   });
 
+  if (process.platform === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY) {
+    respond(0, '服务器无桌面环境，缓存目录已返回');
+    return;
+  }
+
   if (process.platform === 'darwin') {
-    exec(`open ${JSON.stringify(uploadsDir)}`, (error) => {
+    execFile('open', [uploadsDir], (error) => {
       respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
     });
   } else if (process.platform === 'win32') {
-    exec(`explorer "${uploadsDir}"`, (error) => {
+    execFile('explorer', [uploadsDir], (error) => {
       respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
     });
   } else {
-    respond(-1, '暂不支持的平台');
+    execFile('xdg-open', [uploadsDir], (error) => {
+      respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
+    });
   }
 });
 
@@ -61,9 +74,9 @@ router.post('/setCachePath', (req, res) => {
   }
 
   const newPath = path.resolve(inputPath.trim());
-  const appRoot = path.resolve(getAppWritableRoot());
+  const dataRoot = path.resolve(getDefaultDataDir());
 
-  if (!path.isAbsolute(newPath) || newPath === path.resolve(getCachePath()) || newPath === appRoot) {
+  if (!path.isAbsolute(newPath) || newPath === path.resolve(getCachePath()) || newPath === dataRoot) {
     return res.send({ code: -1, message: 'invalid cache path' });
   }
 

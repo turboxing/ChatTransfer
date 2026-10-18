@@ -8,14 +8,16 @@ const MAX_LIMIT = 200;
 const GROUP_SESSION_ID = 'group';
 
 class MessageHistoryService {
-  constructor({ cachePath }) {
+  constructor({ cachePath, databasePath }) {
     if (!cachePath) {
       throw new Error('cachePath is required');
     }
 
     this.cachePath = path.resolve(cachePath);
-    this.historyDir = path.join(this.cachePath, 'history');
-    this.databasePath = path.join(this.historyDir, 'chattransfer.db');
+    this.databasePath = databasePath
+      ? path.resolve(databasePath)
+      : path.join(this.cachePath, 'history', 'chattransfer.db');
+    this.historyDir = path.dirname(this.databasePath);
     this.db = null;
     this.writeLock = Promise.resolve();
   }

@@ -1,5 +1,6 @@
 const os = require('os');
 const path = require('path');
+const { execFile } = require('child_process');
 var qr = require('qr-image');
 module.exports.getIPAddress = function () {
   var interfaces = os.networkInterfaces();
@@ -15,18 +16,17 @@ module.exports.getIPAddress = function () {
 }
 
 //打开默认浏览器
-module.exports.openDefaultBrowser = function (url) {
+module.exports.openDefaultBrowser = function (url, callback = () => {}) {
   console.log("使用浏览器打开首页");
-  var exec = require('child_process').exec;
   switch (process.platform) {
     case "darwin":
-      exec('open ' + url);
+      execFile('open', [url], callback);
       break;
     case "win32":
-      exec('start ' + url);
+      execFile('cmd.exe', ['/c', 'start', '', url], callback);
       break;
     default:
-      exec('xdg-open', [url]);
+      execFile('xdg-open', [url], callback);
   }
 }
 
@@ -51,7 +51,7 @@ module.exports.initCachePath = function (cachePath,callback) {
     callback();
     return;
   };
-  fs.mkdir(cachePath, (err) => {
+  fs.mkdir(cachePath, { recursive: true }, (err) => {
     if (err) {
       console.log('出错:',err)
     } else {

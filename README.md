@@ -53,6 +53,27 @@ I use it every day and keep improving it based on real scenarios. It will stay f
 
 Download the latest executable from the [Releases](https://github.com/turboxing/ChatTransfer/releases) page.
 
+### npm
+
+If you use Node.js 20 or later, you can run ChatTransfer directly:
+
+```bash
+npx chattransfer
+```
+
+Or install it globally:
+
+```bash
+npm install -g chattransfer
+chattransfer
+```
+
+For a headless Linux server:
+
+```bash
+chattransfer --no-browser
+```
+
 | System | File |
 |--------|------|
 | macOS | `ChatTransfer-macos-x64-v{version_with_underscores}` |
