@@ -1,10 +1,15 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.11**
+All notable changes to this project. Current version: **v2.0.12**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.12 (2026-10-19)
+
+- Improved first-run onboarding by generating a default nickname automatically and entering chat without manual input
+- Kept nickname editing in Tools, so users can still change and sync their nickname anytime
 
 ## v2.0.11 (2026-10-18)
 

@@ -1,30 +1,52 @@
 {
   "latest": {
-    "version": "2.0.11",
-    "date": "2026-10-18",
+    "version": "2.0.12",
+    "date": "2026-10-19",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.11/ChatTransfer-macos-x64-v2_0_11.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.11/ChatTransfer-windows-x64-v2.0.11.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-macos-x64-v2_0_12.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-windows-x64-v2.0.12.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复 CLI 默认端口被误判为显式指定的问题，端口不可用时恢复自动递增重试",
-        "默认端口从 55555 调整为 55556，避开 macOS 系统保留端口",
-        "CLI 启动失败时返回非零退出码，便于脚本和自动化流程判断"
+        "优化首次启动流程：自动生成默认昵称并直接进入聊天，无需手动填写",
+        "保留常用功能中的昵称修改入口，修改后仍会保存并同步"
       ],
       "en": [
-        "Fixed the CLI treating the default port as explicitly specified, restoring automatic incremental retry when the port is unavailable",
-        "Changed the default port from 55555 to 55556 to avoid a macOS system-reserved port",
-        "CLI startup failures now return a non-zero exit code for scripts and automation"
+        "Improved first-run onboarding by generating a default nickname automatically and entering chat without manual input",
+        "Kept nickname editing in Tools, so users can still change and sync their nickname anytime"
       ],
       "ar": [
-        "إصلاح معالجة سطر الأوامر للمنفذ الافتراضي كمنفذ محدد يدويًا، مع استعادة إعادة المحاولة التلقائية عند عدم توفر المنفذ",
-        "تغيير المنفذ الافتراضي من 55555 إلى 55556 لتجنب منفذ محجوز بواسطة macOS",
-        "إرجاع رمز خروج غير صفري عند فشل بدء التشغيل لتسهيل الاستخدام في السكربتات وأتمتة العمليات"
+        "تحسين تجربة أول تشغيل: يتم إنشاء اسم مستعار افتراضي تلقائيًا والدخول إلى المحادثة مباشرة دون إدخال يدوي",
+        "الاحتفاظ بخيار تعديل الاسم المستعار في الأدوات الشائعة، مع استمرار الحفظ والمزامنة بعد التعديل"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.11",
+      "date": "2026-10-18",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.11/ChatTransfer-macos-x64-v2_0_11.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.11/ChatTransfer-windows-x64-v2.0.11.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复 CLI 默认端口被误判为显式指定的问题，端口不可用时恢复自动递增重试",
+          "默认端口从 55555 调整为 55556，避开 macOS 系统保留端口",
+          "CLI 启动失败时返回非零退出码，便于脚本和自动化流程判断"
+        ],
+        "en": [
+          "Fixed the CLI treating the default port as explicitly specified, restoring automatic incremental retry when the port is unavailable",
+          "Changed the default port from 55555 to 55556 to avoid a macOS system-reserved port",
+          "CLI startup failures now return a non-zero exit code for scripts and automation"
+        ],
+        "ar": [
+          "إصلاح معالجة سطر الأوامر للمنفذ الافتراضي كمنفذ محدد يدويًا، مع استعادة إعادة المحاولة التلقائية عند عدم توفر المنفذ",
+          "تغيير المنفذ الافتراضي من 55555 إلى 55556 لتجنب منفذ محجوز بواسطة macOS",
+          "إرجاع رمز خروج غير صفري عند فشل بدء التشغيل لتسهيل الاستخدام في السكربتات وأتمتة العمليات"
+        ]
+      }
+    },
     {
       "version": "2.0.10",
       "date": "2026-10-18",

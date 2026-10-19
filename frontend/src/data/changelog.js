@@ -1,5 +1,19 @@
 export const changelog = [
   {
+    version: '2.0.12',
+    date: '2026-10-19',
+    changes: {
+      'zh-CN': [
+        '优化首次启动流程：自动生成默认昵称并直接进入聊天，无需手动填写',
+        '保留常用功能中的昵称修改入口，修改后仍会保存并同步'
+      ],
+      en: [
+        'Improved first-run onboarding by generating a default nickname automatically and entering chat without manual input',
+        'Kept nickname editing in Tools, so users can still change and sync their nickname anytime'
+      ]
+    }
+  },
+  {
     version: '2.0.11',
     date: '2026-10-18',
     changes: {
