@@ -17,10 +17,7 @@
   "login": {
     "scanning": "Signing in…",
     "successAndRedirect": "Signed in. Redirecting…",
-    "failedRetry": "Sign in failed. Please retry.",
-    "nicknameLabel": "Nickname",
-    "nicknamePlaceholder": "Enter your nickname",
-    "joinChat": "Join Chat"
+    "failedRetry": "Sign in failed. Please retry."
   },
   "common": {
     "latest": "Latest",
