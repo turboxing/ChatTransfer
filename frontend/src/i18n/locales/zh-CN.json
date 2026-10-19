@@ -17,10 +17,7 @@
   "login": {
     "scanning": "扫码登录中...",
     "successAndRedirect": "登录成功，即将跳转···",
-    "failedRetry": "登录失败，请重试",
-    "nicknameLabel": "昵称",
-    "nicknamePlaceholder": "输入你的昵称",
-    "joinChat": "加入聊天"
+    "failedRetry": "登录失败，请重试"
   },
   "common": {
     "latest": "最新",
