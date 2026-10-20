@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.12**
+All notable changes to this project. Current version: **v2.0.13**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.13 (2026-10-20)
+
+- Fixed a security issue that allowed the filesystem root to be used as the cache folder
+- Cache path validation now rejects protected directories and their parents, and resolves symlink targets
+- Static file serving is now restricted to the `files` subdirectory of the cache folder
+- Cache folder write access is verified before saving the configuration
+- The saved cache folder is validated at startup and falls back to the default folder when unsafe
 
 ## v2.0.12 (2026-10-19)
 

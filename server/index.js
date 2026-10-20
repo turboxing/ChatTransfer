@@ -3,7 +3,7 @@ const net = require('net');
 const fs = require('fs');
 const path = require('path');
 const { getIPAddress, openDefaultBrowser } = require('./tool');
-const { getCachePath, getConfigFile } = require('./config');
+const { getCachePath, getConfigFile, getDefaultCachePath } = require('./config');
 const registerRoutes = require('./routes/index');
 const registerSocket = require('./socket/index');
 const { MessageHistoryService } = require('./services/message-history-service');
@@ -14,6 +14,7 @@ const {
   usesIndependentDatabaseFile
 } = require('./utils/runtime-paths');
 const { resolveStartOptions } = require('./utils/runtime-options');
+const { getSafeStartupCachePath } = require('./utils/cache-path-validation');
 
 const DEFAULT_PORT = 55556;
 const MAX_RETRY = 3;
@@ -22,7 +23,27 @@ const pkg = require('../package.json');
 
 function createApp() {
   const app = require('express')();
-  registerRoutes(app);
+  return app;
+}
+
+function createConfiguredApp(cachePath) {
+  const app = createApp();
+  const safeCachePath = cachePath
+    ? { path: path.resolve(cachePath), changed: false }
+    : getSafeStartupCachePath({
+      appRoot: path.resolve(__dirname, '..'),
+      configPath: getConfigFile(),
+      configuredPath: getCachePath(),
+      dataRoot: path.dirname(getConfigFile()),
+      defaultPath: getDefaultCachePath()
+    });
+
+  if (safeCachePath.changed) {
+    console.warn(`[Cache] unsafe configured path rejected: ${getCachePath()}`);
+    console.warn(`[Cache] fallback to default: ${safeCachePath.path}`);
+  }
+
+  registerRoutes(app, safeCachePath.path);
   return app;
 }
 
@@ -72,7 +93,22 @@ async function start(options = {}) {
     return;
   }
 
-  const uploadsDir = getCachePath();
+  const configuredCachePath = getCachePath();
+  const defaultCachePath = getDefaultCachePath();
+  const safeCachePath = getSafeStartupCachePath({
+    appRoot: path.resolve(__dirname, '..'),
+    configPath: getConfigFile(),
+    configuredPath: configuredCachePath,
+    dataRoot: path.dirname(getConfigFile()),
+    defaultPath: defaultCachePath
+  });
+
+  if (safeCachePath.changed) {
+    console.warn(`[Cache] unsafe configured path rejected: ${configuredCachePath}`);
+    console.warn(`[Cache] fallback to default: ${safeCachePath.path}`);
+  }
+
+  const uploadsDir = safeCachePath.path;
   await fs.promises.mkdir(uploadsDir, { recursive: true });
 
   const historyService = new MessageHistoryService({
@@ -87,7 +123,7 @@ async function start(options = {}) {
     return;
   }
 
-  const app = createApp();
+  const app = createConfiguredApp(uploadsDir);
   const server = http.createServer(app);
 
   registerSocket(server, historyService);
@@ -127,6 +163,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  createApp,
+  createApp: createConfiguredApp,
   start
 };

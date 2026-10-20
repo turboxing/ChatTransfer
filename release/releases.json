@@ -1,27 +1,58 @@
 {
   "latest": {
-    "version": "2.0.12",
-    "date": "2026-10-19",
+    "version": "2.0.13",
+    "date": "2026-10-20",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-macos-x64-v2_0_12.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-windows-x64-v2.0.12.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-macos-x64-v2_0_13.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-windows-x64-v2.0.13.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "优化首次启动流程：自动生成默认昵称并直接进入聊天，无需手动填写",
-        "保留常用功能中的昵称修改入口，修改后仍会保存并同步"
+        "修复缓存目录可设置为文件系统根目录的安全问题",
+        "缓存目录校验会拒绝受保护目录及其父级，并解析符号链接真实路径",
+        "静态文件服务仅暴露缓存目录下的 files 子目录",
+        "保存缓存目录配置前增加写入权限校验",
+        "启动时校验已保存缓存目录，不安全时自动回退默认目录"
       ],
       "en": [
-        "Improved first-run onboarding by generating a default nickname automatically and entering chat without manual input",
-        "Kept nickname editing in Tools, so users can still change and sync their nickname anytime"
+        "Fixed a security issue that allowed the filesystem root to be used as the cache folder",
+        "Cache path validation now rejects protected directories and their parents, and resolves symlink targets",
+        "Static file serving is now restricted to the files subdirectory of the cache folder",
+        "Cache folder write access is verified before saving the configuration",
+        "The saved cache folder is validated at startup and falls back to the default folder when unsafe"
       ],
       "ar": [
-        "تحسين تجربة أول تشغيل: يتم إنشاء اسم مستعار افتراضي تلقائيًا والدخول إلى المحادثة مباشرة دون إدخال يدوي",
-        "الاحتفاظ بخيار تعديل الاسم المستعار في الأدوات الشائعة، مع استمرار الحفظ والمزامنة بعد التعديل"
+        "إصلاح ثغرة أمنية كانت تسمح باستخدام جذر نظام الملفات كمجلد تخزين مؤقت",
+        "تعزيز التحقق من مسار التخزين المؤقت لرفض المجلدات المحمية ومجلداتها الأصلية، مع تتبع الروابط الرمزية إلى مسارها الحقيقي",
+        "قصر خدمة الملفات الثابتة على مجلد files داخل مجلد التخزين المؤقت",
+        "التحقق من قابلية الكتابة في مجلد التخزين المؤقت قبل حفظ الإعدادات",
+        "التحقق من مجلد التخزين المؤقت المحفوظ عند بدء التشغيل والعودة إلى المجلد الافتراضي إذا كان غير آمن"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.12",
+      "date": "2026-10-19",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-macos-x64-v2_0_12.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.12/ChatTransfer-windows-x64-v2.0.12.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "优化首次启动流程：自动生成默认昵称并直接进入聊天，无需手动填写",
+          "保留常用功能中的昵称修改入口，修改后仍会保存并同步"
+        ],
+        "en": [
+          "Improved first-run onboarding by generating a default nickname automatically and entering chat without manual input",
+          "Kept nickname editing in Tools, so users can still change and sync their nickname anytime"
+        ],
+        "ar": [
+          "تحسين تجربة أول تشغيل: يتم إنشاء اسم مستعار افتراضي تلقائيًا والدخول إلى المحادثة مباشرة دون إدخال يدوي",
+          "الاحتفاظ بخيار تعديل الاسم المستعار في الأدوات الشائعة، مع استمرار الحفظ والمزامنة بعد التعديل"
+        ]
+      }
+    },
     {
       "version": "2.0.11",
       "date": "2026-10-18",
