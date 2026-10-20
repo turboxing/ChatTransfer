@@ -1,5 +1,25 @@
 export const changelog = [
   {
+    version: '2.0.13',
+    date: '2026-10-20',
+    changes: {
+      'zh-CN': [
+        '修复缓存目录可设置为文件系统根目录的安全问题',
+        '缓存目录校验会拒绝受保护目录及其父级，并解析符号链接真实路径',
+        '静态文件服务仅暴露缓存目录下的 files 子目录',
+        '保存缓存目录配置前增加写入权限校验',
+        '启动时校验已保存缓存目录，不安全时自动回退默认目录'
+      ],
+      en: [
+        'Fixed a security issue that allowed the filesystem root to be used as the cache folder',
+        'Cache path validation now rejects protected directories and their parents, and resolves symlink targets',
+        'Static file serving is now restricted to the files subdirectory of the cache folder',
+        'Cache folder write access is verified before saving the configuration',
+        'The saved cache folder is validated at startup and falls back to the default folder when unsafe'
+      ]
+    }
+  },
+  {
     version: '2.0.12',
     date: '2026-10-19',
     changes: {
