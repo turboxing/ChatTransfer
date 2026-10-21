@@ -163,7 +163,7 @@ describe('npm distribution', () => {
 
     expect(pkg.bin.chattransfer).toBe('bin/chattransfer.js');
     expect(bin.startsWith('#!/usr/bin/env node')).toBe(true);
-    expect(pkg.engines.node).toBe('>=20');
+    expect(pkg.engines.node).toBe('>=20.17.0');
     expect(pkg.files).toEqual(expect.arrayContaining([
       'bin',
       'server',
