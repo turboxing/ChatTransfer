@@ -88,6 +88,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           draft: false
+          make_latest: legacy
           files: |
             release-packages/*.zip
             release-assets/SHA256SUMS.txt
