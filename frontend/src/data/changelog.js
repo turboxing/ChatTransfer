@@ -1,5 +1,21 @@
 export const changelog = [
   {
+    version: '2.0.14',
+    date: '2026-10-21',
+    changes: {
+      'zh-CN': [
+        '修复 Node.js 22 下 npm 安装失败的问题',
+        '升级 SQLite 原生模块到 6.0.1，优先使用兼容新 Node 的预编译二进制',
+        'npm 运行环境最低要求调整为 Node.js 20.17'
+      ],
+      en: [
+        'Fixed npm installation failures on Node.js 22',
+        'Upgraded the SQLite native module to 6.0.1 for compatible prebuilt binaries',
+        'Updated the npm runtime requirement to Node.js 20.17 or later'
+      ]
+    }
+  },
+  {
     version: '2.0.13',
     date: '2026-10-20',
     changes: {

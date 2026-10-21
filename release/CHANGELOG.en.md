@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.13**
+All notable changes to this project. Current version: **v2.0.14**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.14 (2026-10-21)
+
+- Fixed npm installation failures on Node.js 22
+- Upgraded the SQLite native module to 6.0.1 for compatible prebuilt binaries
+- Updated the npm runtime requirement to Node.js 20.17 or later
 
 ## v2.0.13 (2026-10-20)
 

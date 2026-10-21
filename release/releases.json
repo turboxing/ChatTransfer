@@ -1,36 +1,61 @@
 {
   "latest": {
-    "version": "2.0.13",
-    "date": "2026-10-20",
+    "version": "2.0.14",
+    "date": "2026-10-21",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-macos-x64-v2_0_13.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-windows-x64-v2.0.13.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-macos-x64-v2_0_14.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-windows-x64-v2.0.14.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复缓存目录可设置为文件系统根目录的安全问题",
-        "缓存目录校验会拒绝受保护目录及其父级，并解析符号链接真实路径",
-        "静态文件服务仅暴露缓存目录下的 files 子目录",
-        "保存缓存目录配置前增加写入权限校验",
-        "启动时校验已保存缓存目录，不安全时自动回退默认目录"
+        "修复 Node.js 22 下 npm 安装失败的问题",
+        "升级 SQLite 原生模块到 6.0.1，优先使用兼容新 Node 的预编译二进制",
+        "npm 运行环境最低要求调整为 Node.js 20.17"
       ],
       "en": [
-        "Fixed a security issue that allowed the filesystem root to be used as the cache folder",
-        "Cache path validation now rejects protected directories and their parents, and resolves symlink targets",
-        "Static file serving is now restricted to the files subdirectory of the cache folder",
-        "Cache folder write access is verified before saving the configuration",
-        "The saved cache folder is validated at startup and falls back to the default folder when unsafe"
+        "Fixed npm installation failures on Node.js 22",
+        "Upgraded the SQLite native module to 6.0.1 for compatible prebuilt binaries",
+        "Updated the npm runtime requirement to Node.js 20.17 or later"
       ],
       "ar": [
-        "إصلاح ثغرة أمنية كانت تسمح باستخدام جذر نظام الملفات كمجلد تخزين مؤقت",
-        "تعزيز التحقق من مسار التخزين المؤقت لرفض المجلدات المحمية ومجلداتها الأصلية، مع تتبع الروابط الرمزية إلى مسارها الحقيقي",
-        "قصر خدمة الملفات الثابتة على مجلد files داخل مجلد التخزين المؤقت",
-        "التحقق من قابلية الكتابة في مجلد التخزين المؤقت قبل حفظ الإعدادات",
-        "التحقق من مجلد التخزين المؤقت المحفوظ عند بدء التشغيل والعودة إلى المجلد الافتراضي إذا كان غير آمن"
+        "إصلاح فشل تثبيت الحزمة عبر npm على Node.js 22",
+        "ترقية وحدة SQLite الأصلية إلى 6.0.1 لاستخدام ملفات ثنائية مسبقة متوافقة",
+        "تحديث الحد الأدنى لبيئة تشغيل npm إلى Node.js 20.17 أو أحدث"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.13",
+      "date": "2026-10-20",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-macos-x64-v2_0_13.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.13/ChatTransfer-windows-x64-v2.0.13.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复缓存目录可设置为文件系统根目录的安全问题",
+          "缓存目录校验会拒绝受保护目录及其父级，并解析符号链接真实路径",
+          "静态文件服务仅暴露缓存目录下的 files 子目录",
+          "保存缓存目录配置前增加写入权限校验",
+          "启动时校验已保存缓存目录，不安全时自动回退默认目录"
+        ],
+        "en": [
+          "Fixed a security issue that allowed the filesystem root to be used as the cache folder",
+          "Cache path validation now rejects protected directories and their parents, and resolves symlink targets",
+          "Static file serving is now restricted to the files subdirectory of the cache folder",
+          "Cache folder write access is verified before saving the configuration",
+          "The saved cache folder is validated at startup and falls back to the default folder when unsafe"
+        ],
+        "ar": [
+          "إصلاح ثغرة أمنية كانت تسمح باستخدام جذر نظام الملفات كمجلد تخزين مؤقت",
+          "تعزيز التحقق من مسار التخزين المؤقت لرفض المجلدات المحمية ومجلداتها الأصلية، مع تتبع الروابط الرمزية إلى مسارها الحقيقي",
+          "قصر خدمة الملفات الثابتة على مجلد files داخل مجلد التخزين المؤقت",
+          "التحقق من قابلية الكتابة في مجلد التخزين المؤقت قبل حفظ الإعدادات",
+          "التحقق من مجلد التخزين المؤقت المحفوظ عند بدء التشغيل والعودة إلى المجلد الافتراضي إذا كان غير آمن"
+        ]
+      }
+    },
     {
       "version": "2.0.12",
       "date": "2026-10-19",
