@@ -4,7 +4,7 @@
   "description": "LAN instant messaging and file transfer tool",
   "main": "server/index.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.17.0"
   },
   "scripts": {
     "test": "vitest run",
@@ -31,7 +31,7 @@
     "moment": "^2.27.0",
     "node-machine-id": "^1.1.12",
     "qr-image": "^3.2.0",
-    "sqlite3": "5.1.7",
+    "sqlite3": "6.0.1",
     "socket.io": "^4.8.3",
     "underscore": "^1.10.2",
     "urlencode": "^1.1.0"

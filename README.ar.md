@@ -55,7 +55,7 @@
 
 ### npm
 
-إذا كنت تستخدم Node.js 20 أو أحدث، يمكنك تشغيل ChatTransfer مباشرة:
+إذا كنت تستخدم Node.js 20.17 أو أحدث، يمكنك تشغيل ChatTransfer مباشرة:
 
 ```bash
 npx chattransfer
@@ -98,7 +98,7 @@ chattransfer --no-browser
 
 ### المتطلبات
 
-- Node.js 20+
+- Node.js 20.17+
 - npm 9+
 
 ### الأوامر

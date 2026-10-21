@@ -55,7 +55,7 @@
 
 ### npm
 
-如果你使用 Node.js 20 或更高版本，可以直接运行：
+如果你使用 Node.js 20.17 或更高版本，可以直接运行：
 
 ```bash
 npx chattransfer
@@ -98,7 +98,7 @@ chattransfer --no-browser
 
 ### 环境要求
 
-- Node.js 20+
+- Node.js 20.17+
 - npm 9+
 
 ### 命令

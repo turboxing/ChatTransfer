@@ -55,7 +55,7 @@ Download the latest executable from the [Releases](https://github.com/turboxing/
 
 ### npm
 
-If you use Node.js 20 or later, you can run ChatTransfer directly:
+If you use Node.js 20.17 or later, you can run ChatTransfer directly:
 
 ```bash
 npx chattransfer
@@ -98,7 +98,7 @@ After the app starts, a browser window opens automatically with a QR code. Scan 
 
 ### Requirements
 
-- Node.js 20+
+- Node.js 20.17+
 - npm 9+
 
 ### Commands

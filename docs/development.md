@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 20.17+
 - npm 9+
 
 ## Commands
