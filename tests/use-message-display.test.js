@@ -24,9 +24,13 @@ describe('useMessageDisplay', () => {
       ]
     })
 
+    let pinCheckCount = 0
     const display = useMessageDisplay({
       ...refs,
-      isMessagePinned: (msgId) => msgId === '3',
+      isMessagePinned: (msgId) => {
+        pinCheckCount += 1
+        return msgId === '3'
+      },
       parseFileName,
       t: (key) => key
     })
@@ -40,8 +44,7 @@ describe('useMessageDisplay', () => {
       role: 'user',
       placement: 'end',
       content: 'hello',
-      status: 'success',
-      isPinned: false
+      status: 'success'
     })
     expect(display.bubbleItems.value[1]).toMatchObject({
       content: 'history hello',
@@ -52,8 +55,9 @@ describe('useMessageDisplay', () => {
       placement: 'start',
       content: 'chat.fileTag',
       fileName: 'a b.txt',
-      status: 'success',
-      isPinned: true
+      status: 'success'
     })
+
+    expect(pinCheckCount).toBe(0)
   })
 })

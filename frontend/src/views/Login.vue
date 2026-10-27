@@ -11,6 +11,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useDefaultNickname } from '../composables/use-default-nickname'
+import { useUserId } from '../composables/use-user-identity'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,18 +21,7 @@ const { resolveNickname } = useDefaultNickname(locale)
 
 const NICKNAME_STORAGE_KEY = 'im_chat_nickname'
 const nickname = ref('')
-
-const generateUUID = () => {
-  let d = new Date().getTime()
-  if (window.performance && typeof window.performance.now === 'function') {
-    d += performance.now()
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (d + Math.random() * 16) % 16 | 0
-    d = Math.floor(d / 16)
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
-  })
-}
+const { getUserId } = useUserId()
 
 const handleLogin = async (sender) => {
   const receiver = route.query.receiver || 'group_chat'
@@ -78,7 +68,7 @@ const handleLogin = async (sender) => {
 
 onMounted(() => {
   nickname.value = resolveNickname(localStorage.getItem(NICKNAME_STORAGE_KEY))
-  handleLogin(generateUUID())
+  handleLogin(getUserId())
 })
 </script>
 
