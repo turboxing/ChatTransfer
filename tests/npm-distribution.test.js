@@ -159,11 +159,16 @@ describe('npm distribution', () => {
 
   it('configures an installable npm package', () => {
     const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+    const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
     const bin = readFileSync('bin/chattransfer.js', 'utf8');
 
     expect(pkg.bin.chattransfer).toBe('bin/chattransfer.js');
     expect(bin.startsWith('#!/usr/bin/env node')).toBe(true);
     expect(pkg.engines.node).toBe('>=20.17.0');
+    expect(pkg.dependencies['prebuild-install']).toBe('7.1.3');
+    expect(pkg.dependencies.sqlite3).toBe('5.1.7');
+    expect(lock.packages['node_modules/prebuild-install'].version).toBe('7.1.3');
+    expect(lock.packages['node_modules/sqlite3'].version).toBe('5.1.7');
     expect(pkg.files).toEqual(expect.arrayContaining([
       'bin',
       'server',
