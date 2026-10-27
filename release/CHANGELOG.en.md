@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.15**
+All notable changes to this project. Current version: **v2.0.16**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.16 (2026-10-27)
+
+- Fixed the SQLite native module failing to load on Linux distributions with older glibc versions
+- Restored compatibility with older enterprise Linux distributions
+- Pinned compatible SQLite and prebuild-install versions
 
 ## v2.0.15 (2026-10-27)
 

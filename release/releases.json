@@ -1,30 +1,55 @@
 {
   "latest": {
-    "version": "2.0.15",
+    "version": "2.0.16",
     "date": "2026-10-27",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-macos-x64-v2_0_15.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-windows-x64-v2.0.15.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.16/ChatTransfer-macos-x64-v2_0_16.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.16/ChatTransfer-windows-x64-v2.0.16.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复服务重启后文件消息无法展示和打开的问题",
-        "修复同一浏览器重启后用户 ID 变化，导致自己发送的消息显示为收到消息的问题",
-        "修复 pin 消息时聊天窗口自动滚动到底部的问题"
+        "修复旧版 Linux glibc 环境下 SQLite 原生模块无法加载的问题",
+        "恢复对旧版企业 Linux 发行版的兼容性",
+        "锁定 SQLite 与预编译安装工具的兼容版本"
       ],
       "en": [
-        "Fixed file messages failing to display and open after a service restart",
-        "Fixed user IDs changing in the same browser after a restart, which made sent messages appear as received",
-        "Fixed the chat window scrolling to the bottom when pinning a message"
+        "Fixed the SQLite native module failing to load on Linux distributions with older glibc versions",
+        "Restored compatibility with older enterprise Linux distributions",
+        "Pinned compatible SQLite and prebuild-install versions"
       ],
       "ar": [
-        "إصلاح مشكلة عدم عرض رسائل الملفات وعدم إمكانية فتحها بعد إعادة تشغيل الخدمة",
-        "إصلاح تغيّر معرّف المستخدم في نفس المتصفح بعد إعادة التشغيل، مما كان يجعل الرسائل المُرسلة تظهر كرسائل مستلمة",
-        "إصلاح مشكلة تمرير نافذة المحادثة تلقائيًا إلى الأسفل عند تثبيت رسالة"
+        "إصلاح مشكلة تحميل وحدة SQLite الأصلية على توزيعات Linux بإصدارات glibc قديمة",
+        "استعادة التوافق مع توزيعات Linux المؤسسية القديمة",
+        "تثبيت إصدارات متوافقة من SQLite وأداة التثبيت المسبق"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.15",
+      "date": "2026-10-27",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-macos-x64-v2_0_15.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-windows-x64-v2.0.15.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复服务重启后文件消息无法展示和打开的问题",
+          "修复同一浏览器重启后用户 ID 变化，导致自己发送的消息显示为收到消息的问题",
+          "修复 pin 消息时聊天窗口自动滚动到底部的问题"
+        ],
+        "en": [
+          "Fixed file messages failing to display and open after a service restart",
+          "Fixed user IDs changing in the same browser after a restart, which made sent messages appear as received",
+          "Fixed the chat window scrolling to the bottom when pinning a message"
+        ],
+        "ar": [
+          "إصلاح مشكلة عدم عرض رسائل الملفات وعدم إمكانية فتحها بعد إعادة تشغيل الخدمة",
+          "إصلاح تغيّر معرّف المستخدم في نفس المتصفح بعد إعادة التشغيل، مما كان يجعل الرسائل المُرسلة تظهر كرسائل مستلمة",
+          "إصلاح مشكلة تمرير نافذة المحادثة تلقائيًا إلى الأسفل عند تثبيت رسالة"
+        ]
+      }
+    },
     {
       "version": "2.0.14",
       "date": "2026-10-21",

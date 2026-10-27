@@ -1,5 +1,21 @@
 export const changelog = [
   {
+    version: '2.0.16',
+    date: '2026-10-27',
+    changes: {
+      'zh-CN': [
+        '修复旧版 Linux glibc 环境下 SQLite 原生模块无法加载的问题',
+        '恢复对旧版企业 Linux 发行版的兼容性',
+        '锁定 SQLite 与预编译安装工具的兼容版本'
+      ],
+      en: [
+        'Fixed the SQLite native module failing to load on Linux distributions with older glibc versions',
+        'Restored compatibility with older enterprise Linux distributions',
+        'Pinned compatible SQLite and prebuild-install versions'
+      ]
+    }
+  },
+  {
     version: '2.0.15',
     date: '2026-10-27',
     changes: {

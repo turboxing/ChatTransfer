@@ -73,6 +73,7 @@ jobs:
     needs: package
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: ChatTransfer-*
@@ -82,11 +83,28 @@ jobs:
         run: |
           mkdir -p release-assets
           (cd release-packages && shasum -a 256 *.zip) > release-assets/SHA256SUMS.txt
+      - name: Generate multilingual release notes
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const releases = JSON.parse(fs.readFileSync('release/releases.json', 'utf8'));
+          const latest = releases.latest;
+          const sections = [
+            ['中文', latest.changelog['zh-CN']],
+            ['English', latest.changelog.en],
+            ['العربية', latest.changelog.ar]
+          ];
+          const body = sections
+            .map(([title, items]) => `## ${title}\n${items.map(item => `- ${item}`).join('\n')}`)
+            .join('\n\n');
+          fs.writeFileSync('release-notes.md', body);
+          NODE
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
+          body_path: release-notes.md
           draft: false
           make_latest: legacy
           files: |
