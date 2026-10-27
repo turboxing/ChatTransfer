@@ -1,5 +1,21 @@
 export const changelog = [
   {
+    version: '2.0.15',
+    date: '2026-10-27',
+    changes: {
+      'zh-CN': [
+        '修复服务重启后文件消息无法展示和打开的问题',
+        '修复同一浏览器重启后用户 ID 变化，导致自己发送的消息显示为收到消息的问题',
+        '修复 pin 消息时聊天窗口自动滚动到底部的问题'
+      ],
+      en: [
+        'Fixed file messages failing to display and open after a service restart',
+        'Fixed user IDs changing in the same browser after a restart, which made sent messages appear as received',
+        'Fixed the chat window scrolling to the bottom when pinning a message'
+      ]
+    }
+  },
+  {
     version: '2.0.14',
     date: '2026-10-21',
     changes: {

@@ -1,30 +1,55 @@
 {
   "latest": {
-    "version": "2.0.14",
-    "date": "2026-10-21",
+    "version": "2.0.15",
+    "date": "2026-10-27",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-macos-x64-v2_0_14.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-windows-x64-v2.0.14.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-macos-x64-v2_0_15.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.15/ChatTransfer-windows-x64-v2.0.15.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复 Node.js 22 下 npm 安装失败的问题",
-        "升级 SQLite 原生模块到 6.0.1，优先使用兼容新 Node 的预编译二进制",
-        "npm 运行环境最低要求调整为 Node.js 20.17"
+        "修复服务重启后文件消息无法展示和打开的问题",
+        "修复同一浏览器重启后用户 ID 变化，导致自己发送的消息显示为收到消息的问题",
+        "修复 pin 消息时聊天窗口自动滚动到底部的问题"
       ],
       "en": [
-        "Fixed npm installation failures on Node.js 22",
-        "Upgraded the SQLite native module to 6.0.1 for compatible prebuilt binaries",
-        "Updated the npm runtime requirement to Node.js 20.17 or later"
+        "Fixed file messages failing to display and open after a service restart",
+        "Fixed user IDs changing in the same browser after a restart, which made sent messages appear as received",
+        "Fixed the chat window scrolling to the bottom when pinning a message"
       ],
       "ar": [
-        "إصلاح فشل تثبيت الحزمة عبر npm على Node.js 22",
-        "ترقية وحدة SQLite الأصلية إلى 6.0.1 لاستخدام ملفات ثنائية مسبقة متوافقة",
-        "تحديث الحد الأدنى لبيئة تشغيل npm إلى Node.js 20.17 أو أحدث"
+        "إصلاح مشكلة عدم عرض رسائل الملفات وعدم إمكانية فتحها بعد إعادة تشغيل الخدمة",
+        "إصلاح تغيّر معرّف المستخدم في نفس المتصفح بعد إعادة التشغيل، مما كان يجعل الرسائل المُرسلة تظهر كرسائل مستلمة",
+        "إصلاح مشكلة تمرير نافذة المحادثة تلقائيًا إلى الأسفل عند تثبيت رسالة"
       ]
     }
   },
   "history": [
+    {
+      "version": "2.0.14",
+      "date": "2026-10-21",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-macos-x64-v2_0_14.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v2.0.14/ChatTransfer-windows-x64-v2.0.14.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复 Node.js 22 下 npm 安装失败的问题",
+          "升级 SQLite 原生模块到 6.0.1，优先使用兼容新 Node 的预编译二进制",
+          "npm 运行环境最低要求调整为 Node.js 20.17"
+        ],
+        "en": [
+          "Fixed npm installation failures on Node.js 22",
+          "Upgraded the SQLite native module to 6.0.1 for compatible prebuilt binaries",
+          "Updated the npm runtime requirement to Node.js 20.17 or later"
+        ],
+        "ar": [
+          "إصلاح فشل تثبيت الحزمة عبر npm على Node.js 22",
+          "ترقية وحدة SQLite الأصلية إلى 6.0.1 لاستخدام ملفات ثنائية مسبقة متوافقة",
+          "تحديث الحد الأدنى لبيئة تشغيل npm إلى Node.js 20.17 أو أحدث"
+        ]
+      }
+    },
     {
       "version": "2.0.13",
       "date": "2026-10-20",

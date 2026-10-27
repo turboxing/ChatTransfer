@@ -1,10 +1,16 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.14**
+All notable changes to this project. Current version: **v2.0.15**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.15 (2026-10-27)
+
+- Fixed file messages failing to display and open after a service restart
+- Fixed user IDs changing in the same browser after a restart, which made sent messages appear as received
+- Fixed the chat window scrolling to the bottom when pinning a message
 
 ## v2.0.14 (2026-10-21)
 
