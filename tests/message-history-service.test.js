@@ -118,4 +118,40 @@ describe('MessageHistoryService', () => {
     expect(history.messages).toHaveLength(0);
     expect(fs.existsSync(physicalFile)).toBe(false);
   });
+
+  it('returns the physical file URL after a service restart', async () => {
+    const filesDir = path.join(cachePath, 'files');
+    fs.mkdirSync(filesDir, { recursive: true });
+    const physicalFile = path.join(filesDir, '123_display-name.txt');
+    fs.writeFileSync(physicalFile, 'hello', 'utf8');
+
+    await service.saveMessage({
+      msgId: 'file-2',
+      sender: 'user-a',
+      receiver: 'group_chat',
+      msgType: 'FILE',
+      content: '',
+      fileName: 'display-name.txt',
+      fileSize: 5,
+      fileType: 'text/plain',
+      fileUrl: 'http://127.0.0.1:55555/files/123_display-name.txt',
+      createTime: '2026-01-01 00:00:00',
+      createdAt: 6
+    });
+
+    await service.close();
+    service = new MessageHistoryService({ cachePath });
+    await service.init();
+
+    const history = await service.queryHistory({
+      requester: 'user-a',
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+    const message = history.messages.find((item) => item.msgId === 'file-2');
+
+    expect(message.fileUrl).toBe('/files/123_display-name.txt');
+    expect(message.fileName).toBe('display-name.txt');
+    expect(fs.existsSync(physicalFile)).toBe(true);
+  });
 });

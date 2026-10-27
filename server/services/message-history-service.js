@@ -359,9 +359,9 @@ class MessageHistoryService {
     };
 
     if (row.file_path) {
-      const fileName = row.file_name || path.posix.basename(row.file_path);
-      message.fileUrl = `/files/${encodeURIComponent(fileName)}`;
-      message.fileName = fileName;
+      const physicalFileName = path.posix.basename(row.file_path);
+      message.fileUrl = `/files/${encodeURIComponent(physicalFileName)}`;
+      message.fileName = row.file_name || physicalFileName;
       message.fileSize = row.file_size;
       message.fileType = row.file_mime_type;
     }
