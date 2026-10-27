@@ -59,7 +59,6 @@ export function useMessageDisplay({
         status: message.status || 'success',
         originalMsg: message,
         noStyle: true,
-        isPinned: isMessagePinned(message.msgId),
         isGroupChat
       }
     })
