@@ -15,6 +15,7 @@ describe('server API', () => {
     expect(response.status).toBe(200);
     expect(response.body.code).toBe(0);
     expect(response.body.data.version).toBe('2.0.16');
+    expect(response.body.data.copyright).toBe('© suncx and ChatTransfer Contributors');
   });
 
   it('returns login target URL', async () => {
