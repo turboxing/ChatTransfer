@@ -9,6 +9,10 @@
 [![npm monthly downloads](https://img.shields.io/npm/dm/chattransfer?style=flat-square&logo=npm&label=month%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm weekly downloads](https://img.shields.io/npm/dw/chattransfer?style=flat-square&logo=npm&label=weekly%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm daily downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.npmjs.org%2Fdownloads%2Fpoint%2Flast-day%2Fchattransfer&query=%24.downloads&style=flat-square&logo=npm&label=daily%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
+[![CI](https://img.shields.io/github/actions/workflow/status/turboxing/ChatTransfer/ci.yml?branch=main&style=flat-square&logo=githubactions&label=CI)](https://github.com/turboxing/ChatTransfer/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/chattransfer?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/chattransfer)
+[![npm unpacked size](https://img.shields.io/npm/unpacked-size/chattransfer?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/chattransfer)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/turboxing/ChatTransfer/blob/main/CONTRIBUTING.md)
 
 English | [简体中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 
