@@ -79,6 +79,31 @@ Update these files for the new version:
 - `release/CHANGELOG.ar.md`
 - `release/releases.json`
 
+### Release Notes Format
+
+Use `latest.changelog` in `release/releases.json` as the only source for GitHub Release notes. The release workflow converts that data into the final body.
+
+The generated release body must use exactly this shape:
+
+```markdown
+## 中文
+- 中文更新说明
+
+## English
+- English update note
+
+## العربية
+- Arabic update note
+```
+
+Rules:
+
+- Keep the three section titles and their order fixed.
+- Use one bullet per change and one blank line between language sections.
+- Keep item count and semantic order aligned across all three languages.
+- Do not add version, date, asset links, checksums, or extra sections unless explicitly requested.
+- The repository test suite validates this format before release.
+
 Recommended command after editing `package.json`:
 
 ```bash
@@ -219,6 +244,7 @@ Do not commit generated binaries in `dist/`.
 - Frontend build succeeds.
 - Version is updated consistently.
 - Changelog and release metadata are updated.
+- Release notes follow the required trilingual format.
 - Tag matches `package.json`.
 - GitHub Actions release workflow succeeds.
 - Release assets download successfully.

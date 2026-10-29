@@ -42,3 +42,12 @@ npm run dev
 - The intended public repository is `turboxing/ChatTransfer`.
 - Do not reference the transitional private source repository in public-facing documentation.
 - Preserve existing GitHub Releases and tags when migrating or releasing.
+
+## Release Notes Policy
+
+- Treat `release/releases.json` as the source of truth for GitHub Release notes.
+- Generate the GitHub Release body only from the latest entry's `changelog` data.
+- Use exactly these sections in this order: `## 中文`, `## English`, and `## العربية`.
+- Render each section as a Markdown bullet list and keep one blank line between sections.
+- Keep the three languages aligned in item count and semantic order.
+- Do not add version, date, asset links, checksums, or extra sections unless explicitly requested.
