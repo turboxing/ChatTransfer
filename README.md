@@ -1,18 +1,23 @@
 # ChatTransfer
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&logo=github&color=44cc11)](https://github.com/turboxing/ChatTransfer/releases)
+<!-- Project status and community -->
+[![CI](https://img.shields.io/github/actions/workflow/status/turboxing/ChatTransfer/ci.yml?branch=main&style=flat-square&logo=githubactions&label=CI)](https://github.com/turboxing/ChatTransfer/actions/workflows/ci.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/turboxing/ChatTransfer?style=flat-square&color=fe7d37)](https://github.com/turboxing/ChatTransfer/releases)
 [![GitHub last commit](https://img.shields.io/github/last-commit/turboxing/ChatTransfer?style=flat-square&color=a4a61d)](https://github.com/turboxing/ChatTransfer/commits/main)
 [![GitHub stars](https://img.shields.io/github/stars/turboxing/ChatTransfer?style=flat-square&color=dfb317)](https://github.com/turboxing/ChatTransfer/stargazers)
-[![MIT License](https://img.shields.io/github/license/turboxing/ChatTransfer?style=flat-square&color=007ec6)](./LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/turboxing/ChatTransfer/blob/main/CONTRIBUTING.md)
+
+<!-- npm package -->
+[![npm version](https://img.shields.io/npm/v/chattransfer?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm downloads](https://img.shields.io/npm/dt/chattransfer?style=flat-square&logo=npm&label=npm%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm monthly downloads](https://img.shields.io/npm/dm/chattransfer?style=flat-square&logo=npm&label=month%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm weekly downloads](https://img.shields.io/npm/dw/chattransfer?style=flat-square&logo=npm&label=weekly%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm daily downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.npmjs.org%2Fdownloads%2Fpoint%2Flast-day%2Fchattransfer&query=%24.downloads&style=flat-square&logo=npm&label=daily%20downloads&color=cb3837)](https://www.npmjs.com/package/chattransfer)
-[![CI](https://img.shields.io/github/actions/workflow/status/turboxing/ChatTransfer/ci.yml?branch=main&style=flat-square&logo=githubactions&label=CI)](https://github.com/turboxing/ChatTransfer/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/chattransfer?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/chattransfer)
 [![npm unpacked size](https://img.shields.io/npm/unpacked-size/chattransfer?style=flat-square&logo=npm&color=cb3837)](https://www.npmjs.com/package/chattransfer)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/turboxing/ChatTransfer/blob/main/CONTRIBUTING.md)
+
+<!-- Distribution and license -->
+[![GitHub Downloads](https://img.shields.io/github/downloads/turboxing/ChatTransfer/total?style=flat-square&logo=github&color=44cc11)](https://github.com/turboxing/ChatTransfer/releases)
+[![MIT License](https://img.shields.io/github/license/turboxing/ChatTransfer?style=flat-square&color=007ec6)](./LICENSE)
 
 English | [简体中文](./README.zh-CN.md) | [العربية](./README.ar.md)
 
