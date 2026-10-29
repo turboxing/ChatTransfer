@@ -1,5 +1,19 @@
 export const changelog = [
   {
+    version: '2.0.17',
+    date: '2026-10-29',
+    changes: {
+      'zh-CN': [
+        '修复首页和常用功能底部版权信息显示为空的问题',
+        '优化版本信息加载，避免重复请求'
+      ],
+      en: [
+        'Fixed blank copyright text on the home page and Tools drawer',
+        'Optimized version info loading to avoid duplicate requests'
+      ]
+    }
+  },
+  {
     version: '2.0.16',
     date: '2026-10-27',
     changes: {

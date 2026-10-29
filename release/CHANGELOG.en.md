@@ -1,10 +1,15 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.16**
+All notable changes to this project. Current version: **v2.0.17**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.17 (2026-10-29)
+
+- Fixed blank copyright text on the home page and Tools drawer
+- Optimized version info loading to avoid duplicate requests
 
 ## v2.0.16 (2026-10-27)
 
