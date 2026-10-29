@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 export function useVersionInfo() {
   const version = ref('1.0.0')
-  const copyright = ref('created by suncx')
+  const copyright = ref('© suncx and ChatTransfer Contributors')
 
   const fetchVersionInfo = async () => {
     try {

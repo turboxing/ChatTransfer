@@ -42,27 +42,14 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Welcome } from 'vue-element-plus-x'
 import { useI18n } from 'vue-i18n'
+import { useVersionInfo } from '../composables/use-version-info'
 
 const router = useRouter()
 const { t } = useI18n()
 const qrUrl = ref('')
 const jumpUrl = ref('')
 const loading = ref(false)
-const version = ref('1.0.0')
-const copyright = ref('created by suncx')
-
-const fetchVersionInfo = async () => {
-  try {
-    const response = await fetch('/getVersionInfo')
-    const res = await response.json()
-    if (res.code === 0) {
-      version.value = res.data.version
-      copyright.value = res.data.copyright
-    }
-  } catch (e) {
-    console.error('获取版本信息失败', e)
-  }
-}
+const { version, copyright, fetchVersionInfo } = useVersionInfo()
 
 const fetchIndexInfo = async () => {
   loading.value = true

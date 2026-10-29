@@ -35,6 +35,7 @@ module.exports = (configuredUploadsDir = getCachePath()) => {
       message: 'ok',
       data: {
         version: require('../../package.json').version,
+        copyright: '© suncx and ChatTransfer Contributors',
         deviceId: 'anonymous'
       }
     });
