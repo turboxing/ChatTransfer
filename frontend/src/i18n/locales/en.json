@@ -35,6 +35,8 @@
     "copyCachePath": "Copy cache path",
     "openCachePath": "Open cache folder",
     "changeCachePath": "Change cache folder",
+    "batchDownload": "Batch download attachments",
+    "batchDownloadTitle": "Batch download attachments",
     "changeCachePathTitle": "Set cache folder",
     "cachePathInputPlaceholder": "Enter an absolute path",
     "useDefaultCachePath": "Use default",
@@ -128,5 +130,28 @@
     "networkError": "Network request failed",
     "getInfoFailed": "Failed to get data",
     "pvTrackFailed": "PV tracking failed"
+  },
+  "batchDownload": {
+    "filterAll": "All",
+    "filterImage": "Images",
+    "filterFile": "Files",
+    "selectAll": "Select all",
+    "missing": "Missing",
+    "preview": "Preview",
+    "previewFailed": "Failed to load preview",
+    "previewTooLarge": "Text preview is only available for files up to 1 MB",
+    "fileName": "File name",
+    "fileType": "Type",
+    "fileSize": "Size",
+    "sender": "Sender",
+    "sentAt": "Time",
+    "unknown": "Unknown",
+    "close": "Close",
+    "selectedSummary": "{count} selected · {size}",
+    "empty": "No attachments in this conversation",
+    "download": "Download ZIP",
+    "loadFailed": "Failed to load attachments",
+    "downloadFailed": "Failed to create batch download",
+    "downloadStarted": "Batch download started"
   }
 }

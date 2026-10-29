@@ -35,6 +35,8 @@
     "copyCachePath": "复制缓存路径",
     "openCachePath": "打开缓存目录",
     "changeCachePath": "修改缓存目录",
+    "batchDownload": "批量下载附件",
+    "batchDownloadTitle": "批量下载附件",
     "changeCachePathTitle": "设置缓存目录",
     "cachePathInputPlaceholder": "请输入绝对路径",
     "useDefaultCachePath": "使用默认",
@@ -128,5 +130,28 @@
     "networkError": "网络请求失败",
     "getInfoFailed": "获取信息失败",
     "pvTrackFailed": "PV 统计失败"
+  },
+  "batchDownload": {
+    "filterAll": "全部",
+    "filterImage": "图片",
+    "filterFile": "文件",
+    "selectAll": "全选",
+    "missing": "文件缺失",
+    "preview": "预览",
+    "previewFailed": "预览加载失败",
+    "previewTooLarge": "仅支持预览 1MB 以内的文本文件",
+    "fileName": "文件名",
+    "fileType": "类型",
+    "fileSize": "大小",
+    "sender": "发送者",
+    "sentAt": "时间",
+    "unknown": "未知",
+    "close": "关闭",
+    "selectedSummary": "已选 {count} 个 · {size}",
+    "empty": "当前会话暂无附件",
+    "download": "下载 ZIP",
+    "loadFailed": "附件加载失败",
+    "downloadFailed": "创建批量下载失败",
+    "downloadStarted": "批量下载已开始"
   }
 }

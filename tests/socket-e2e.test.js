@@ -8,10 +8,14 @@ const registerSocket = require('../server/socket/index');
 const {
   MessageHistoryService
 } = require('../server/services/message-history-service');
+const {
+  BatchDownloadService
+} = require('../server/services/batch-download-service');
 
 let server;
 let serverUrl;
 let historyService;
+let batchDownloadService;
 let historyCachePath;
 const clients = [];
 
@@ -20,7 +24,8 @@ beforeAll(async () => {
   historyCachePath = fs.mkdtempSync(path.join(os.tmpdir(), 'chattransfer-socket-history-'));
   historyService = new MessageHistoryService({ cachePath: historyCachePath });
   await historyService.init();
-  registerSocket(server, historyService);
+  batchDownloadService = new BatchDownloadService({ historyService });
+  registerSocket(server, historyService, batchDownloadService);
 
   await new Promise((resolve) => {
     server.listen(0, '127.0.0.1', resolve);
@@ -87,6 +92,13 @@ function waitFor(predicate, timeout = 5000) {
 
 function emitWithAck(socket, event, payload) {
   return new Promise((resolve) => socket.emit(event, payload, resolve));
+}
+
+async function createConnectedClient(name) {
+  const socket = createChatClient(name);
+  await new Promise((resolve) => socket.once('connect', resolve));
+  socket.emit('group_online', `batch-${name}`, name);
+  return socket;
 }
 
 describe('Socket.IO multi-client chat', () => {
@@ -260,5 +272,63 @@ describe('Socket.IO multi-client chat', () => {
 
     userA.disconnect();
     userB.disconnect();
+  });
+
+  it('queries attachments and creates a one-time batch download', { timeout: 15000 }, async () => {
+    const filesDir = path.join(historyCachePath, 'files');
+    fs.mkdirSync(filesDir, { recursive: true });
+    fs.writeFileSync(path.join(filesDir, 'batch-a.txt'), 'batch-a', 'utf8');
+    fs.writeFileSync(path.join(filesDir, 'batch-b.txt'), 'batch-b', 'utf8');
+
+    const batchSenderA = await createConnectedClient('BatchSender');
+    await emitWithAck(batchSenderA, 'group_chat', {
+      sender: 'batch-user-a',
+      receiver: 'group_chat',
+      msgType: 'FILE',
+      fileName: 'batch-a.txt',
+      fileSize: 7,
+      fileUrl: 'http://127.0.0.1:55555/files/batch-a.txt'
+    });
+    const batchSenderB = await createConnectedClient('BatchSender2');
+    await emitWithAck(batchSenderB, 'group_chat', {
+      sender: 'batch-user-b',
+      receiver: 'group_chat',
+      msgType: 'IMAGE',
+      fileName: 'batch-b.txt',
+      fileSize: 7,
+      fileUrl: 'http://127.0.0.1:55555/files/batch-b.txt'
+    });
+
+    const user = createChatClient('BatchUser');
+    await new Promise((resolve) => user.once('connect', resolve));
+    user.emit('group_online', 'batch-user-c', 'Batch User');
+    const attachments = await emitWithAck(user, 'attachment_query', {
+      chatType: 'group',
+      targetUser: 'group_chat'
+    });
+    const download = await emitWithAck(user, 'attachment_download', {
+      chatType: 'group',
+      targetUser: 'group_chat',
+      messageIds: attachments.data.attachments.map((attachment) => attachment.msgId)
+    });
+    const reused = await emitWithAck(user, 'attachment_download', {
+      chatType: 'group',
+      targetUser: 'group_chat',
+      messageIds: attachments.data.attachments.map((attachment) => attachment.msgId)
+    });
+
+    expect(attachments.code).toBe(0);
+    expect(attachments.data.attachments.map((attachment) => attachment.fileName)).toEqual([
+      'batch-a.txt',
+      'batch-b.txt'
+    ]);
+    expect(attachments.data.attachments.map((attachment) => attachment.fileUrl)).toEqual([
+      '/files/batch-a.txt',
+      '/files/batch-b.txt'
+    ]);
+    expect(download.code).toBe(0);
+    expect(download.data.downloadUrl).toMatch(/^\/batch-download\/[a-f0-9]{48}$/);
+    expect(reused.code).toBe(0);
+    expect(reused.data.downloadUrl).not.toBe(download.data.downloadUrl);
   });
 });

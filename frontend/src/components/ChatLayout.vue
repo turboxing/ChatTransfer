@@ -71,6 +71,7 @@
       @copy-cache-path="copyCachePath(cachePath)"
       @open-cache-path="handleOpenCachePath"
       @open-cache-path-dialog="openCachePathDialog"
+      @open-batch-download="openBatchDownloadDialog"
       @show-changelog="showChangelog"
       @open-feedback="openFeedback"
       @clear-local-history="handleClearLocalHistory"
@@ -98,6 +99,18 @@
       :saving="cachePathSaving"
       @use-default="applyDefaultCachePath"
       @confirm="confirmCachePathChange"
+    />
+
+    <BatchDownloadDialog
+      v-model="batchDownloadDialogVisible"
+      :attachments="batchAttachments"
+      :loading="batchAttachmentsLoading"
+      :downloading="batchDownloadLoading"
+      :title="t('tools.batchDownloadTitle')"
+      :empty-text="t('batchDownload.empty')"
+      :cancel-text="t('chat.cancel')"
+      :download-text="t('batchDownload.download')"
+      @download="handleBatchDownload"
     />
 
     <PinDrawer
@@ -135,6 +148,7 @@ import ToolsDrawer from './chat/ToolsDrawer.vue'
 import QrCodeDialog from './chat/dialogs/QrCodeDialog.vue'
 import InputDialog from './chat/dialogs/InputDialog.vue'
 import CachePathDialog from './chat/dialogs/CachePathDialog.vue'
+import BatchDownloadDialog from './chat/dialogs/BatchDownloadDialog.vue'
 import ChangelogDialog from './chat/dialogs/ChangelogDialog.vue'
 import { changelog } from '../data/changelog.js'
 import { useI18n } from 'vue-i18n'
@@ -244,6 +258,8 @@ const {
   isConnected,
   connect: connectSocket,
   requestHistory,
+  queryAttachments,
+  requestBatchDownload,
   clearServerHistory,
 } = useSocket({
   currentUser,
@@ -293,6 +309,60 @@ const clearServerHistoryForCurrentSession = () => {
     chatType,
     targetUser: targetUser.value
   })
+}
+
+const batchDownloadDialogVisible = ref(false)
+const batchAttachments = ref([])
+const batchAttachmentsLoading = ref(false)
+const batchDownloadLoading = ref(false)
+
+const getChatType = () => (
+  targetUser.value === 'group_chat' ? 'group' : 'private'
+)
+
+const openBatchDownloadDialog = async () => {
+  batchDownloadDialogVisible.value = true
+  batchAttachmentsLoading.value = true
+
+  const result = await queryAttachments({
+    requester: currentUser.value,
+    chatType: getChatType(),
+    targetUser: targetUser.value
+  })
+  batchAttachmentsLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(t('batchDownload.loadFailed'))
+    return
+  }
+
+  batchAttachments.value = result.data.attachments || []
+}
+
+const handleBatchDownload = async (messageIds) => {
+  batchDownloadLoading.value = true
+
+  const result = await requestBatchDownload({
+    requester: currentUser.value,
+    chatType: getChatType(),
+    targetUser: targetUser.value,
+    messageIds
+  })
+  batchDownloadLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('batchDownload.downloadFailed'))
+    return
+  }
+
+  const link = document.createElement('a')
+  link.href = result.data.downloadUrl
+  link.download = 'ChatTransfer.zip'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  ElMessage.success(t('batchDownload.downloadStarted'))
+  batchDownloadDialogVisible.value = false
 }
 
 const {

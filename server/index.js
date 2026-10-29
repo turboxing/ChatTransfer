@@ -7,6 +7,7 @@ const { getCachePath, getConfigFile, getDefaultCachePath } = require('./config')
 const registerRoutes = require('./routes/index');
 const registerSocket = require('./socket/index');
 const { MessageHistoryService } = require('./services/message-history-service');
+const { BatchDownloadService } = require('./services/batch-download-service');
 const { trackEvent } = require('./telemetry/compat');
 const {
   getDatabaseFile,
@@ -26,7 +27,7 @@ function createApp() {
   return app;
 }
 
-function createConfiguredApp(cachePath) {
+function createConfiguredApp(cachePath, historyService = null, batchDownloadService = null) {
   const app = createApp();
   const safeCachePath = cachePath
     ? { path: path.resolve(cachePath), changed: false }
@@ -43,7 +44,7 @@ function createConfiguredApp(cachePath) {
     console.warn(`[Cache] fallback to default: ${safeCachePath.path}`);
   }
 
-  registerRoutes(app, safeCachePath.path);
+  registerRoutes(app, safeCachePath.path, historyService, batchDownloadService);
   return app;
 }
 
@@ -115,6 +116,7 @@ async function start(options = {}) {
     cachePath: uploadsDir,
     databasePath: usesIndependentDatabaseFile() ? getDatabaseFile() : undefined
   });
+  const batchDownloadService = new BatchDownloadService({ historyService });
 
   try {
     await historyService.init();
@@ -123,10 +125,10 @@ async function start(options = {}) {
     return;
   }
 
-  const app = createConfiguredApp(uploadsDir);
+  const app = createConfiguredApp(uploadsDir, historyService, batchDownloadService);
   const server = http.createServer(app);
 
-  registerSocket(server, historyService);
+  registerSocket(server, historyService, batchDownloadService);
 
   await new Promise((resolve, reject) => {
     server.once('error', reject);

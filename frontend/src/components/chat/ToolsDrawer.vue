@@ -49,6 +49,10 @@
         <el-icon><FolderAdd /></el-icon>
         <span>{{ t('tools.changeCachePath') }}</span>
       </div>
+      <div class="tool-item" @click="emit('open-batch-download')">
+        <el-icon><Download /></el-icon>
+        <span>{{ t('tools.batchDownload') }}</span>
+      </div>
       <div class="tool-item" @click="emit('show-changelog')">
         <el-icon><Document /></el-icon>
         <span>{{ t('tools.changelog') }}</span>
@@ -100,6 +104,7 @@ import {
   CopyDocument,
   Delete,
   Document,
+  Download,
   EditPen,
   FolderAdd,
   FolderOpened,
@@ -128,6 +133,7 @@ const emit = defineEmits([
   'copy-cache-path',
   'open-cache-path',
   'open-cache-path-dialog',
+  'open-batch-download',
   'show-changelog',
   'open-feedback',
   'clear-local-history',
