@@ -1,10 +1,20 @@
 <template>
   <BubbleList ref="bubbleListRef" :list="items" :auto-scroll="false">
     <template #avatar="{ item }">
+      <el-checkbox
+        v-if="selectionMode && isAttachment(item)"
+        :model-value="selectedMessageIds.has(item.key)"
+        :disabled="!isSelectableMessage(item)"
+        :aria-label="t('chat.multiSelect')"
+        size="large"
+        class="message-select-checkbox"
+        @click.stop
+        @change="$emit('toggle-select', item)"
+      />
       <el-avatar :size="40" :src="item.originalMsg.avatar" class="user-avatar" :style="{
         backgroundColor: item.originalMsg.avatar ? undefined : getColorByName(item.originalMsg.sender),
         color: item.originalMsg.avatar ? undefined : '#fff'
-      }">
+      }" v-else>
         {{ getDisplayName(item.originalMsg)?.slice(-2) || item.originalMsg.sender?.slice(-2) || 'User' }}
       </el-avatar>
     </template>
@@ -24,11 +34,17 @@
 
     <template #content="{ item }">
       <div class="content-wrapper"
-        :class="{ 'is-pinned-content': isMessagePinned(item.key), 'is-topped-content': isMessageTopped(item.key) }">
+        :class="{
+          'is-pinned-content': isMessagePinned(item.key),
+          'is-topped-content': isMessageTopped(item.key),
+          'is-selection-mode': selectionMode && isSelectableMessage(item),
+          'is-selected-message': selectionMode && selectedMessageIds.has(item.key)
+        }"
+        @click="handleContentClick(item, $event)">
         <div v-if="item.rawType === 'TEXT'" class="content-text" v-html="formatTextContent(item.content)"></div>
 
         <div v-else-if="item.rawType === 'IMAGE'" class="content-image">
-          <el-image :src="item.fileUrl" :preview-src-list="[item.fileUrl]" fit="cover" class="message-image" />
+          <el-image :src="item.fileUrl" :preview-src-list="selectionMode ? [] : [item.fileUrl]" fit="cover" class="message-image" />
         </div>
 
         <div v-else-if="item.rawType === 'FILE' || item.status === 'uploading'" class="content-file">
@@ -41,7 +57,7 @@
 
     <template #footer="{ item }">
       <div class="footer-wrapper" :class="{ 'is-sender': item.placement === 'end' }">
-        <div class="footer-actions">
+        <div v-if="!selectionMode" class="footer-actions">
           <el-button type="primary" link size="small" class="pin-btn"
             :class="{ 'is-pinned': isMessagePinned(item.key) }" @click="$emit('pin', item)">
             <img src="/pin.svg" alt="pin" class="pin-icon-small" />
@@ -67,6 +83,9 @@
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item v-if="isSelectableMessage(item)" :icon="Select" @click="$emit('start-select', item)">
+                  {{ t('chat.multiSelect') }}
+                </el-dropdown-item>
                 <el-dropdown-item v-if="isAttachment(item) && item.status === 'success'" :icon="View" @click="$emit('open', item)">
                   {{ t('chat.open') }}
                 </el-dropdown-item>
@@ -89,7 +108,7 @@
 <script setup>
 import { ref } from 'vue'
 import { BubbleList, FilesCard } from 'vue-element-plus-x'
-import { Top, CopyDocument, Grid, Download, View, RefreshRight, MoreFilled } from '@element-plus/icons-vue'
+import { Top, CopyDocument, Grid, Download, View, RefreshRight, MoreFilled, Select } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { getColorByName, formatTextContent } from '../../composables/use-message-utils'
 import {
@@ -97,7 +116,7 @@ import {
   isAttachmentMessage
 } from '../../composables/use-message-actions'
 
-defineProps({
+const props = defineProps({
   items: {
     type: Array,
     required: true
@@ -117,16 +136,34 @@ defineProps({
   isMessageTopped: {
     type: Function,
     required: true
+  },
+  selectionMode: {
+    type: Boolean,
+    default: false
+  },
+  selectedMessageIds: {
+    type: Object,
+    default: () => new Set()
+  },
+  isSelectableMessage: {
+    type: Function,
+    required: true
   }
 })
 
-defineEmits(['pin', 'top', 'copy', 'qr', 'open', 'download', 'retry'])
+const emit = defineEmits(['pin', 'top', 'copy', 'qr', 'open', 'download', 'retry', 'start-select', 'toggle-select'])
 
 const { t } = useI18n()
 
 const isAttachment = isAttachmentMessage
 
 const bubbleListRef = ref(null)
+
+const handleContentClick = (item, event) => {
+  if (!props.selectionMode || !props.isSelectableMessage(item)) return
+  event.stopPropagation()
+  emit('toggle-select', item)
+}
 
 const scrollToBottom = () => {
   if (!bubbleListRef.value?.scrollToBottom) return false

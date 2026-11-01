@@ -68,6 +68,8 @@
     "copy": "复制",
     "qrcode": "二维码",
     "resend": "重发",
+    "multiSelect": "多选",
+    "downloadSelected": "下载所选",
     "messageQrTitle": "消息二维码",
     "inputPlaceholder": "输入消息，支持粘贴图片/文件...双击'/'激活输入框",
     "pinDrawerTitle": "Pin 消息",
@@ -151,6 +153,7 @@
     "empty": "当前会话暂无附件",
     "download": "下载 ZIP",
     "loadFailed": "附件加载失败",
+    "selectionUnavailable": "部分附件已失效，请刷新页面后重试",
     "downloadFailed": "创建批量下载失败",
     "downloadStarted": "批量下载已开始"
   }
