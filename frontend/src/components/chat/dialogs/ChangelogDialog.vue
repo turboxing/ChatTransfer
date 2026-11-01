@@ -25,7 +25,7 @@ defineProps({
   latestText: { type: String, required: true }
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 </script>
 
 <style scoped>
