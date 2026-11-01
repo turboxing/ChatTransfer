@@ -92,6 +92,7 @@
       @open-cache-path-dialog="openCachePathDialog"
       @open-batch-download="openBatchDownloadDialog"
       @show-changelog="showChangelog"
+      @open-repository="openRepository"
       @open-feedback="openFeedback"
       @clear-local-history="handleClearLocalHistory"
       @clear-server-history="handleClearServerHistory"
@@ -405,6 +406,7 @@ const {
   handleClearLocalHistory,
   handleClearServerHistory,
   openFeedback,
+  openRepository,
 } = useChatTools({
   route,
   cachePathController,

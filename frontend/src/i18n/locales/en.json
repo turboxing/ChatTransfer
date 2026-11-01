@@ -52,6 +52,7 @@
     "version": "Version",
     "showQr": "QR Code",
     "changelog": "Changelog Record",
+    "starProject": "Star on GitHub",
     "feedback": "Feedback"
   },
   "chat": {

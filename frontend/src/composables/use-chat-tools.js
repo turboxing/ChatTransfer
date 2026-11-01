@@ -107,6 +107,10 @@ export function useChatTools({
     window.open('https://github.com/turboxing/ChatTransfer/issues/new', '_blank')
   }
 
+  const openRepository = () => {
+    window.open('https://github.com/turboxing/ChatTransfer', '_blank', 'noopener,noreferrer')
+  }
+
   return {
     toolsDrawerVisible,
     changelogDialogVisible,
@@ -120,6 +124,7 @@ export function useChatTools({
     confirmCachePathChange,
     handleClearLocalHistory,
     handleClearServerHistory,
-    openFeedback
+    openFeedback,
+    openRepository
   }
 }
