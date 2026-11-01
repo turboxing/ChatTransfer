@@ -1,5 +1,25 @@
 export const changelog = [
   {
+    version: '2.0.18',
+    date: '2026-11-01',
+    changes: {
+      'zh-CN': [
+        '新增批量下载附件：可从常用功能选择全部附件，或直接在消息中多选图片和文件下载',
+        '支持附件预览、筛选、全选及 ZIP 打包下载',
+        '修复桌面端刚上传文件因临时消息 ID 无法批量下载的问题，并兼容历史临时 ID',
+        '修复版本更新记录关闭后切换语言无法再次打开的问题',
+        '版权与版本信息支持跳转 GitHub 仓库，并新增项目 Star 引导'
+      ],
+      en: [
+        'Added batch attachment downloads from Tools, with inline multi-select for image and file messages',
+        'Added attachment previews, filtering, select all, and ZIP generation',
+        'Fixed batch downloads for newly uploaded desktop files that used temporary message IDs, with compatibility for legacy IDs',
+        'Fixed the changelog dialog failing to reopen after closing it and switching languages',
+        'Copyright and version info now link to the GitHub repository, with a low-intrusion Star entry'
+      ]
+    }
+  },
+  {
     version: '2.0.17',
     date: '2026-10-29',
     changes: {

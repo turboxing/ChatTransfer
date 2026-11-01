@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.17**
+All notable changes to this project. Current version: **v2.0.18**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v2.0.18 (2026-11-01)
+
+- Added batch attachment downloads from Tools, with inline multi-select for image and file messages
+- Added attachment previews, filtering, select all, and ZIP generation
+- Fixed batch downloads for newly uploaded desktop files that used temporary message IDs, with compatibility for legacy IDs
+- Fixed the changelog dialog failing to reopen after closing it and switching languages
+- Copyright and version info now link to the GitHub repository, with a low-intrusion Star entry
 
 ## v2.0.17 (2026-10-29)
 
