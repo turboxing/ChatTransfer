@@ -1,12 +1,12 @@
 # ChatTransfer Backlog
 
-This document records product and engineering work that has been reviewed but is not yet implemented. Items are kept here so they can be scheduled without losing the agreed design context.
+This document records product and engineering work that has been reviewed but is not yet fully implemented. Items are kept here so they can be scheduled without losing the agreed design context.
 
 Status values: `Planned`, `In progress`, `Blocked`, `Done`.
 
 ## Online Device List and Presence Notices
 
-- Status: Planned
+- Status: In progress
 - Priority: P1
 - Estimated effort: 2-3 engineering days
 - Target: Improve awareness of connected devices during multi-device transfers

@@ -6,7 +6,7 @@ const {
   decoratePrivateMessage
 } = require('../services/message-service');
 
-module.exports = function registerSocket(server, historyService, batchDownloadService) {
+module.exports = function registerSocket(server, historyService, batchDownloadService, options = {}) {
   if (!historyService) {
     throw new Error('historyService is required');
   }
@@ -23,6 +23,10 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     pingInterval: 25000
   });
   const chatRoom = 'group-chat';
+  const presenceOfflineDebounceMs = Number.isFinite(options.presenceOfflineDebounceMs)
+    ? Math.max(0, options.presenceOfflineDebounceMs)
+    : 8000;
+  const offlineTimers = new Map();
 
   const getClientIp = (socket) => {
     const address = socket.handshake.address || socket.request.connection.remoteAddress;
@@ -34,6 +38,67 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     io.to(chatRoom).emit('user_list_updated', {
       users: roomManager.listUsers()
     });
+  };
+
+  const emitToUser = (username, eventName, payload) => {
+    const user = roomManager.getUser(username);
+    if (!user || user.status !== roomManager.getOnline()) return;
+
+    for (const socketId of user.socketIds) {
+      io.to(socketId).emit(eventName, payload);
+    }
+  };
+
+  const clearOfflineTimer = (username) => {
+    const timer = offlineTimers.get(username);
+    if (!timer) return;
+    clearTimeout(timer);
+    offlineTimers.delete(username);
+  };
+
+  const emitPresenceChanged = (type, user, sourceSocket = null) => {
+    const payload = { type, user, at: Date.now() };
+
+    if (type === 'online' && sourceSocket) {
+      sourceSocket.broadcast.to(chatRoom).emit('presence_changed', payload);
+      return;
+    }
+
+    io.to(chatRoom).emit('presence_changed', payload);
+  };
+
+  const registerUserOnline = (socket, username, nickname = '') => {
+    if (!username) return null;
+
+    clearOfflineTimer(username);
+    socket.join(chatRoom);
+    socket.username = username;
+    const result = roomManager.setOnline({
+      username,
+      socketId: socket.id,
+      nickname,
+      ip: getClientIp(socket)
+    });
+    broadcastUserList();
+
+    if (result.becameOnline) {
+      emitPresenceChanged('online', result.user, socket);
+    }
+
+    return result;
+  };
+
+  const scheduleOffline = (username) => {
+    clearOfflineTimer(username);
+    const timer = setTimeout(() => {
+      offlineTimers.delete(username);
+      const result = roomManager.markOffline(username);
+      if (!result.becameOffline) return;
+
+      broadcastUserList();
+      emitPresenceChanged('offline', result.user);
+    }, presenceOfflineDebounceMs);
+    offlineTimers.set(username, timer);
   };
 
   const trackMessage = (type, direction, params, socket) => {
@@ -65,10 +130,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     }
 
     sourceSocket.emit('history_cleared', payload);
-    const receiver = roomManager.getUser(targetUser);
-    if (receiver && receiver.status === roomManager.getOnline()) {
-      io.to(receiver.socketId).emit('history_cleared', payload);
-    }
+    emitToUser(targetUser, 'history_cleared', payload);
   };
 
   io.on('connection', (socket) => {
@@ -80,14 +142,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
     socket.on('online', (username) => {
       console.log(`[Socket] online: ${username} ${socket.id}`);
-      socket.username = username;
-      socket.join(chatRoom);
-      roomManager.setOnline({
-        username,
-        socketId: socket.id,
-        ip: getClientIp(socket)
-      });
-      broadcastUserList();
+      registerUserOnline(socket, username);
     });
 
     socket.on('private_chat', async (params, ack) => {
@@ -105,7 +160,9 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       const receiver = roomManager.getUser(savedMessage.receiver);
 
       if (receiver && receiver.status === roomManager.getOnline()) {
-        socket.to(receiver.socketId).emit('reply_private_chat', savedMessage);
+        for (const socketId of receiver.socketIds) {
+          io.to(socketId).emit('reply_private_chat', savedMessage);
+        }
 
         trackEvent('message_action', {
           chat_type: 'private',
@@ -121,19 +178,11 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
     socket.on('group_online', (username, nickname) => {
       console.log(`[Socket] group_online: ${username} ${socket.id} nickname=${nickname}`);
-      socket.join(chatRoom);
-      socket.username = username;
-      roomManager.setOnline({
-        username,
-        socketId: socket.id,
-        nickname,
-        ip: getClientIp(socket)
-      });
+      registerUserOnline(socket, username, nickname);
       socket.emit('group_name_updated', {
         groupName: roomManager.getGroupName(),
         updatedBy: ''
       });
-      broadcastUserList();
     });
 
     socket.on('update_nickname', ({ sender, nickname }) => {
@@ -287,9 +336,18 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
     socket.on('disconnect', () => {
       console.log(`[Socket] disconnect: ${socket.username || 'unknown'} ${socket.id}`);
-      roomManager.setOffline(socket.username);
-      broadcastUserList();
+      if (!socket.username) return;
+
+      const result = roomManager.removeSocket(socket.username, socket.id);
+      if (result.user && !result.hasConnections) {
+        scheduleOffline(socket.username);
+      }
     });
+  });
+
+  io.on('close', () => {
+    for (const timer of offlineTimers.values()) clearTimeout(timer);
+    offlineTimers.clear();
   });
 
   return io;

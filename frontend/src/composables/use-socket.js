@@ -9,7 +9,8 @@ export function useSocket({
   onUserList,
   onGroupName,
   onMessage,
-  onHistoryCleared
+  onHistoryCleared,
+  onPresenceChanged
 }) {
   const socket = ref(null);
   const isConnected = ref(false);
@@ -48,6 +49,7 @@ export function useSocket({
     socket.value.on('reply_group_chat', onMessage);
     socket.value.on('update_msg', onMessage);
     socket.value.on('history_cleared', (data) => onHistoryCleared?.(data));
+    socket.value.on('presence_changed', (data) => onPresenceChanged?.(data));
   };
 
   const emitWithAck = (eventName, payload) => new Promise((resolve) => {

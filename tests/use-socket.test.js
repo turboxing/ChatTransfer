@@ -53,23 +53,27 @@ describe('useSocket', () => {
     const onUserList = vi.fn();
     const onGroupName = vi.fn();
     const onMessage = vi.fn();
+    const onPresenceChanged = vi.fn();
     const { connect } = useSocket({
       currentUser: { value: 'A' },
       targetUser: { value: 'group_chat' },
       myNickname: { value: 'Tester' },
       onUserList,
       onGroupName,
-      onMessage
+      onMessage,
+      onPresenceChanged
     });
     connect();
 
     handlers.get('user_list_updated')?.forEach((handler) => handler({ users: ['A'] }));
     handlers.get('group_name_updated')?.forEach((handler) => handler({ groupName: 'Team' }));
     handlers.get('reply_group_chat')?.forEach((handler) => handler({ content: 'hello' }));
+    handlers.get('presence_changed')?.forEach((handler) => handler({ type: 'online', user: { sender: 'B' } }));
 
     expect(onUserList).toHaveBeenCalledWith(['A']);
     expect(onGroupName).toHaveBeenCalledWith('Team');
     expect(onMessage).toHaveBeenCalledWith({ content: 'hello' });
+    expect(onPresenceChanged).toHaveBeenCalledWith({ type: 'online', user: { sender: 'B' } });
   });
 
   it('registers history clear events and emits history requests with ack', async () => {

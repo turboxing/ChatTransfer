@@ -13,6 +13,7 @@
       @open-pin-drawer="openPinDrawer"
       @show-qr="showQrCode"
       @show-tools="showTools"
+      @open-online-users="onlineUsersDrawerVisible = true"
     />
 
     <TopBar
@@ -46,6 +47,7 @@
         @start-select="enterSelection"
         @toggle-select="toggleSelection"
       />
+      <PresenceNoticeList :events="presenceNotices" />
     </div>
 
     <BatchSelectionBar
@@ -153,6 +155,12 @@
 
     <ChangelogDialog v-model="changelogDialogVisible" :releases="changelog" :locale="locale"
       :title="t('common.versionHistory')" :latest-text="t('common.latest')" />
+
+    <OnlineUsersDrawer
+      v-model="onlineUsersDrawerVisible"
+      :users="onlineUsers"
+      :current-user="currentUser"
+    />
   </div>
 </template>
 
@@ -162,6 +170,8 @@ import { Attachments } from 'vue-element-plus-x'
 import MessageList from './chat/MessageList.vue'
 import PinDrawer from './chat/PinDrawer.vue'
 import ChatHeader from './chat/ChatHeader.vue'
+import OnlineUsersDrawer from './chat/OnlineUsersDrawer.vue'
+import PresenceNoticeList from './chat/PresenceNoticeList.vue'
 import TopBar from './chat/TopBar.vue'
 import ChatFooter from './chat/ChatFooter.vue'
 import BatchSelectionBar from './chat/BatchSelectionBar.vue'
@@ -213,6 +223,9 @@ const messageListRef = ref(null)
 const myNickname = ref('')
 const groupName = ref('')
 const onlineUsers = ref([])
+const onlineUsersDrawerVisible = ref(false)
+const presenceNotices = ref([])
+const presenceNoticeTimers = new Map()
 const {
   cachePath,
   cachePathCustomized,
@@ -278,6 +291,40 @@ const handleHistoryCleared = (data) => {
   resetHistoryCursor()
 }
 
+const removePresenceNotice = (noticeId) => {
+  presenceNotices.value = presenceNotices.value.filter((notice) => notice.id !== noticeId)
+  const timer = presenceNoticeTimers.get(noticeId)
+  if (timer) clearTimeout(timer)
+  presenceNoticeTimers.delete(noticeId)
+}
+
+const clearPresenceNotices = () => {
+  for (const timer of presenceNoticeTimers.values()) clearTimeout(timer)
+  presenceNoticeTimers.clear()
+  presenceNotices.value = []
+}
+
+const handlePresenceChanged = (data) => {
+  if (targetUser.value !== 'group_chat') return
+  if (!data?.user?.sender || !['online', 'offline'].includes(data.type)) return
+
+  const id = `${data.type}-${data.user.sender}-${data.at || Date.now()}`
+  const notice = {
+    id,
+    type: data.type,
+    name: data.user.nickname || data.user.sender.slice(-5)
+  }
+  presenceNotices.value = [...presenceNotices.value, notice].slice(-20)
+  const timer = setTimeout(() => removePresenceNotice(id), 30000)
+  presenceNoticeTimers.set(id, timer)
+
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
+    }
+  })
+}
+
 const {
   socket,
   isConnected,
@@ -304,6 +351,7 @@ const {
   },
   onMessage: handleIncomingMessage,
   onHistoryCleared: handleHistoryCleared,
+  onPresenceChanged: handlePresenceChanged,
 })
 
 const loadServerHistory = async () => {
@@ -640,6 +688,8 @@ watch(selectionMode, async (active) => {
   footerRef.value?.registerHistoryNavigation?.(handleHistoryKeydown)
 })
 
+watch(targetUser, () => clearPresenceNotices())
+
 const { initSession } = useChatSession({
   currentUser,
   targetUser,
@@ -660,6 +710,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleChatKeydown)
   footerRef.value?.unregisterHistoryNavigation?.(handleHistoryKeydown)
+  clearPresenceNotices()
 })
 </script>
 

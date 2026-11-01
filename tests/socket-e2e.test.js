@@ -25,7 +25,9 @@ beforeAll(async () => {
   historyService = new MessageHistoryService({ cachePath: historyCachePath });
   await historyService.init();
   batchDownloadService = new BatchDownloadService({ historyService });
-  registerSocket(server, historyService, batchDownloadService);
+  registerSocket(server, historyService, batchDownloadService, {
+    presenceOfflineDebounceMs: 80
+  });
 
   await new Promise((resolve) => {
     server.listen(0, '127.0.0.1', resolve);
@@ -57,6 +59,7 @@ function createChatClient(name) {
   socket.name = name;
   socket.messages = [];
   socket.userLists = [];
+  socket.presenceEvents = [];
   socket.on('user_list_updated', (data) => {
     socket.userLists.push(data.users || []);
   });
@@ -65,6 +68,9 @@ function createChatClient(name) {
   });
   socket.on('reply_private_chat', (message) => {
     socket.messages.push(message);
+  });
+  socket.on('presence_changed', (event) => {
+    socket.presenceEvents.push(event);
   });
 
   clients.push(socket);
@@ -330,5 +336,49 @@ describe('Socket.IO multi-client chat', () => {
     expect(download.data.downloadUrl).toMatch(/^\/batch-download\/[a-f0-9]{48}$/);
     expect(reused.code).toBe(0);
     expect(reused.data.downloadUrl).not.toBe(download.data.downloadUrl);
+  });
+
+  it('debounces offline presence and handles multiple connections per user', { timeout: 15000 }, async () => {
+    const observer = createChatClient('PresenceObserver');
+    await new Promise((resolve) => observer.once('connect', resolve));
+    observer.emit('group_online', 'presence-observer', 'Presence Observer');
+    await waitFor(() => observer.userLists.length > 0);
+
+    const firstTab = createChatClient('PresenceDeviceFirst');
+    await new Promise((resolve) => firstTab.once('connect', resolve));
+    firstTab.emit('group_online', 'presence-device', 'Presence Device');
+
+    await waitFor(() => observer.presenceEvents.some(
+      (event) => event.type === 'online' && event.user.sender === 'presence-device'
+    ));
+
+    const secondTab = createChatClient('PresenceDeviceSecond');
+    await new Promise((resolve) => secondTab.once('connect', resolve));
+    secondTab.emit('group_online', 'presence-device', 'Presence Device');
+    await waitFor(() => secondTab.userLists.length > 0);
+
+    firstTab.disconnect();
+    await new Promise((resolve) => setTimeout(resolve, 220));
+    expect(observer.presenceEvents.some(
+      (event) => event.type === 'offline' && event.user.sender === 'presence-device'
+    )).toBe(false);
+
+    secondTab.disconnect();
+    await waitFor(() => observer.presenceEvents.some(
+      (event) => event.type === 'offline' && event.user.sender === 'presence-device'
+    ));
+
+    const reconnect = createChatClient('PresenceDeviceReconnect');
+    await new Promise((resolve) => reconnect.once('connect', resolve));
+    reconnect.emit('group_online', 'presence-device', 'Presence Device');
+
+    await waitFor(() => observer.presenceEvents.filter(
+      (event) => event.type === 'online' && event.user.sender === 'presence-device'
+    ).length >= 2);
+
+    const latestUser = observer.userLists.at(-1).find((user) => user.sender === 'presence-device');
+    expect(latestUser).toMatchObject({ status: 'ONLINE', nickname: 'Presence Device' });
+    observer.disconnect();
+    reconnect.disconnect();
   });
 });
