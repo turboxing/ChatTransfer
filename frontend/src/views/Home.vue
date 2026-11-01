@@ -30,6 +30,10 @@
       <div class="footer-content">
         <div>Copyright: {{ copyright }}</div>
         <div>Software Version: {{ version }}</div>
+        <div class="star-link" @click="openRepository">
+          <el-icon><StarFilled /></el-icon>
+          {{ t('tools.starProject') }}
+        </div>
         <div class="feedback-link" @click="openFeedback">{{ t('tools.feedback') }}</div>
       </div>
     </div>
@@ -40,6 +44,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { StarFilled } from '@element-plus/icons-vue'
 import { Welcome } from 'vue-element-plus-x'
 import { useI18n } from 'vue-i18n'
 import { useVersionInfo } from '../composables/use-version-info'
@@ -94,6 +99,10 @@ const startChat = () => {
 
 const openFeedback = () => {
   window.open('https://github.com/turboxing/ChatTransfer/issues/new', '_blank')
+}
+
+const openRepository = () => {
+  window.open('https://github.com/turboxing/ChatTransfer', '_blank', 'noopener,noreferrer')
 }
 
 onMounted(() => {
@@ -170,6 +179,19 @@ onMounted(() => {
   cursor: pointer;
   text-decoration: underline;
   margin-top: 8px;
+}
+
+.star-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  color: #e6a23c;
+  cursor: pointer;
+}
+
+.star-link:hover {
+  color: #f3b54a;
 }
 
 .feedback-link:hover {

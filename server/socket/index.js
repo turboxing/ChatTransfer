@@ -6,9 +6,12 @@ const {
   decoratePrivateMessage
 } = require('../services/message-service');
 
-module.exports = function registerSocket(server, historyService) {
+module.exports = function registerSocket(server, historyService, batchDownloadService) {
   if (!historyService) {
     throw new Error('historyService is required');
+  }
+  if (!batchDownloadService) {
+    throw new Error('batchDownloadService is required');
   }
 
   const io = socketIo(server, {
@@ -187,6 +190,67 @@ module.exports = function registerSocket(server, historyService) {
       } catch (error) {
         console.error('[History] query failed:', error.message);
         ack({ code: -1, message: 'Failed to load history' });
+      }
+    });
+
+    socket.on('attachment_query', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const requester = socket.username || params.requester;
+        const chatType = params.chatType || (
+          params.targetUser === 'group_chat' ? 'group' : 'private'
+        );
+        const { attachments } = await historyService.queryAttachments({
+          requester,
+          chatType,
+          targetUser: params.targetUser
+        });
+
+        ack({
+          code: 0,
+          data: {
+            attachments: attachments.map((attachment) => ({
+              msgId: attachment.msgId,
+              seq: attachment.seq,
+              sender: attachment.sender,
+              senderNickname: attachment.senderNickname,
+              msgType: attachment.msgType,
+              createTime: attachment.createTime,
+              createdAt: attachment.createdAt,
+              fileName: attachment.fileName,
+              fileSize: attachment.fileSize,
+              fileType: attachment.fileType,
+              fileUrl: attachment.fileUrl,
+              available: attachment.available
+            }))
+          }
+        });
+      } catch (error) {
+        console.error('[Attachment] query failed:', error.message);
+        ack({ code: -1, message: 'Failed to load attachments' });
+      }
+    });
+
+    socket.on('attachment_download', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const requester = socket.username || params.requester;
+        const chatType = params.chatType || (
+          params.targetUser === 'group_chat' ? 'group' : 'private'
+        );
+        const data = await batchDownloadService.createDownloadToken({
+          requester,
+          chatType,
+          targetUser: params.targetUser,
+          messageIds: params.messageIds
+        });
+
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[Attachment] download request failed:', error.message);
+        ack({ code: -1, message: error.message });
       }
     });
 

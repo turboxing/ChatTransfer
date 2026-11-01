@@ -35,6 +35,8 @@
     "copyCachePath": "Copy cache path",
     "openCachePath": "Open cache folder",
     "changeCachePath": "Change cache folder",
+    "batchDownload": "Batch download attachments",
+    "batchDownloadTitle": "Batch download attachments",
     "changeCachePathTitle": "Set cache folder",
     "cachePathInputPlaceholder": "Enter an absolute path",
     "useDefaultCachePath": "Use default",
@@ -50,6 +52,7 @@
     "version": "Version",
     "showQr": "QR Code",
     "changelog": "Changelog Record",
+    "starProject": "Star on GitHub",
     "feedback": "Feedback"
   },
   "chat": {
@@ -66,6 +69,8 @@
     "copy": "Copy",
     "qrcode": "QR Code",
     "resend": "Resend",
+    "multiSelect": "Select multiple",
+    "downloadSelected": "Download selected",
     "messageQrTitle": "Message QR code",
     "inputPlaceholder": "Type a message. Paste images/files. Double press '/' to focus.",
     "pinDrawerTitle": "Pinned",
@@ -128,5 +133,29 @@
     "networkError": "Network request failed",
     "getInfoFailed": "Failed to get data",
     "pvTrackFailed": "PV tracking failed"
+  },
+  "batchDownload": {
+    "filterAll": "All",
+    "filterImage": "Images",
+    "filterFile": "Files",
+    "selectAll": "Select all",
+    "missing": "Missing",
+    "preview": "Preview",
+    "previewFailed": "Failed to load preview",
+    "previewTooLarge": "Text preview is only available for files up to 1 MB",
+    "fileName": "File name",
+    "fileType": "Type",
+    "fileSize": "Size",
+    "sender": "Sender",
+    "sentAt": "Time",
+    "unknown": "Unknown",
+    "close": "Close",
+    "selectedSummary": "{count} selected · {size}",
+    "empty": "No attachments in this conversation",
+    "download": "Download ZIP",
+    "loadFailed": "Failed to load attachments",
+    "selectionUnavailable": "Some attachments are no longer available. Refresh the page and try again.",
+    "downloadFailed": "Failed to create batch download",
+    "downloadStarted": "Batch download started"
   }
 }

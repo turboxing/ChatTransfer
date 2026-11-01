@@ -5,6 +5,8 @@ const sqlite3 = require('sqlite3');
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 200;
+const MAX_BATCH_ATTACHMENT_COUNT = 200;
+const MAX_BATCH_ATTACHMENT_TOTAL_SIZE = 2 * 1024 * 1024 * 1024;
 const GROUP_SESSION_ID = 'group';
 
 class MessageHistoryService {
@@ -145,6 +147,82 @@ class MessageHistoryService {
       hasMore,
       nextCursor
     };
+  }
+
+  async queryAttachments({ requester, chatType, targetUser }) {
+    this.ensureOpened();
+
+    const conversation = this.getConversation({ requester, chatType, targetUser });
+    const rows = await this.all(
+      `SELECT seq, id, sender_id, sender_nickname, message_type, create_time, created_at,
+              file_path, file_name, file_size, file_mime_type
+       FROM messages
+       WHERE session_id = ? AND file_path IS NOT NULL
+       ORDER BY created_at ASC, seq ASC`,
+      [conversation.sessionId]
+    );
+
+    const attachments = [];
+    for (const row of rows) {
+      const physicalPath = this.resolveExistingFilePath(row.file_path);
+      if (!physicalPath) continue;
+      const stats = fs.statSync(physicalPath);
+      if (!stats.isFile()) continue;
+      const physicalFileName = path.posix.basename(row.file_path);
+
+      attachments.push({
+        msgId: row.id,
+        seq: row.seq,
+        sender: row.sender_id,
+        senderNickname: row.sender_nickname || row.sender_id,
+        msgType: row.message_type,
+        createTime: row.create_time,
+        createdAt: row.created_at,
+        fileName: row.file_name || physicalFileName,
+        fileSize: Number(row.file_size) || stats.size,
+        fileType: row.file_mime_type,
+        fileUrl: `/files/${encodeURIComponent(physicalFileName)}`,
+        filePath: row.file_path,
+        physicalPath,
+        available: true
+      });
+    }
+
+    return { attachments };
+  }
+
+  async getBatchAttachments({ requester, chatType, targetUser, messageIds }) {
+    this.ensureOpened();
+
+    if (!Array.isArray(messageIds) || messageIds.length === 0) {
+      throw new Error('No attachment selected');
+    }
+
+    const requestedIds = new Set(messageIds.filter((id) => typeof id === 'string' && id.length > 0));
+    if (requestedIds.size === 0) throw new Error('No attachment selected');
+    if (requestedIds.size > MAX_BATCH_ATTACHMENT_COUNT) {
+      throw new Error(`Batch download supports at most ${MAX_BATCH_ATTACHMENT_COUNT} files`);
+    }
+
+    const { attachments } = await this.queryAttachments({ requester, chatType, targetUser });
+    const attachmentMap = new Map(attachments.map((attachment) => [attachment.msgId, attachment]));
+    const selectedAttachments = [];
+
+    for (const messageId of requestedIds) {
+      const attachment = attachmentMap.get(messageId);
+      if (!attachment) throw new Error(`Attachment not found: ${messageId}`);
+      if (!attachment.available) throw new Error(`Attachment file missing: ${attachment.fileName}`);
+      selectedAttachments.push(attachment);
+    }
+
+    const totalSize = selectedAttachments.reduce((total, attachment) => (
+      total + (Number(attachment.fileSize) || 0)
+    ), 0);
+    if (totalSize > MAX_BATCH_ATTACHMENT_TOTAL_SIZE) {
+      throw new Error('Batch download exceeds the 2GB size limit');
+    }
+
+    return selectedAttachments;
   }
 
   clearHistory({ requester, chatType, targetUser }) {
@@ -409,6 +487,30 @@ class MessageHistoryService {
     }
 
     return physicalPath;
+  }
+
+  resolveExistingFilePath(filePath) {
+    const physicalPath = this.resolveFilePath(filePath);
+    if (!physicalPath) return null;
+
+    try {
+      const realCachePath = fs.realpathSync(this.cachePath);
+      const realFilesPath = path.join(realCachePath, 'files');
+      const realPhysicalPath = fs.realpathSync(physicalPath);
+      const relativePath = path.relative(realFilesPath, realPhysicalPath);
+
+      if (
+        relativePath === '' ||
+        relativePath.startsWith('..') ||
+        path.isAbsolute(relativePath)
+      ) {
+        return null;
+      }
+
+      return realPhysicalPath;
+    } catch (error) {
+      return null;
+    }
   }
 
   isValidUserId(value) {

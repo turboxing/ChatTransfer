@@ -60,6 +60,8 @@ export function useSocket({
   });
 
   const requestHistory = (payload) => emitWithAck('history_query', payload);
+  const queryAttachments = (payload) => emitWithAck('attachment_query', payload);
+  const requestBatchDownload = (payload) => emitWithAck('attachment_download', payload);
 
   const clearServerHistory = (payload) => emitWithAck('history_clear', payload);
 
@@ -70,6 +72,8 @@ export function useSocket({
     isConnected,
     connect,
     requestHistory,
+    queryAttachments,
+    requestBatchDownload,
     clearServerHistory
   };
 }

@@ -49,9 +49,17 @@
         <el-icon><FolderAdd /></el-icon>
         <span>{{ t('tools.changeCachePath') }}</span>
       </div>
+      <div class="tool-item" @click="emit('open-batch-download')">
+        <el-icon><Download /></el-icon>
+        <span>{{ t('tools.batchDownload') }}</span>
+      </div>
       <div class="tool-item" @click="emit('show-changelog')">
         <el-icon><Document /></el-icon>
         <span>{{ t('tools.changelog') }}</span>
+      </div>
+      <div class="tool-item star-item" @click="emit('open-repository')">
+        <el-icon><Star /></el-icon>
+        <span>{{ t('tools.starProject') }}</span>
       </div>
       <div class="tool-item" @click="emit('open-feedback')">
         <el-icon><ChatDotRound /></el-icon>
@@ -85,7 +93,14 @@
     </div>
 
     <div class="drawer-footer">
-      <div class="version-info" @click="emit('show-changelog')">
+      <div
+        class="version-info"
+        role="button"
+        tabindex="0"
+        @click="emit('open-repository')"
+        @keydown.enter.prevent="emit('open-repository')"
+        @keydown.space.prevent="emit('open-repository')"
+      >
         <div>Copyright: {{ copyright }}</div>
         <div>Software Version: {{ version }}</div>
       </div>
@@ -100,10 +115,12 @@ import {
   CopyDocument,
   Delete,
   Document,
+  Download,
   EditPen,
   FolderAdd,
   FolderOpened,
-  FullScreen
+  FullScreen,
+  Star
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
@@ -128,7 +145,9 @@ const emit = defineEmits([
   'copy-cache-path',
   'open-cache-path',
   'open-cache-path-dialog',
+  'open-batch-download',
   'show-changelog',
+  'open-repository',
   'open-feedback',
   'clear-local-history',
   'clear-server-history'
@@ -220,6 +239,10 @@ const { t } = useI18n()
   background-color: #fef0f0;
 }
 
+.star-item .el-icon {
+  color: #e6a23c;
+}
+
 .cache-info {
   margin-top: 20px;
   padding: 10px;
@@ -267,6 +290,7 @@ const { t } = useI18n()
 .version-info {
   color: #909399;
   font-size: 12px;
+  cursor: pointer;
 }
 
 .version-info:hover {

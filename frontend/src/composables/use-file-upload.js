@@ -54,6 +54,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
 
       const { mimetype, fileUrl, size } = result.data
       const messageData = {
+        msgId: tempMsgId,
         sender: currentUser.value,
         receiver: targetUser.value,
         msgType: mimetype.includes('image') ? 'IMAGE' : 'FILE',

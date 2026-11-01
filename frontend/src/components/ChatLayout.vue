@@ -33,6 +33,9 @@
         :get-display-ip="getDisplayIp"
         :is-message-pinned="isMessagePinned"
         :is-message-topped="isMessageTopped"
+        :selection-mode="selectionMode"
+        :selected-message-ids="selectedIds"
+        :is-selectable-message="isSelectableMessage"
         @pin="toggleMessagePin"
         @top="handleTopMessage"
         @copy="copyItem"
@@ -40,10 +43,26 @@
         @open="handleOpen"
         @download="handleDownload"
         @retry="handleRetry"
+        @start-select="enterSelection"
+        @toggle-select="toggleSelection"
       />
     </div>
 
+    <BatchSelectionBar
+      v-if="selectionMode"
+      :selected-count="selectedCount"
+      :selectable-count="selectableCount"
+      :total-size="selectedTotalSize"
+      :all-selected="allSelected"
+      :some-selected="someSelected"
+      :downloading="batchDownloadLoading || batchSelectionResolving"
+      @toggle-all="toggleSelectAll"
+      @cancel="exitSelection"
+      @download="handleSelectedBatchDownload"
+    />
+
     <ChatFooter
+      v-else
       :loading="isUploading"
       :placeholder="t('chat.inputPlaceholder')"
       v-model="inputValue"
@@ -71,7 +90,9 @@
       @copy-cache-path="copyCachePath(cachePath)"
       @open-cache-path="handleOpenCachePath"
       @open-cache-path-dialog="openCachePathDialog"
+      @open-batch-download="openBatchDownloadDialog"
       @show-changelog="showChangelog"
+      @open-repository="openRepository"
       @open-feedback="openFeedback"
       @clear-local-history="handleClearLocalHistory"
       @clear-server-history="handleClearServerHistory"
@@ -98,6 +119,18 @@
       :saving="cachePathSaving"
       @use-default="applyDefaultCachePath"
       @confirm="confirmCachePathChange"
+    />
+
+    <BatchDownloadDialog
+      v-model="batchDownloadDialogVisible"
+      :attachments="batchAttachments"
+      :loading="batchAttachmentsLoading"
+      :downloading="batchDownloadLoading"
+      :title="t('tools.batchDownloadTitle')"
+      :empty-text="t('batchDownload.empty')"
+      :cancel-text="t('chat.cancel')"
+      :download-text="t('batchDownload.download')"
+      @download="handleBatchDownload"
     />
 
     <PinDrawer
@@ -131,10 +164,12 @@ import PinDrawer from './chat/PinDrawer.vue'
 import ChatHeader from './chat/ChatHeader.vue'
 import TopBar from './chat/TopBar.vue'
 import ChatFooter from './chat/ChatFooter.vue'
+import BatchSelectionBar from './chat/BatchSelectionBar.vue'
 import ToolsDrawer from './chat/ToolsDrawer.vue'
 import QrCodeDialog from './chat/dialogs/QrCodeDialog.vue'
 import InputDialog from './chat/dialogs/InputDialog.vue'
 import CachePathDialog from './chat/dialogs/CachePathDialog.vue'
+import BatchDownloadDialog from './chat/dialogs/BatchDownloadDialog.vue'
 import ChangelogDialog from './chat/dialogs/ChangelogDialog.vue'
 import { changelog } from '../data/changelog.js'
 import { useI18n } from 'vue-i18n'
@@ -160,6 +195,10 @@ import { useMessageDisplay } from '../composables/use-message-display'
 import { useMessageLocation } from '../composables/use-message-location'
 import { useChatTools } from '../composables/use-chat-tools'
 import { useChatKeyboard } from '../composables/use-chat-keyboard'
+import {
+  resolveSelectedAttachmentIds,
+  useBatchSelection
+} from '../composables/use-batch-selection'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -244,6 +283,8 @@ const {
   isConnected,
   connect: connectSocket,
   requestHistory,
+  queryAttachments,
+  requestBatchDownload,
   clearServerHistory,
 } = useSocket({
   currentUser,
@@ -295,6 +336,62 @@ const clearServerHistoryForCurrentSession = () => {
   })
 }
 
+const batchDownloadDialogVisible = ref(false)
+const batchAttachments = ref([])
+const batchAttachmentsLoading = ref(false)
+const batchDownloadLoading = ref(false)
+const batchSelectionResolving = ref(false)
+
+const getChatType = () => (
+  targetUser.value === 'group_chat' ? 'group' : 'private'
+)
+
+const openBatchDownloadDialog = async () => {
+  batchDownloadDialogVisible.value = true
+  batchAttachmentsLoading.value = true
+
+  const result = await queryAttachments({
+    requester: currentUser.value,
+    chatType: getChatType(),
+    targetUser: targetUser.value
+  })
+  batchAttachmentsLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(t('batchDownload.loadFailed'))
+    return
+  }
+
+  batchAttachments.value = result.data.attachments || []
+}
+
+const handleBatchDownload = async (messageIds) => {
+  batchDownloadLoading.value = true
+
+  const result = await requestBatchDownload({
+    requester: currentUser.value,
+    chatType: getChatType(),
+    targetUser: targetUser.value,
+    messageIds
+  })
+  batchDownloadLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('batchDownload.downloadFailed'))
+    return false
+  }
+
+  const link = document.createElement('a')
+  link.href = result.data.downloadUrl
+  link.download = 'ChatTransfer.zip'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  ElMessage.success(t('batchDownload.downloadStarted'))
+  batchDownloadDialogVisible.value = false
+  return true
+}
+
 const {
   toolsDrawerVisible,
   changelogDialogVisible,
@@ -309,6 +406,7 @@ const {
   handleClearLocalHistory,
   handleClearServerHistory,
   openFeedback,
+  openRepository,
 } = useChatTools({
   route,
   cachePathController,
@@ -374,6 +472,23 @@ const {
   parseFileName,
   t,
 })
+
+const {
+  selectionMode,
+  selectedIds,
+  selectableItems,
+  selectedCount,
+  selectableCount,
+  selectedTotalSize,
+  allSelected,
+  someSelected,
+  isSelectableMessage,
+  enterSelection,
+  exitSelection,
+  toggleSelection,
+  toggleSelectAll,
+} = useBatchSelection(bubbleItems, { targetUser })
+
 const {
   qrDialogVisible,
   qrLoading,
@@ -468,6 +583,42 @@ const {
 
 const { scrollToMessage } = useMessageLocation({ t, notify: ElMessage })
 
+const handleSelectedBatchDownload = async () => {
+  const selectedItems = selectableItems.value.filter((item) => selectedIds.value.has(item.key))
+  if (selectedItems.length === 0) return
+
+  batchSelectionResolving.value = true
+  const result = await queryAttachments({
+    requester: currentUser.value,
+    chatType: getChatType(),
+    targetUser: targetUser.value
+  })
+  batchSelectionResolving.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(t('batchDownload.loadFailed'))
+    return
+  }
+
+  const { messageIds, unresolvedItems } = resolveSelectedAttachmentIds(
+    selectedItems,
+    result.data.attachments || []
+  )
+
+  if (unresolvedItems.length > 0 || messageIds.length === 0) {
+    ElMessage.error(t('batchDownload.selectionUnavailable'))
+    return
+  }
+
+  const downloaded = await handleBatchDownload(messageIds)
+  if (downloaded) exitSelection()
+}
+
+const handleChatKeydown = (event) => {
+  if (selectionMode.value) return
+  handleKeydown(event)
+}
+
 const openPinDrawer = () => {
   pinDrawerVisible.value = true
 }
@@ -482,6 +633,13 @@ watch(bubbleItems, () => {
   scrollToBottom()
 }, { deep: true })
 
+watch(selectionMode, async (active) => {
+  if (active) return
+
+  await nextTick()
+  footerRef.value?.registerHistoryNavigation?.(handleHistoryKeydown)
+})
+
 const { initSession } = useChatSession({
   currentUser,
   targetUser,
@@ -495,12 +653,12 @@ const { initSession } = useChatSession({
 onMounted(() => {
   initSession()
   loadSendHistory()
-  document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('keydown', handleChatKeydown)
   footerRef.value?.registerHistoryNavigation?.(handleHistoryKeydown)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('keydown', handleChatKeydown)
   footerRef.value?.unregisterHistoryNavigation?.(handleHistoryKeydown)
 })
 </script>
