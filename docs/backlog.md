@@ -4,6 +4,23 @@ This document records product and engineering work that has been reviewed but is
 
 Status values: `Planned`, `In progress`, `Blocked`, `Done`.
 
+## Multi-room Conversations
+
+- Status: Planned
+- Priority: P0
+- Estimated effort: 6.5-9 engineering days
+- Target: Unify conversations around multi-room support with QR and room-code joining
+
+The full product and engineering proposal is documented in [plan-multi-room-conversations.md](./plan-multi-room-conversations.md). The existing "group chat" concept should be renamed to "room" in the product UI. The current default group chat remains backward compatible as the default room, while new rooms use independent room IDs and room codes.
+
+Key outcomes:
+
+- Users can create multiple rooms for different projects or device groups.
+- New devices can join by QR code or by entering a room code.
+- Messages, files, attachments, presence, and cleanup are isolated per room.
+- The conversation switcher can change rooms without refreshing the page.
+- Legacy default group links and history continue to work.
+
 ## Online Device List and Presence Notices
 
 - Status: In progress
