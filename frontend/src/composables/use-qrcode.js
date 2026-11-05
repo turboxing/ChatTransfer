@@ -9,19 +9,20 @@ export function useQrcode({ targetUser, activeRoom, t, notify }) {
   const msgQrCodeUrl = ref('')
   const msgQrContent = ref('')
 
-  const showQrCode = async () => {
-    const room = activeRoom.value
+  const showQrCode = async (roomOverride = null) => {
+    const room = roomOverride || activeRoom.value
     const roomId = room?.id || targetUser.value || 'group_chat'
     const url = roomId === 'group_chat'
       ? `${window.location.origin}/login?receiver=group_chat`
       : `${window.location.origin}/login?roomId=${encodeURIComponent(roomId)}&code=${encodeURIComponent(room?.code || '')}`
 
+    inviteUrl.value = url
+    inviteRoom.value = room || { id: roomId, name: '' }
+
     qrLoading.value = true
     try {
       const QRCode = await import('qrcode')
       qrCodeUrl.value = await QRCode.default.toDataURL(url, { width: 300, margin: 2 })
-      inviteUrl.value = url
-      inviteRoom.value = room || { id: roomId, name: '' }
     } catch {
       notify?.error(t('chat.getQrFailed'))
     } finally {

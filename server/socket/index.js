@@ -66,6 +66,10 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     const key = `${roomId}:${username}`;
     const timer = setTimeout(() => {
       offlineTimers.delete(key);
+      const currentUser = roomManager.getUser(roomId, username);
+      if (currentUser?.status === roomManager.getOnline() && currentUser.socketIds.size > 0) {
+        return;
+      }
       const result = roomManager.markOffline({ roomId, username });
       if (!result.becameOffline) return;
 

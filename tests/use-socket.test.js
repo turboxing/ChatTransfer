@@ -77,11 +77,13 @@ describe('useSocket', () => {
     handlers.get('user_list_updated')?.forEach((handler) => handler({ users: ['A'] }));
     handlers.get('group_name_updated')?.forEach((handler) => handler({ groupName: 'Team' }));
     handlers.get('reply_group_chat')?.forEach((handler) => handler({ content: 'hello' }));
+    handlers.get('reply_room_chat')?.forEach((handler) => handler({ content: 'room hello' }));
     handlers.get('presence_changed')?.forEach((handler) => handler({ type: 'online', user: { sender: 'B' } }));
 
-    expect(onUserList).toHaveBeenCalledWith(['A']);
+    expect(onUserList).toHaveBeenCalledWith(['A'], undefined);
     expect(onGroupName).toHaveBeenCalledWith('Team');
     expect(onMessage).toHaveBeenCalledWith({ content: 'hello' });
+    expect(onMessage).toHaveBeenCalledWith({ content: 'room hello' });
     expect(onPresenceChanged).toHaveBeenCalledWith({ type: 'online', user: { sender: 'B' } });
   });
 

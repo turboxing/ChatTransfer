@@ -6,8 +6,10 @@
     width="420px"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <div class="invite-content">
-      <div class="room-name">{{ room?.name || t('rooms.default') }}</div>
+    <div class="invite-content" :data-invite-url="inviteUrl">
+      <div class="room-name">
+        {{ room?.id === 'group_chat' ? t('rooms.default') : (room?.name || t('rooms.default')) }}
+      </div>
       <img v-if="qrUrl" :src="qrUrl" class="invite-qr" alt="Room QR Code" />
       <div v-else v-loading="loading" class="invite-placeholder"></div>
 

@@ -54,14 +54,14 @@ export function useSocket({
         return
       }
 
-      onConnect?.();
+      onConnect?.(result.data?.room);
     });
 
     socket.value.on('disconnect', () => {
       isConnected.value = false;
     });
 
-    socket.value.on('user_list_updated', (data) => onUserList?.(data.users || []));
+    socket.value.on('user_list_updated', (data) => onUserList?.(data.users || [], data.roomId));
     socket.value.on('group_name_updated', (data) => onGroupName?.(data.groupName || ''));
     socket.value.on('room_updated', (data) => onRoomUpdated?.(data.room));
     socket.value.on('reply_private_chat', onMessage);

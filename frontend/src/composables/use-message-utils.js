@@ -48,8 +48,12 @@ export function formatTextContent(text) {
 export function useClipboard({ t, notify }) {
   const copyToClipboard = async (text) => {
     if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text)
-      return
+      try {
+        await navigator.clipboard.writeText(text)
+        return
+      } catch (error) {
+        console.warn('Clipboard API failed, falling back to execCommand', error)
+      }
     }
 
     const textarea = document.createElement('textarea')
@@ -60,6 +64,7 @@ export function useClipboard({ t, notify }) {
     textarea.style.top = '0'
     textarea.style.opacity = '0'
     document.body.appendChild(textarea)
+    textarea.focus()
     textarea.select()
     const successful = document.execCommand('copy')
     document.body.removeChild(textarea)

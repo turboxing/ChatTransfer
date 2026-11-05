@@ -60,9 +60,10 @@ class BatchDownloadService {
     this.tokens = new Map();
   }
 
-  async createDownloadToken({ requester, chatType, targetUser, messageIds }) {
+  async createDownloadToken({ requester, roomId, chatType, targetUser, messageIds }) {
     const attachments = await this.historyService.getBatchAttachments({
       requester,
+      roomId,
       chatType,
       targetUser,
       messageIds

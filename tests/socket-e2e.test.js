@@ -61,6 +61,7 @@ function createChatClient(name) {
   socket.userLists = [];
   socket.presenceEvents = [];
   socket.roomMessages = [];
+  socket.roomUpdates = [];
   socket.on('user_list_updated', (data) => {
     socket.userLists.push(data.users || []);
   });
@@ -75,6 +76,9 @@ function createChatClient(name) {
   });
   socket.on('reply_room_chat', (message) => {
     socket.roomMessages.push(message);
+  });
+  socket.on('room_updated', (data) => {
+    socket.roomUpdates.push(data.room);
   });
 
   clients.push(socket);
@@ -386,6 +390,35 @@ describe('Socket.IO multi-client chat', () => {
     reconnect.disconnect();
   });
 
+  it('keeps a user online when they reconnect during the offline debounce window', { timeout: 15000 }, async () => {
+    const observer = createChatClient('ReconnectObserver');
+    await new Promise((resolve) => observer.once('connect', resolve));
+    observer.emit('group_online', 'reconnect-observer', 'Reconnect Observer');
+    await waitFor(() => observer.userLists.length > 0);
+
+    const first = createChatClient('ReconnectFirst');
+    await new Promise((resolve) => first.once('connect', resolve));
+    first.emit('group_online', 'reconnect-device', 'Reconnect Device');
+    await waitFor(() => observer.presenceEvents.some(
+      (event) => event.type === 'online' && event.user.sender === 'reconnect-device'
+    ));
+
+    first.disconnect();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const second = createChatClient('ReconnectSecond');
+    await new Promise((resolve) => second.once('connect', resolve));
+    second.emit('group_online', 'reconnect-device', 'Reconnect Device');
+    await waitFor(() => second.userLists.length > 0);
+
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    expect(observer.presenceEvents.some(
+      (event) => event.type === 'offline' && event.user.sender === 'reconnect-device'
+    )).toBe(false);
+    expect(observer.userLists.at(-1).find((user) => user.sender === 'reconnect-device').status).toBe('ONLINE');
+    observer.disconnect();
+    second.disconnect();
+  });
+
   it('creates rooms, joins by room code, and isolates room messages', { timeout: 15000 }, async () => {
     const host = createChatClient('RoomHost');
     await new Promise((resolve) => host.once('connect', resolve));
@@ -452,8 +485,38 @@ describe('Socket.IO multi-client chat', () => {
     expect(defaultHistory.data.messages.map((message) => message.content)).toContain('default-room-only');
     expect(defaultHistory.data.messages.map((message) => message.content)).not.toContain('project-a-only');
 
+    const renamed = await emitWithAck(host, 'room_update_name', {
+      roomId: room.id,
+      name: 'Renamed Project A'
+    });
+    expect(renamed.code).toBe(0);
+    await waitFor(() => joiner.roomUpdates.some((item) => item.id === room.id && item.name === 'Renamed Project A'));
+    expect(joiner.roomUpdates.at(-1).name).toBe('Renamed Project A');
+
+    const filesDir = path.join(historyCachePath, 'files');
+    fs.mkdirSync(filesDir, { recursive: true });
+    fs.writeFileSync(path.join(filesDir, 'room-file.txt'), 'room file', 'utf8');
+    await emitWithAck(host, 'room_chat', {
+      sender: 'room-host',
+      roomId: room.id,
+      msgType: 'FILE',
+      fileName: 'room-file.txt',
+      fileSize: 9,
+      fileUrl: 'http://127.0.0.1:55555/files/room-file.txt'
+    });
+    const roomAttachments = await emitWithAck(joiner, 'attachment_query', { roomId: room.id });
+    expect(roomAttachments.code).toBe(0);
+    expect(roomAttachments.data.attachments.map((item) => item.fileName)).toContain('room-file.txt');
+    const roomDownload = await emitWithAck(joiner, 'attachment_download', {
+      roomId: room.id,
+      messageIds: roomAttachments.data.attachments.map((item) => item.msgId)
+    });
+    expect(roomDownload.code).toBe(0);
+
     const rooms = await emitWithAck(joiner, 'room_list', {});
-    expect(rooms.data.some((item) => item.id === room.id)).toBe(true);
+    const listedRoom = rooms.data.find((item) => item.id === room.id);
+    expect(listedRoom).toBeTruthy();
+    expect(listedRoom.onlineCount).toBe(2);
     host.disconnect();
     joiner.disconnect();
   });

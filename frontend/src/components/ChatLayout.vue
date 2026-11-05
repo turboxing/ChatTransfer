@@ -14,7 +14,7 @@
       @show-qr="showRoomInvite"
       @show-tools="showTools"
       @open-online-users="onlineUsersDrawerVisible = true"
-      @open-conversations="conversationsDrawerVisible = true"
+      @open-conversations="openConversationsDrawer"
     />
 
     <TopBar
@@ -392,13 +392,24 @@ const {
   myNickname,
   activeRoomId: targetUser,
   pendingRoomCode,
-  onConnect: () => {
+  onConnect: (room) => {
+    if (room) {
+      handleRoomUpdated(room)
+      if (room.id === targetUser.value) {
+        groupName.value = room.id === 'group_chat' ? '' : room.name
+      }
+    }
     fetchCachePath()
     loadServerHistory()
     refreshRooms()
   },
-  onUserList: (users) => {
+  onUserList: (users, roomId) => {
     onlineUsers.value = users
+    const activeRoom = rooms.value.find((room) => room.id === (roomId || targetUser.value))
+    if (activeRoom) {
+      activeRoom.onlineCount = users.filter((user) => user.status === 'ONLINE').length
+      rooms.value = [...rooms.value]
+    }
   },
   onGroupName: (name) => {
     if (!name) return
@@ -435,11 +446,18 @@ function handleRoomUpdated(room) {
     rooms.value[index] = { ...rooms.value[index], ...room }
   }
 
-  if (room.id === targetUser.value) groupName.value = room.name
+  if (room.id === targetUser.value) {
+    groupName.value = room.id === 'group_chat' ? '' : room.name
+  }
 }
 
 function handleRoomError(result) {
   ElMessage.error(result.message || t('rooms.joinFailed'))
+}
+
+const openConversationsDrawer = () => {
+  conversationsDrawerVisible.value = true
+  refreshRooms()
 }
 
 const loadServerHistory = async () => {
@@ -617,6 +635,7 @@ const {
 const {
   qrLoading,
   qrCodeUrl,
+  inviteUrl,
   msgQrDialogVisible,
   msgQrCodeUrl,
   msgQrContent,
@@ -667,8 +686,15 @@ const handleRoomInviteCopied = (type) => {
 }
 
 const showRoomInvite = async () => {
+  if (
+    targetUser.value !== 'group_chat' &&
+    (!activeRoom.value?.code || !rooms.value.some((room) => room.id === targetUser.value))
+  ) {
+    await refreshRooms()
+  }
+  inviteRoom.value = activeRoom.value
   roomInviteDialogVisible.value = true
-  await showQrCode()
+  await showQrCode(inviteRoom.value)
 }
 
 const switchRoom = async (room, options = {}) => {
@@ -701,9 +727,10 @@ const switchRoom = async (room, options = {}) => {
   }
 
   const joinedRoom = result.data?.room
-  if (joinedRoom) handleRoomUpdated({ ...joinedRoom, onlineCount: 0 })
+  if (joinedRoom) handleRoomUpdated(joinedRoom)
 
   await loadServerHistory()
+  await refreshRooms()
   await scrollToBottom()
   return true
 }
@@ -723,7 +750,7 @@ const handleCreateRoom = async (name) => {
   createRoomDialogVisible.value = false
   inviteRoom.value = room
   roomInviteDialogVisible.value = true
-  await showQrCode()
+  await showQrCode(room)
   await switchRoom(room.id)
 }
 
@@ -760,7 +787,7 @@ const handleRegenerateRoomCode = async () => {
 
   inviteRoom.value = result.data.room
   handleRoomUpdated(result.data.room)
-  await showQrCode()
+  await showQrCode(inviteRoom.value)
 }
 
 const {
