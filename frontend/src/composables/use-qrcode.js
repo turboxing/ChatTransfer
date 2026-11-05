@@ -1,27 +1,27 @@
 import { ref } from 'vue'
 
-export function useQrcode({ targetUser, t, notify }) {
-  const qrDialogVisible = ref(false)
+export function useQrcode({ targetUser, activeRoom, t, notify }) {
   const qrLoading = ref(false)
   const qrCodeUrl = ref('')
+  const inviteUrl = ref('')
+  const inviteRoom = ref(null)
   const msgQrDialogVisible = ref(false)
   const msgQrCodeUrl = ref('')
   const msgQrContent = ref('')
 
   const showQrCode = async () => {
-    qrDialogVisible.value = true
-    if (qrCodeUrl.value) return
+    const room = activeRoom.value
+    const roomId = room?.id || targetUser.value || 'group_chat'
+    const url = roomId === 'group_chat'
+      ? `${window.location.origin}/login?receiver=group_chat`
+      : `${window.location.origin}/login?roomId=${encodeURIComponent(roomId)}&code=${encodeURIComponent(room?.code || '')}`
 
     qrLoading.value = true
     try {
-      const receiver = targetUser.value || 'group_chat'
-      const response = await fetch(`/getIndexInfo2?receiver=${receiver}`)
-      const result = await response.json()
-      if (result.code === 0 && result.data.lists && result.data.lists.length > 0) {
-        qrCodeUrl.value = result.data.lists[0].qrurl
-      } else {
-        notify?.warning(t('chat.cannotGetQr'))
-      }
+      const QRCode = await import('qrcode')
+      qrCodeUrl.value = await QRCode.default.toDataURL(url, { width: 300, margin: 2 })
+      inviteUrl.value = url
+      inviteRoom.value = room || { id: roomId, name: '' }
     } catch {
       notify?.error(t('chat.getQrFailed'))
     } finally {
@@ -57,9 +57,10 @@ export function useQrcode({ targetUser, t, notify }) {
   }
 
   return {
-    qrDialogVisible,
     qrLoading,
     qrCodeUrl,
+    inviteUrl,
+    inviteRoom,
     msgQrDialogVisible,
     msgQrCodeUrl,
     msgQrContent,

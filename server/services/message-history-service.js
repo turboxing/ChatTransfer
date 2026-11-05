@@ -8,6 +8,8 @@ const MAX_LIMIT = 200;
 const MAX_BATCH_ATTACHMENT_COUNT = 200;
 const MAX_BATCH_ATTACHMENT_TOTAL_SIZE = 2 * 1024 * 1024 * 1024;
 const GROUP_SESSION_ID = 'group';
+const DEFAULT_ROOM_ID = 'group_chat';
+const ROOM_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 class MessageHistoryService {
   constructor({ cachePath, databasePath }) {
@@ -64,11 +66,13 @@ class MessageHistoryService {
   async saveMessageInTransaction(message) {
 
     const normalized = this.normalizeMessage(message);
-    const conversation = this.getConversation({
-      chatType: normalized.receiver === 'group_chat' ? 'group' : 'private',
-      requester: normalized.sender,
-      targetUser: normalized.receiver
-    });
+    const conversation = normalized.roomId
+      ? this.getRoomConversation(normalized.roomId)
+      : this.getConversation({
+        chatType: normalized.receiver === 'group_chat' ? 'group' : 'private',
+        requester: normalized.sender,
+        targetUser: normalized.receiver
+      });
 
     await this.run('BEGIN IMMEDIATE');
 
@@ -117,10 +121,12 @@ class MessageHistoryService {
     }
   }
 
-  async queryHistory({ requester, chatType, targetUser, cursor = null, limit = DEFAULT_LIMIT }) {
+  async queryHistory({ requester, roomId, chatType, targetUser, cursor = null, limit = DEFAULT_LIMIT }) {
     this.ensureOpened();
 
-    const conversation = this.getConversation({ requester, chatType, targetUser });
+    const conversation = roomId
+      ? await this.getVerifiedRoomConversation(roomId, requester)
+      : this.getConversation({ requester, chatType, targetUser });
     const queryLimit = this.normalizeLimit(limit);
     const normalizedCursor = this.normalizeCursor(cursor);
     const direction = normalizedCursor === null ? 'DESC' : 'ASC';
@@ -149,10 +155,12 @@ class MessageHistoryService {
     };
   }
 
-  async queryAttachments({ requester, chatType, targetUser }) {
+  async queryAttachments({ requester, roomId, chatType, targetUser }) {
     this.ensureOpened();
 
-    const conversation = this.getConversation({ requester, chatType, targetUser });
+    const conversation = roomId
+      ? await this.getVerifiedRoomConversation(roomId, requester)
+      : this.getConversation({ requester, chatType, targetUser });
     const rows = await this.all(
       `SELECT seq, id, sender_id, sender_nickname, message_type, create_time, created_at,
               file_path, file_name, file_size, file_mime_type
@@ -191,7 +199,7 @@ class MessageHistoryService {
     return { attachments };
   }
 
-  async getBatchAttachments({ requester, chatType, targetUser, messageIds }) {
+  async getBatchAttachments({ requester, roomId, chatType, targetUser, messageIds }) {
     this.ensureOpened();
 
     if (!Array.isArray(messageIds) || messageIds.length === 0) {
@@ -204,7 +212,12 @@ class MessageHistoryService {
       throw new Error(`Batch download supports at most ${MAX_BATCH_ATTACHMENT_COUNT} files`);
     }
 
-    const { attachments } = await this.queryAttachments({ requester, chatType, targetUser });
+    const { attachments } = await this.queryAttachments({
+      requester,
+      roomId,
+      chatType,
+      targetUser
+    });
     const attachmentMap = new Map(attachments.map((attachment) => [attachment.msgId, attachment]));
     const selectedAttachments = [];
 
@@ -225,19 +238,22 @@ class MessageHistoryService {
     return selectedAttachments;
   }
 
-  clearHistory({ requester, chatType, targetUser }) {
+  clearHistory({ requester, roomId, chatType, targetUser }) {
     this.ensureOpened();
 
     return this.enqueueWrite(() => this.clearHistoryInTransaction({
       requester,
+      roomId,
       chatType,
       targetUser
     }));
   }
 
-  async clearHistoryInTransaction({ requester, chatType, targetUser }) {
+  async clearHistoryInTransaction({ requester, roomId, chatType, targetUser }) {
 
-    const conversation = this.getConversation({ requester, chatType, targetUser });
+    const conversation = roomId
+      ? await this.getVerifiedRoomConversation(roomId, requester)
+      : this.getConversation({ requester, chatType, targetUser });
     const files = await this.all(
       'SELECT DISTINCT file_path FROM messages WHERE session_id = ? AND file_path IS NOT NULL',
       [conversation.sessionId]
@@ -355,6 +371,31 @@ class MessageHistoryService {
       last_error TEXT,
       created_at INTEGER NOT NULL
     )`);
+    await this.run(`CREATE TABLE IF NOT EXISTS rooms (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      code TEXT UNIQUE,
+      created_by TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    )`);
+    await this.run(`CREATE TABLE IF NOT EXISTS room_participants (
+      room_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      nickname TEXT,
+      joined_at INTEGER NOT NULL,
+      last_seen_at INTEGER,
+      PRIMARY KEY (room_id, user_id),
+      FOREIGN KEY (room_id) REFERENCES rooms(id)
+    )`);
+    await this.run(`CREATE INDEX IF NOT EXISTS idx_room_participants_user
+      ON room_participants(user_id, joined_at)`);
+    await this.run(
+      `INSERT OR IGNORE INTO rooms(id, name, code, created_by, status, created_at, updated_at)
+       VALUES (?, ?, NULL, NULL, 'active', ?, ?)`,
+      [DEFAULT_ROOM_ID, 'Default Room', Date.now(), Date.now()]
+    );
   }
 
   getConversation({ requester, chatType, targetUser }) {
@@ -392,6 +433,213 @@ class MessageHistoryService {
       chatType: 'private',
       participants
     };
+  }
+
+  getRoomConversation(roomId) {
+    if (!this.isValidRoomId(roomId)) {
+      throw new Error('Invalid room ID');
+    }
+
+    return {
+      sessionId: roomId === DEFAULT_ROOM_ID ? GROUP_SESSION_ID : `room:${roomId}`,
+      chatType: 'room',
+      roomId,
+      participants: []
+    };
+  }
+
+  async getVerifiedRoomConversation(roomId, requester) {
+    const conversation = this.getRoomConversation(roomId);
+    const room = await this.getRoom(roomId);
+    if (!room) throw new Error('Room not found');
+
+    if (roomId !== DEFAULT_ROOM_ID) {
+      const participant = await this.get(
+        'SELECT user_id FROM room_participants WHERE room_id = ? AND user_id = ?',
+        [roomId, requester]
+      );
+      if (!participant) throw new Error('Room access denied');
+    }
+
+    return conversation;
+  }
+
+  async createRoom({ name, createdBy }) {
+    this.ensureOpened();
+
+    const roomName = String(name || '').trim();
+    if (!roomName || roomName.length > 60) {
+      throw new Error('Invalid room name');
+    }
+
+    const now = Date.now();
+    const room = {
+      id: crypto.randomUUID(),
+      name: roomName,
+      code: null,
+      createdBy: createdBy || null,
+      status: 'active',
+      createdAt: now,
+      updatedAt: now
+    };
+
+    return this.enqueueWrite(async () => {
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        room.code = this.generateRoomCode();
+
+        try {
+          await this.run(
+            `INSERT INTO rooms(id, name, code, created_by, status, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+              room.id,
+              room.name,
+              room.code,
+              room.createdBy,
+              room.status,
+              room.createdAt,
+              room.updatedAt
+            ]
+          );
+          return this.mapRoom(room);
+        } catch (error) {
+          if (!String(error.message || '').includes('UNIQUE constraint failed: rooms.code')) {
+            throw error;
+          }
+        }
+      }
+
+      throw new Error('Unable to generate a unique room code');
+    });
+  }
+
+  async getRoom(roomId) {
+    this.ensureOpened();
+    if (!this.isValidRoomId(roomId)) return null;
+
+    const row = await this.get(
+      'SELECT * FROM rooms WHERE id = ? AND status = ?',
+      [roomId, 'active']
+    );
+    return row ? this.mapRoom(row) : null;
+  }
+
+  async getRoomByCode(code) {
+    this.ensureOpened();
+    const normalizedCode = this.normalizeRoomCode(code);
+    if (!normalizedCode) return null;
+
+    const row = await this.get(
+      'SELECT * FROM rooms WHERE code = ? AND status = ?',
+      [normalizedCode, 'active']
+    );
+    return row ? this.mapRoom(row) : null;
+  }
+
+  async joinRoom({ roomId, code, userId, nickname = '' }) {
+    this.ensureOpened();
+
+    if (!this.isValidUserId(userId)) throw new Error('Invalid user');
+    const room = await this.getRoom(roomId);
+    if (!room) throw new Error('Room not found');
+
+    const participant = await this.get(
+      'SELECT user_id FROM room_participants WHERE room_id = ? AND user_id = ?',
+      [room.id, userId]
+    );
+    const normalizedCode = this.normalizeRoomCode(code);
+
+    if (room.id !== DEFAULT_ROOM_ID && !participant) {
+      if (!normalizedCode) throw new Error('Room code required');
+      if (normalizedCode !== room.code) throw new Error('Invalid room code');
+    } else if (normalizedCode && room.code && normalizedCode !== room.code) {
+      throw new Error('Invalid room code');
+    }
+
+    const now = Date.now();
+    await this.enqueueWrite(() => this.run(
+      `INSERT INTO room_participants(room_id, user_id, nickname, joined_at, last_seen_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(room_id, user_id) DO UPDATE SET
+         nickname = excluded.nickname,
+         last_seen_at = excluded.last_seen_at`,
+      [room.id, userId, nickname || null, now, now]
+    ));
+
+    return room;
+  }
+
+  async listRoomsForUser(userId) {
+    this.ensureOpened();
+    if (!this.isValidUserId(userId)) throw new Error('Invalid user');
+
+    const rows = await this.all(
+      `SELECT r.*, p.joined_at, p.last_seen_at
+       FROM rooms r
+       INNER JOIN room_participants p ON p.room_id = r.id
+       WHERE p.user_id = ? AND r.status = 'active'
+       ORDER BY p.last_seen_at DESC, p.joined_at DESC`,
+      [userId]
+    );
+
+    return Promise.all(rows.map(async (row) => {
+      const room = this.mapRoom(row);
+      const session = this.getRoomConversation(room.id);
+      const lastMessage = await this.get(
+        `SELECT content, message_type, create_time, created_at
+         FROM messages
+         WHERE session_id = ?
+         ORDER BY seq DESC
+         LIMIT 1`,
+        [session.sessionId]
+      );
+
+      return {
+        ...room,
+        joinedAt: row.joined_at,
+        lastSeenAt: row.last_seen_at,
+        lastMessage: lastMessage ? {
+          content: lastMessage.content || '',
+          msgType: lastMessage.message_type,
+          createTime: lastMessage.create_time,
+          createdAt: lastMessage.created_at
+        } : null
+      };
+    }));
+  }
+
+  async updateRoomName({ roomId, name }) {
+    this.ensureOpened();
+
+    const roomName = String(name || '').trim();
+    if (!roomName || roomName.length > 60) throw new Error('Invalid room name');
+
+    const room = await this.getRoom(roomId);
+    if (!room) throw new Error('Room not found');
+
+    const updatedAt = Date.now();
+    await this.enqueueWrite(() => this.run(
+      'UPDATE rooms SET name = ?, updated_at = ? WHERE id = ?',
+      [roomName, updatedAt, roomId]
+    ));
+
+    return { ...room, name: roomName, updatedAt };
+  }
+
+  async regenerateRoomCode({ roomId }) {
+    this.ensureOpened();
+
+    const room = await this.getRoom(roomId);
+    if (!room) throw new Error('Room not found');
+
+    const code = this.generateRoomCode();
+    const updatedAt = Date.now();
+    await this.enqueueWrite(() => this.run(
+      'UPDATE rooms SET code = ?, updated_at = ? WHERE id = ?',
+      [code, updatedAt, roomId]
+    ));
+
+    return { ...room, code, updatedAt };
   }
 
   normalizeMessage(message) {
@@ -517,6 +765,33 @@ class MessageHistoryService {
     return typeof value === 'string' && value.trim().length > 0 && value.length <= 256;
   }
 
+  isValidRoomId(value) {
+    return value === DEFAULT_ROOM_ID || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
+  generateRoomCode() {
+    return Array.from(
+      { length: 8 },
+      () => ROOM_CODE_ALPHABET[crypto.randomInt(ROOM_CODE_ALPHABET.length)]
+    ).join('');
+  }
+
+  normalizeRoomCode(value) {
+    return String(value || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  }
+
+  mapRoom(row) {
+    return {
+      id: row.id,
+      name: row.name,
+      code: row.code,
+      createdBy: row.created_by,
+      status: row.status,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
   normalizeLimit(limit) {
     const value = Number(limit);
     if (!Number.isFinite(value) || value <= 0) return DEFAULT_LIMIT;
@@ -574,5 +849,6 @@ class MessageHistoryService {
 
 module.exports = {
   MessageHistoryService,
-  GROUP_SESSION_ID
+  GROUP_SESSION_ID,
+  DEFAULT_ROOM_ID
 };

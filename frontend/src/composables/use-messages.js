@@ -5,15 +5,10 @@ export function useMessages({ currentUser, targetUser }) {
   const historyCursor = ref(null);
 
   const isSessionMessage = (message) => {
-    if (targetUser.value === 'group_chat') {
-      return message.receiver === 'group_chat';
-    }
-
-    return (
-      (message.sender === currentUser.value && message.receiver === targetUser.value) ||
-      (message.sender === targetUser.value && message.receiver === currentUser.value)
-    );
+    return message.receiver === targetUser.value;
   };
+
+  const getStorageKey = () => `im_chat_record:${targetUser.value || 'group_chat'}`;
 
   const loadHistory = () => {
     rawMessages.value = [];
@@ -22,7 +17,8 @@ export function useMessages({ currentUser, targetUser }) {
 
   const saveMessage = (message) => {
     try {
-      const records = JSON.parse(localStorage.getItem('im_chat_record') || '[]');
+      const storageKey = getStorageKey();
+      const records = JSON.parse(localStorage.getItem(storageKey) || '[]');
       const index = records.findIndex((item) => item.msgId === message.msgId);
 
       if (index > -1) {
@@ -31,7 +27,7 @@ export function useMessages({ currentUser, targetUser }) {
         records.push(message);
       }
 
-      localStorage.setItem('im_chat_record', JSON.stringify(records));
+      localStorage.setItem(storageKey, JSON.stringify(records));
     } catch (error) {
       console.error(error);
     }
@@ -39,13 +35,14 @@ export function useMessages({ currentUser, targetUser }) {
 
   const clearHistory = () => {
     try {
-      const records = JSON.parse(localStorage.getItem('im_chat_record') || '[]');
+      const storageKey = getStorageKey();
+      const records = JSON.parse(localStorage.getItem(storageKey) || '[]');
       const remainingRecords = records.filter((message) => !isSessionMessage(message));
 
       if (remainingRecords.length > 0) {
-        localStorage.setItem('im_chat_record', JSON.stringify(remainingRecords));
+        localStorage.setItem(storageKey, JSON.stringify(remainingRecords));
       } else {
-        localStorage.removeItem('im_chat_record');
+        localStorage.removeItem(storageKey);
       }
     } catch (error) {
       console.error(error);

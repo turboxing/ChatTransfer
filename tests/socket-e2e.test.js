@@ -60,6 +60,7 @@ function createChatClient(name) {
   socket.messages = [];
   socket.userLists = [];
   socket.presenceEvents = [];
+  socket.roomMessages = [];
   socket.on('user_list_updated', (data) => {
     socket.userLists.push(data.users || []);
   });
@@ -71,6 +72,9 @@ function createChatClient(name) {
   });
   socket.on('presence_changed', (event) => {
     socket.presenceEvents.push(event);
+  });
+  socket.on('reply_room_chat', (message) => {
+    socket.roomMessages.push(message);
   });
 
   clients.push(socket);
@@ -380,5 +384,77 @@ describe('Socket.IO multi-client chat', () => {
     expect(latestUser).toMatchObject({ status: 'ONLINE', nickname: 'Presence Device' });
     observer.disconnect();
     reconnect.disconnect();
+  });
+
+  it('creates rooms, joins by room code, and isolates room messages', { timeout: 15000 }, async () => {
+    const host = createChatClient('RoomHost');
+    await new Promise((resolve) => host.once('connect', resolve));
+    await emitWithAck(host, 'room_online', {
+      roomId: 'group_chat',
+      username: 'room-host',
+      nickname: 'Room Host'
+    });
+
+    const created = await emitWithAck(host, 'room_create', { name: 'Project A' });
+    expect(created.code).toBe(0);
+    const room = created.data.room;
+    expect(room.id).toMatch(/^[0-9a-f-]+$/i);
+    expect(room.code).toHaveLength(8);
+    await emitWithAck(host, 'room_online', {
+      roomId: room.id,
+      username: 'room-host',
+      nickname: 'Room Host'
+    });
+
+    const joiner = createChatClient('RoomJoiner');
+    await new Promise((resolve) => joiner.once('connect', resolve));
+    await emitWithAck(joiner, 'room_online', {
+      roomId: 'group_chat',
+      username: 'room-joiner',
+      nickname: 'Room Joiner'
+    });
+
+    const denied = await emitWithAck(joiner, 'room_join_by_code', { code: 'WRONG234' });
+    expect(denied.code).toBe(-1);
+
+    const joined = await emitWithAck(joiner, 'room_join_by_code', { code: room.code });
+    expect(joined.code).toBe(0);
+    await emitWithAck(joiner, 'room_online', {
+      roomId: room.id,
+      username: 'room-joiner',
+      nickname: 'Room Joiner'
+    });
+
+    const roomMessage = new Promise((resolve) => joiner.once('reply_room_chat', resolve));
+    await emitWithAck(host, 'room_chat', {
+      sender: 'room-host',
+      roomId: room.id,
+      msgType: 'TEXT',
+      content: 'project-a-only'
+    });
+    await roomMessage;
+
+    const defaultMessage = await emitWithAck(host, 'group_chat', {
+      sender: 'room-host',
+      receiver: 'group_chat',
+      msgType: 'TEXT',
+      content: 'default-room-only'
+    });
+
+    expect(defaultMessage.content).toBe('default-room-only');
+    expect(joiner.roomMessages.map((message) => message.content)).toEqual(['project-a-only']);
+
+    const roomHistory = await emitWithAck(joiner, 'history_query', { roomId: room.id });
+    expect(roomHistory.code).toBe(0);
+    expect(roomHistory.data.messages.map((message) => message.content)).toEqual(['project-a-only']);
+
+    const defaultHistory = await emitWithAck(host, 'history_query', { roomId: 'group_chat' });
+    expect(defaultHistory.data.messages.map((message) => message.content)).toContain('default-room-only');
+    expect(defaultHistory.data.messages.map((message) => message.content)).not.toContain('project-a-only');
+
+    const rooms = await emitWithAck(joiner, 'room_list', {});
+    expect(rooms.data.some((item) => item.id === room.id)).toBe(true);
+    host.disconnect();
+    joiner.disconnect();
   });
 });

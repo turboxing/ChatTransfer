@@ -37,7 +37,11 @@ router.get('/getIndexInfo', (req, res) => {
 
 router.get('/getIndexInfo2', (req, res) => {
   const homeUrl = getRequestBaseUrl(req);
-  const loginUrl = `${homeUrl}/login?receiver=${req.query.receiver || 'group_chat'}`;
+  const roomId = req.query.roomId;
+  const roomCode = req.query.code;
+  const loginUrl = roomId && roomId !== 'group_chat'
+    ? `${homeUrl}/login?roomId=${encodeURIComponent(roomId)}&code=${encodeURIComponent(roomCode || '')}`
+    : `${homeUrl}/login?receiver=${req.query.receiver || 'group_chat'}`;
 
   res.send({
     code: 0,
@@ -51,7 +55,11 @@ router.get('/getIndexInfo2', (req, res) => {
 router.get('/scanLogin', (req, res) => {
   const homeUrl = getRequestBaseUrl(req);
   const receiver = req.query.receiver || 'group_chat';
-  const targetUrl = `${homeUrl}/chat?sender=${req.query.sender}&receiver=${receiver}`;
+  const roomId = req.query.roomId;
+  const roomCode = req.query.code;
+  const targetUrl = roomId && roomId !== 'group_chat'
+    ? `${homeUrl}/chat?sender=${req.query.sender}&roomId=${encodeURIComponent(roomId)}&code=${encodeURIComponent(roomCode || '')}`
+    : `${homeUrl}/chat?sender=${req.query.sender}&receiver=${receiver}`;
 
   res.send({
     code: 0,

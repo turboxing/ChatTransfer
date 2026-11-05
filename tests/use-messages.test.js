@@ -7,7 +7,7 @@ describe('useMessages', () => {
   });
 
   it('resets local display before server history is loaded', () => {
-    localStorage.setItem('im_chat_record', JSON.stringify([
+    localStorage.setItem('im_chat_record:group_chat', JSON.stringify([
       { msgId: '1', sender: 'A', receiver: 'B' },
       { msgId: '2', sender: 'B', receiver: 'A' },
       { msgId: '3', sender: 'C', receiver: 'A' },
@@ -22,7 +22,7 @@ describe('useMessages', () => {
   });
 
   it('applies server history and deduplicates messages', () => {
-    localStorage.setItem('im_chat_record', JSON.stringify([
+    localStorage.setItem('im_chat_record:B', JSON.stringify([
       { msgId: 'local-1', sender: 'A', receiver: 'B' }
     ]));
 
@@ -59,14 +59,14 @@ describe('useMessages', () => {
     saveMessage({ msgId: '1', status: 'sending' });
     saveMessage({ msgId: '1', status: 'success' });
 
-    const records = JSON.parse(localStorage.getItem('im_chat_record'));
+    const records = JSON.parse(localStorage.getItem('im_chat_record:B'));
     expect(records).toHaveLength(1);
     expect(records[0].status).toBe('success');
     expect(rawMessages.value).toHaveLength(0);
   });
 
   it('clears only the active session from local history', () => {
-    localStorage.setItem('im_chat_record', JSON.stringify([
+    localStorage.setItem('im_chat_record:B', JSON.stringify([
       { msgId: '1', sender: 'A', receiver: 'B' },
       { msgId: '2', sender: 'B', receiver: 'A' },
       { msgId: '3', sender: 'C', receiver: 'A' },
@@ -80,8 +80,8 @@ describe('useMessages', () => {
     rawMessages.value = [{ msgId: '1' }];
     clearHistory();
 
-    const records = JSON.parse(localStorage.getItem('im_chat_record'));
-    expect(records.map((message) => message.msgId)).toEqual(['3', '4']);
+    const records = JSON.parse(localStorage.getItem('im_chat_record:B'));
+    expect(records.map((message) => message.msgId)).toEqual(['2', '3', '4']);
     expect(rawMessages.value).toHaveLength(0);
   });
 });

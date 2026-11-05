@@ -4,16 +4,17 @@
       :group-name="displayGroupName"
       :online-count="onlineCount"
       :is-connected="isConnected"
-      :show-online-count="targetUser === 'group_chat'"
+      :show-online-count="!!targetUser"
       :edit-group-name-title="t('chat.editGroupName')"
       :online-text="t('chat.online')"
       :offline-text="t('chat.offline')"
       :online-count-text="t('chat.onlineCount', { count: onlineCount })"
       @edit-group-name="openGroupNameEditor"
       @open-pin-drawer="openPinDrawer"
-      @show-qr="showQrCode"
+      @show-qr="showRoomInvite"
       @show-tools="showTools"
       @open-online-users="onlineUsersDrawerVisible = true"
+      @open-conversations="conversationsDrawerVisible = true"
     />
 
     <TopBar
@@ -80,7 +81,7 @@
       :language-setting="languageSetting"
       :my-nickname="myNickname"
       :group-name="groupName"
-      :show-group-name="targetUser === 'group_chat'"
+      :show-group-name="!!targetUser"
       :cache-path="cachePath"
       :cache-path-customized="cachePathCustomized"
       :copyright="copyright"
@@ -88,7 +89,7 @@
       @update:language-setting="handleLanguageChange"
       @edit-nickname="openNicknameEditor"
       @edit-group-name="openGroupNameEditor"
-      @show-qr="showQrCode"
+      @show-qr="showRoomInvite"
       @copy-cache-path="copyCachePath(cachePath)"
       @open-cache-path="handleOpenCachePath"
       @open-cache-path-dialog="openCachePathDialog"
@@ -99,9 +100,6 @@
       @clear-local-history="handleClearLocalHistory"
       @clear-server-history="handleClearServerHistory"
     />
-
-    <QrCodeDialog v-model="qrDialogVisible" :loading="qrLoading" :url="qrCodeUrl"
-      :title="t('tools.joinGroupQrTitle')" :placeholder="t('chat.cannotGetQr')" />
 
     <QrCodeDialog v-model="msgQrDialogVisible" :url="msgQrCodeUrl" :content="msgQrContent"
       :title="t('chat.messageQrTitle')" />
@@ -161,17 +159,53 @@
       :users="onlineUsers"
       :current-user="currentUser"
     />
+
+    <ConversationDrawer
+      v-model="conversationsDrawerVisible"
+      :rooms="rooms"
+      :active-room-id="targetUser"
+      :loading="roomsLoading"
+      @select="switchRoom"
+      @create="createRoomDialogVisible = true"
+      @join="joinRoomDialogVisible = true"
+    />
+
+    <CreateRoomDialog
+      v-model="createRoomDialogVisible"
+      :loading="roomActionLoading"
+      @create="handleCreateRoom"
+    />
+
+    <JoinRoomDialog
+      v-model="joinRoomDialogVisible"
+      :loading="roomActionLoading"
+      @join="handleJoinRoomByCode"
+    />
+
+    <RoomInviteDialog
+      v-model="roomInviteDialogVisible"
+      :room="inviteRoom"
+      :qr-url="qrCodeUrl"
+      :invite-url="inviteUrl"
+      :regenerating="roomActionLoading"
+      @regenerate="handleRegenerateRoomCode"
+      @copied="handleRoomInviteCopied"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { Attachments } from 'vue-element-plus-x'
 import MessageList from './chat/MessageList.vue'
 import PinDrawer from './chat/PinDrawer.vue'
 import ChatHeader from './chat/ChatHeader.vue'
 import OnlineUsersDrawer from './chat/OnlineUsersDrawer.vue'
+import ConversationDrawer from './chat/ConversationDrawer.vue'
 import PresenceNoticeList from './chat/PresenceNoticeList.vue'
+import CreateRoomDialog from './chat/dialogs/CreateRoomDialog.vue'
+import JoinRoomDialog from './chat/dialogs/JoinRoomDialog.vue'
+import RoomInviteDialog from './chat/dialogs/RoomInviteDialog.vue'
 import TopBar from './chat/TopBar.vue'
 import ChatFooter from './chat/ChatFooter.vue'
 import BatchSelectionBar from './chat/BatchSelectionBar.vue'
@@ -195,10 +229,7 @@ import { parseFileName } from '../composables/use-message-utils'
 import { useSendHistory } from '../composables/use-send-history'
 import { useMessageEmitter } from '../composables/use-message-emitter'
 import { useMessageActions } from '../composables/use-message-actions'
-import {
-  GROUPNAME_STORAGE_KEY,
-  useIdentityEditor
-} from '../composables/use-identity-editor'
+import { useIdentityEditor } from '../composables/use-identity-editor'
 import { useChatSession } from '../composables/use-chat-session'
 import { useVersionInfo } from '../composables/use-version-info'
 import { useMessageDisplay } from '../composables/use-message-display'
@@ -217,6 +248,7 @@ const footerRef = ref(null)
 const inputValue = ref('')
 const currentUser = ref('')
 const targetUser = ref('')
+const pendingRoomCode = ref(null)
 const scrollContainer = ref(null)
 const messageListRef = ref(null)
 
@@ -224,6 +256,21 @@ const myNickname = ref('')
 const groupName = ref('')
 const onlineUsers = ref([])
 const onlineUsersDrawerVisible = ref(false)
+const rooms = ref([])
+const roomsLoading = ref(false)
+const conversationsDrawerVisible = ref(false)
+const createRoomDialogVisible = ref(false)
+const joinRoomDialogVisible = ref(false)
+const roomInviteDialogVisible = ref(false)
+const inviteRoom = ref(null)
+const roomActionLoading = ref(false)
+const roomDrafts = new Map()
+const activeRoom = computed(() => (
+  rooms.value.find((room) => room.id === targetUser.value) || {
+    id: targetUser.value,
+    name: groupName.value
+  }
+))
 const presenceNotices = ref([])
 const presenceNoticeTimers = new Map()
 const {
@@ -257,13 +304,13 @@ const cachePathController = {
 
 const handleIncomingMessage = (data) => {
   console.log('收到消息:', data)
-  const isGroupMessage = data.receiver === 'group_chat' && targetUser.value === 'group_chat'
+  const isRoomMessage = data.receiver === targetUser.value
   const isPrivateMessage = (
     (data.sender === targetUser.value && data.receiver === currentUser.value) ||
     (data.sender === currentUser.value && data.receiver === targetUser.value)
   )
 
-  if (isGroupMessage || isPrivateMessage) {
+  if (isRoomMessage || isPrivateMessage) {
     const message = { ...data, status: 'success' }
     const index = rawMessages.value.findIndex((item) => item.msgId === message.msgId)
 
@@ -282,10 +329,10 @@ const handleIncomingMessage = (data) => {
 }
 
 const handleHistoryCleared = (data) => {
-  const isCurrentGroup = data.chatType === 'group' && targetUser.value === 'group_chat'
+  const isCurrentRoom = data.roomId === targetUser.value
   const isCurrentPrivate = data.chatType === 'private' && data.targetUser === targetUser.value
 
-  if (!isCurrentGroup && !isCurrentPrivate) return
+  if (!isCurrentRoom && !isCurrentPrivate) return
 
   clearLocalHistory()
   resetHistoryCursor()
@@ -305,7 +352,7 @@ const clearPresenceNotices = () => {
 }
 
 const handlePresenceChanged = (data) => {
-  if (targetUser.value !== 'group_chat') return
+  if (data.roomId && data.roomId !== targetUser.value) return
   if (!data?.user?.sender || !['online', 'offline'].includes(data.type)) return
 
   const id = `${data.type}-${data.user.sender}-${data.at || Date.now()}`
@@ -329,6 +376,12 @@ const {
   socket,
   isConnected,
   connect: connectSocket,
+  createRoom,
+  joinRoom,
+  joinRoomByCode,
+  listRooms,
+  updateRoomName,
+  regenerateRoomCode,
   requestHistory,
   queryAttachments,
   requestBatchDownload,
@@ -337,9 +390,12 @@ const {
   currentUser,
   targetUser,
   myNickname,
+  activeRoomId: targetUser,
+  pendingRoomCode,
   onConnect: () => {
     fetchCachePath()
     loadServerHistory()
+    refreshRooms()
   },
   onUserList: (users) => {
     onlineUsers.value = users
@@ -347,21 +403,51 @@ const {
   onGroupName: (name) => {
     if (!name) return
     groupName.value = name
-    localStorage.setItem(GROUPNAME_STORAGE_KEY, name)
   },
   onMessage: handleIncomingMessage,
   onHistoryCleared: handleHistoryCleared,
   onPresenceChanged: handlePresenceChanged,
+  onRoomUpdated: handleRoomUpdated,
+  onRoomError: handleRoomError,
 })
+
+async function refreshRooms() {
+  if (!socket.value?.connected) return
+
+  roomsLoading.value = true
+  const result = await listRooms()
+  roomsLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.loadFailed'))
+    return
+  }
+
+  rooms.value = result.data
+}
+
+function handleRoomUpdated(room) {
+  if (!room?.id) return
+  const index = rooms.value.findIndex((item) => item.id === room.id)
+  if (index === -1) {
+    rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+  } else {
+    rooms.value[index] = { ...rooms.value[index], ...room }
+  }
+
+  if (room.id === targetUser.value) groupName.value = room.name
+}
+
+function handleRoomError(result) {
+  ElMessage.error(result.message || t('rooms.joinFailed'))
+}
 
 const loadServerHistory = async () => {
   if (!socket.value?.connected) return
 
-  const chatType = targetUser.value === 'group_chat' ? 'group' : 'private'
   const result = await requestHistory({
     requester: currentUser.value,
-    chatType,
-    targetUser: targetUser.value,
+    roomId: targetUser.value,
     cursor: historyCursor.value,
     limit: 100
   })
@@ -375,12 +461,9 @@ const loadServerHistory = async () => {
 }
 
 const clearServerHistoryForCurrentSession = () => {
-  const chatType = targetUser.value === 'group_chat' ? 'group' : 'private'
-
   return clearServerHistory({
     requester: currentUser.value,
-    chatType,
-    targetUser: targetUser.value
+    roomId: targetUser.value
   })
 }
 
@@ -390,18 +473,13 @@ const batchAttachmentsLoading = ref(false)
 const batchDownloadLoading = ref(false)
 const batchSelectionResolving = ref(false)
 
-const getChatType = () => (
-  targetUser.value === 'group_chat' ? 'group' : 'private'
-)
-
 const openBatchDownloadDialog = async () => {
   batchDownloadDialogVisible.value = true
   batchAttachmentsLoading.value = true
 
   const result = await queryAttachments({
     requester: currentUser.value,
-    chatType: getChatType(),
-    targetUser: targetUser.value
+    roomId: targetUser.value
   })
   batchAttachmentsLoading.value = false
 
@@ -418,8 +496,7 @@ const handleBatchDownload = async (messageIds) => {
 
   const result = await requestBatchDownload({
     requester: currentUser.value,
-    chatType: getChatType(),
-    targetUser: targetUser.value,
+    roomId: targetUser.value,
     messageIds
   })
   batchDownloadLoading.value = false
@@ -501,7 +578,7 @@ const {
   unpinLatestMessage,
   handleTopMessage,
   unTopMessage,
-} = useMessagePin({ t, parseFileName })
+} = useMessagePin({ targetUser, t, parseFileName })
 
 const {
   onlineCount,
@@ -538,7 +615,6 @@ const {
 } = useBatchSelection(bubbleItems, { targetUser })
 
 const {
-  qrDialogVisible,
   qrLoading,
   qrCodeUrl,
   msgQrDialogVisible,
@@ -548,6 +624,7 @@ const {
   showItemQrCode,
 } = useQrcode({
   targetUser,
+  activeRoom,
   t,
   notify: ElMessage
 })
@@ -555,6 +632,7 @@ const {
 const {
   copyItem,
   copyCachePath,
+  copyToClipboard,
 } = useClipboard({ t, notify: ElMessage })
 
 const { emitMessage } = useMessageEmitter({
@@ -571,6 +649,118 @@ const scrollToBottom = async () => {
   if (!scrolledByBubbleList && scrollContainer.value) {
     scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
   }
+}
+
+const copyRoomText = async (value, type) => {
+  try {
+    await copyToClipboard(value)
+    ElMessage.success(type === 'code' ? t('rooms.codeCopied') : t('rooms.linkCopied'))
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(t('messages.copyFailed'))
+  }
+}
+
+const handleRoomInviteCopied = (type) => {
+  if (type === 'code') copyRoomText(inviteRoom.value?.code || '', 'code')
+  else copyRoomText(inviteUrl.value, 'link')
+}
+
+const showRoomInvite = async () => {
+  roomInviteDialogVisible.value = true
+  await showQrCode()
+}
+
+const switchRoom = async (room, options = {}) => {
+  const roomId = typeof room === 'string' ? room : room?.id
+  if (!roomId || roomId === targetUser.value) return true
+
+  const previousRoomId = targetUser.value
+  roomDrafts.set(previousRoomId, inputValue.value)
+  exitSelection()
+  targetUser.value = roomId
+  inputValue.value = roomDrafts.get(roomId) || ''
+  uploadFiles.value = []
+  batchDownloadDialogVisible.value = false
+  batchAttachments.value = []
+  loadHistory()
+
+  const result = await joinRoom({
+    roomId,
+    code: options.code || null,
+    nickname: myNickname.value,
+    username: currentUser.value
+  })
+
+  if (result.code !== 0) {
+    targetUser.value = previousRoomId
+    inputValue.value = roomDrafts.get(previousRoomId) || ''
+    loadHistory()
+    ElMessage.error(result.message || t('rooms.joinFailed'))
+    return false
+  }
+
+  const joinedRoom = result.data?.room
+  if (joinedRoom) handleRoomUpdated({ ...joinedRoom, onlineCount: 0 })
+
+  await loadServerHistory()
+  await scrollToBottom()
+  return true
+}
+
+const handleCreateRoom = async (name) => {
+  roomActionLoading.value = true
+  const result = await createRoom({ name })
+  roomActionLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.createFailed'))
+    return
+  }
+
+  const room = result.data.room
+  rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+  createRoomDialogVisible.value = false
+  inviteRoom.value = room
+  roomInviteDialogVisible.value = true
+  await showQrCode()
+  await switchRoom(room.id)
+}
+
+const handleJoinRoomByCode = async (code) => {
+  roomActionLoading.value = true
+  const result = await joinRoomByCode({ code })
+  roomActionLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.joinFailed'))
+    return
+  }
+
+  const room = result.data.room
+  if (!rooms.value.some((item) => item.id === room.id)) {
+    rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+  }
+
+  joinRoomDialogVisible.value = false
+  await switchRoom(room.id)
+}
+
+const handleRegenerateRoomCode = async () => {
+  if (!inviteRoom.value?.id) return
+
+  roomActionLoading.value = true
+  const result = await regenerateRoomCode({ roomId: inviteRoom.value.id })
+  roomActionLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.regenerateFailed'))
+    return
+  }
+
+  inviteRoom.value = result.data.room
+  handleRoomUpdated(result.data.room)
+  await showQrCode()
 }
 
 const {
@@ -638,8 +828,7 @@ const handleSelectedBatchDownload = async () => {
   batchSelectionResolving.value = true
   const result = await queryAttachments({
     requester: currentUser.value,
-    chatType: getChatType(),
-    targetUser: targetUser.value
+    roomId: targetUser.value
   })
   batchSelectionResolving.value = false
 
@@ -695,6 +884,7 @@ const { initSession } = useChatSession({
   targetUser,
   myNickname,
   groupName,
+  pendingRoomCode,
   loadHistory,
   connectSocket,
   fetchVersionInfo,

@@ -24,14 +24,18 @@ const nickname = ref('')
 const { getUserId } = useUserId()
 
 const handleLogin = async (sender) => {
-  const receiver = route.query.receiver || 'group_chat'
+  const roomId = route.query.roomId || route.query.receiver || 'group_chat'
+  const roomCode = route.query.code || null
   const userNickname = nickname.value.trim() || resolveNickname()
 
   // 保存昵称到 localStorage
   localStorage.setItem(NICKNAME_STORAGE_KEY, userNickname)
 
   try {
-    const response = await fetch(`/scanLogin?sender=${sender}&receiver=${receiver}`)
+    const roomQuery = roomId === 'group_chat'
+      ? `receiver=${encodeURIComponent(roomId)}`
+      : `roomId=${encodeURIComponent(roomId)}&code=${encodeURIComponent(roomCode || '')}`
+    const response = await fetch(`/scanLogin?sender=${encodeURIComponent(sender)}&${roomQuery}`)
     const res = await response.json()
 
     if (res.code === 0) {
@@ -41,7 +45,8 @@ const handleLogin = async (sender) => {
           name: 'chat',
           query: {
             sender,
-            receiver,
+            roomId,
+            code: roomCode || undefined,
             nickname: userNickname
           }
         })
@@ -58,7 +63,7 @@ const handleLogin = async (sender) => {
         name: 'chat',
         query: {
           sender,
-          receiver,
+            roomId,
           nickname: userNickname
         }
       })

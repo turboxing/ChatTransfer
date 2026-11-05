@@ -1,7 +1,11 @@
 <template>
   <div class="chat-header">
     <div class="header-content">
-      <div class="header-left-slot" aria-hidden="true"></div>
+      <div class="header-left-slot">
+        <el-button class="header-action" circle size="small" @click="$emit('open-conversations')">
+          <el-icon><Menu /></el-icon>
+        </el-button>
+      </div>
       <div class="header-center">
         <div class="header-title-info">
           <h3 class="group-name-text" :title="editGroupNameTitle" @click="$emit('edit-group-name')">
@@ -39,7 +43,7 @@
 </template>
 
 <script setup>
-import { EditPen, FullScreen, Tools } from '@element-plus/icons-vue'
+import { EditPen, FullScreen, Menu, Tools } from '@element-plus/icons-vue'
 
 defineProps({
   groupName: { type: String, required: true },
@@ -52,7 +56,7 @@ defineProps({
   offlineText: { type: String, required: true }
 })
 
-defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'open-online-users'])
+defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'open-online-users', 'open-conversations'])
 </script>
 
 <style scoped>
@@ -76,6 +80,8 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
 
 .header-left-slot {
   min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .header-center {

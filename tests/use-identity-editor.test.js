@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  GROUPNAME_STORAGE_KEY,
   NICKNAME_STORAGE_KEY,
   useIdentityEditor
 } from '../frontend/src/composables/use-identity-editor'
@@ -47,27 +46,18 @@ describe('useIdentityEditor', () => {
     expect(identity.editDialogVisible.value).toBe(false)
   })
 
-  it('updates and emits the group name only in group chat', () => {
+  it('updates and emits the room name', () => {
     const { refs, socket, notify, identity } = createComposable()
-    identity.editInputRef.value = { value: ' new group ', setValue: vi.fn() }
+    identity.editInputRef.value = { value: ' new room ', setValue: vi.fn() }
 
     identity.openGroupNameEditor()
     identity.confirmEditDialog()
 
-    expect(refs.groupName.value).toBe('new group')
-    expect(localStorage.getItem(GROUPNAME_STORAGE_KEY)).toBe('new group')
-    expect(socket.emit).toHaveBeenCalledWith('update_group_name', {
-      groupName: 'new group',
-      updatedBy: 'old nickname'
+    expect(refs.groupName.value).toBe('new room')
+    expect(socket.emit).toHaveBeenCalledWith('room_update_name', {
+      roomId: 'group_chat',
+      name: 'new room'
     })
     expect(notify.success).toHaveBeenCalledWith('chat.groupNameUpdated')
-  })
-
-  it('does not open the group name editor in private chat', () => {
-    const { identity } = createComposable({ targetUser: 'user-b' })
-
-    identity.openGroupNameEditor()
-
-    expect(identity.editDialogVisible.value).toBe(false)
   })
 })

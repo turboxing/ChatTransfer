@@ -32,20 +32,29 @@ describe('useSocket', () => {
     emit.mockClear();
   });
 
-  it('registers the current user online after connecting', () => {
+  it('registers the current user online after connecting', async () => {
     const refs = {
       currentUser: { value: 'A' },
       targetUser: { value: 'group_chat' },
       myNickname: { value: 'Tester' }
     };
     const onConnect = vi.fn();
+    emit.mockImplementation((event, payload, ack) => {
+      if (event === 'room_online') ack?.({ code: 0, data: { room: { id: payload.roomId } } })
+    })
     const { connect } = useSocket({ ...refs, onConnect });
     connect();
 
     handlers.get('connect')?.forEach((handler) => handler());
+    await vi.waitFor(() => expect(onConnect).toHaveBeenCalled());
 
     expect(emit).toHaveBeenCalledWith('login', { uid: 'A' });
-    expect(emit).toHaveBeenCalledWith('group_online', 'A', 'Tester');
+    expect(emit).toHaveBeenCalledWith('room_online', {
+      roomId: 'group_chat',
+      code: null,
+      nickname: 'Tester',
+      username: 'A'
+    }, expect.any(Function));
     expect(onConnect).toHaveBeenCalled();
   });
 

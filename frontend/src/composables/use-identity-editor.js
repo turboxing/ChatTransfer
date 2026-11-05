@@ -1,8 +1,6 @@
 import { ref } from 'vue'
 
 export const NICKNAME_STORAGE_KEY = 'im_chat_nickname'
-export const GROUPNAME_STORAGE_KEY = 'im_chat_group_name'
-
 export function useIdentityEditor({
   currentUser,
   targetUser,
@@ -28,7 +26,6 @@ export function useIdentityEditor({
   }
 
   const openGroupNameEditor = () => {
-    if (targetUser.value !== 'group_chat') return
     editDialogType.value = 'groupName'
     editDialogTitle.value = t('chat.editGroupName')
     editDialogPlaceholder.value = t('chat.groupNamePlaceholder')
@@ -51,11 +48,10 @@ export function useIdentityEditor({
       notify?.success(t('chat.nicknameUpdated'))
     } else if (editDialogType.value === 'groupName') {
       groupName.value = value
-      localStorage.setItem(GROUPNAME_STORAGE_KEY, value)
       if (socket.value && isConnected.value) {
-        socket.value.emit('update_group_name', {
-          groupName: value,
-          updatedBy: myNickname.value || currentUser.value
+        socket.value.emit('room_update_name', {
+          roomId: targetUser.value,
+          name: value
         })
       }
       notify?.success(t('chat.groupNameUpdated'))

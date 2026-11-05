@@ -1,10 +1,15 @@
 export function useMessageEmitter({ socket, isConnected, targetUser, rawMessages, saveMessage }) {
   const emitMessage = (messageData) => {
-    const eventName = targetUser.value === 'group_chat' ? 'group_chat' : 'private_chat'
+    const eventName = 'room_chat'
+    const roomMessageData = {
+      ...messageData,
+      roomId: targetUser.value,
+      receiver: targetUser.value
+    }
 
     if (socket.value && isConnected.value) {
-      socket.value.emit(eventName, messageData, (data) => {
-        const index = rawMessages.value.findIndex((message) => message.msgId === messageData.msgId)
+      socket.value.emit(eventName, roomMessageData, (data) => {
+        const index = rawMessages.value.findIndex((message) => message.msgId === roomMessageData.msgId)
         if (index !== -1) {
           rawMessages.value[index] = {
             ...data,
@@ -16,7 +21,7 @@ export function useMessageEmitter({ socket, isConnected, targetUser, rawMessages
       return
     }
 
-    const index = rawMessages.value.findIndex((message) => message.msgId === messageData.msgId)
+    const index = rawMessages.value.findIndex((message) => message.msgId === roomMessageData.msgId)
     if (index !== -1) rawMessages.value[index].status = 'failed'
   }
 

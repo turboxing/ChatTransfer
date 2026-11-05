@@ -1,10 +1,20 @@
 const ONLINE = 'ONLINE';
 const OFFLINE = 'OFFLINE';
+const DEFAULT_ROOM_ID = 'group_chat';
 
 class RoomManager {
   constructor() {
-    this.users = new Map();
-    this.groupName = '';
+    this.rooms = new Map();
+    this.roomNames = new Map();
+    this.ensureRoom(DEFAULT_ROOM_ID);
+  }
+
+  ensureRoom(roomId = DEFAULT_ROOM_ID) {
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, { users: new Map() });
+    }
+
+    return this.rooms.get(roomId);
   }
 
   getOnline() {
@@ -15,8 +25,9 @@ class RoomManager {
     return OFFLINE;
   }
 
-  setOnline({ username, socketId, nickname = '', ip = '' }) {
-    const existing = this.users.get(username) || {
+  setOnline({ roomId = DEFAULT_ROOM_ID, username, socketId, nickname = '', ip = '' }) {
+    const room = this.ensureRoom(roomId);
+    const existing = room.users.get(username) || {
       socketIds: new Set(),
       status: OFFLINE,
       nickname: '',
@@ -35,20 +46,20 @@ class RoomManager {
       ip: ip || existing.ip || '',
       onlineSince: wasOnline ? existing.onlineSince : Date.now()
     };
-    this.users.set(username, user);
+    room.users.set(username, user);
 
     return {
-      user: this.getPublicUser(username),
+      user: this.getPublicUser(roomId, username),
       becameOnline: !wasOnline
     };
   }
 
-  getUser(username) {
-    return this.users.get(username);
+  getUser(roomId = DEFAULT_ROOM_ID, username) {
+    return this.ensureRoom(roomId).users.get(username);
   }
 
-  getPublicUser(username) {
-    const user = this.users.get(username);
+  getPublicUser(roomId = DEFAULT_ROOM_ID, username) {
+    const user = this.ensureRoom(roomId).users.get(username);
     if (!user) return null;
 
     return {
@@ -61,8 +72,8 @@ class RoomManager {
     };
   }
 
-  setNickname(username, nickname) {
-    const user = this.users.get(username);
+  setNickname({ roomId = DEFAULT_ROOM_ID, username, nickname = '' }) {
+    const user = this.getUser(roomId, username);
 
     if (!user) {
       return false;
@@ -72,8 +83,8 @@ class RoomManager {
     return true;
   }
 
-  removeSocket(username, socketId) {
-    const user = this.users.get(username);
+  removeSocket({ roomId = DEFAULT_ROOM_ID, username, socketId }) {
+    const user = this.getUser(roomId, username);
 
     if (!user) {
       return { user: null, hasConnections: false };
@@ -81,13 +92,13 @@ class RoomManager {
 
     user.socketIds.delete(socketId);
     return {
-      user: this.getPublicUser(username),
+      user: this.getPublicUser(roomId, username),
       hasConnections: user.socketIds.size > 0
     };
   }
 
-  markOffline(username) {
-    const user = this.users.get(username);
+  markOffline({ roomId = DEFAULT_ROOM_ID, username }) {
+    const user = this.getUser(roomId, username);
 
     if (!user) {
       return { user: null, becameOffline: false };
@@ -100,13 +111,13 @@ class RoomManager {
     user.lastSeenAt = Date.now();
 
     return {
-      user: this.getPublicUser(username),
+      user: this.getPublicUser(roomId, username),
       becameOffline
     };
   }
 
-  setOffline(username, socketId = null) {
-    const user = this.users.get(username);
+  setOffline({ roomId = DEFAULT_ROOM_ID, username, socketId = null }) {
+    const user = this.getUser(roomId, username);
 
     if (!user) {
       return { user: null, becameOffline: false, hasConnections: false };
@@ -116,24 +127,34 @@ class RoomManager {
     const hasConnections = user.socketIds.size > 0;
 
     return hasConnections
-      ? { user: this.getPublicUser(username), becameOffline: false, hasConnections }
-      : { ...this.markOffline(username), hasConnections: false };
+      ? { user: this.getPublicUser(roomId, username), becameOffline: false, hasConnections }
+      : { ...this.markOffline({ roomId, username }), hasConnections: false };
   }
 
-  listUsers() {
-    return [...this.users.keys()].map((username) => this.getPublicUser(username));
+  listUsers(roomId = DEFAULT_ROOM_ID) {
+    const room = this.ensureRoom(roomId);
+    return [...room.users.keys()].map((username) => this.getPublicUser(roomId, username));
+  }
+
+  setRoomName(roomId = DEFAULT_ROOM_ID, name = '') {
+    this.roomNames.set(roomId, name || '');
+  }
+
+  getRoomName(roomId = DEFAULT_ROOM_ID) {
+    return this.roomNames.get(roomId) || '';
   }
 
   setGroupName(groupName) {
-    this.groupName = groupName || '';
+    this.setRoomName(DEFAULT_ROOM_ID, groupName);
   }
 
   getGroupName() {
-    return this.groupName;
+    return this.getRoomName(DEFAULT_ROOM_ID);
   }
 }
 
 module.exports = {
   RoomManager,
-  USER_STATUS: [ONLINE, OFFLINE]
+  USER_STATUS: [ONLINE, OFFLINE],
+  DEFAULT_ROOM_ID
 };

@@ -5,12 +5,16 @@ export function useSocket({
   currentUser,
   targetUser,
   myNickname,
+  activeRoomId = null,
+  pendingRoomCode = null,
   onConnect,
   onUserList,
   onGroupName,
   onMessage,
   onHistoryCleared,
-  onPresenceChanged
+  onPresenceChanged,
+  onRoomUpdated,
+  onRoomError
 }) {
   const socket = ref(null);
   const isConnected = ref(false);
@@ -32,10 +36,24 @@ export function useSocket({
       }
     });
 
-    socket.value.on('connect', () => {
+    socket.value.on('connect', async () => {
       isConnected.value = true;
       socket.value.emit('login', { uid: currentUser.value });
-      socket.value.emit('group_online', currentUser.value, myNickname.value);
+
+      const result = await new Promise((resolve) => {
+        socket.value.emit('room_online', {
+          roomId: activeRoomId?.value || targetUser.value || 'group_chat',
+          code: pendingRoomCode?.value || null,
+          nickname: myNickname.value,
+          username: currentUser.value
+        }, resolve)
+      })
+
+      if (result.code !== 0) {
+        onRoomError?.(result)
+        return
+      }
+
       onConnect?.();
     });
 
@@ -45,8 +63,10 @@ export function useSocket({
 
     socket.value.on('user_list_updated', (data) => onUserList?.(data.users || []));
     socket.value.on('group_name_updated', (data) => onGroupName?.(data.groupName || ''));
+    socket.value.on('room_updated', (data) => onRoomUpdated?.(data.room));
     socket.value.on('reply_private_chat', onMessage);
     socket.value.on('reply_group_chat', onMessage);
+    socket.value.on('reply_room_chat', onMessage);
     socket.value.on('update_msg', onMessage);
     socket.value.on('history_cleared', (data) => onHistoryCleared?.(data));
     socket.value.on('presence_changed', (data) => onPresenceChanged?.(data));
@@ -62,6 +82,19 @@ export function useSocket({
   });
 
   const requestHistory = (payload) => emitWithAck('history_query', payload);
+  const createRoom = (payload) => emitWithAck('room_create', payload);
+  const joinRoomByCode = (payload) => emitWithAck('room_join_by_code', payload);
+  const listRooms = () => emitWithAck('room_list', {});
+  const updateRoomName = (payload) => emitWithAck('room_update_name', payload);
+  const regenerateRoomCode = (payload) => emitWithAck('room_regenerate_code', payload);
+  const joinRoom = async (payload) => {
+    const result = await emitWithAck('room_online', payload);
+    if (result.code === 0 && activeRoomId) {
+      activeRoomId.value = payload.roomId;
+    }
+
+    return result;
+  };
   const queryAttachments = (payload) => emitWithAck('attachment_query', payload);
   const requestBatchDownload = (payload) => emitWithAck('attachment_download', payload);
 
@@ -73,6 +106,12 @@ export function useSocket({
     socket,
     isConnected,
     connect,
+    createRoom,
+    joinRoom,
+    joinRoomByCode,
+    listRooms,
+    updateRoomName,
+    regenerateRoomCode,
     requestHistory,
     queryAttachments,
     requestBatchDownload,

@@ -7,11 +7,11 @@ function truncateContent(content) {
   return content && content.length > 30 ? `${content.substring(0, 30)}...` : content
 }
 
-export function useMessagePin({ t, parseFileName }) {
+export function useMessagePin({ targetUser, t, parseFileName }) {
   const pinDrawerVisible = ref(false)
   const pinFilter = ref('all')
   const pinnedMessages = ref([])
-  const topMessage = ref(null)
+  const storedTopMessage = ref(null)
 
   const load = () => {
     try {
@@ -23,7 +23,7 @@ export function useMessagePin({ t, parseFileName }) {
 
     try {
       const data = localStorage.getItem(TOP_STORAGE_KEY)
-      topMessage.value = data ? JSON.parse(data) : null
+      storedTopMessage.value = data ? JSON.parse(data) : null
     } catch {
       topMessage.value = null
     }
@@ -34,33 +34,41 @@ export function useMessagePin({ t, parseFileName }) {
   }
 
   const saveTopMessage = () => {
-    if (topMessage.value) {
-      localStorage.setItem(TOP_STORAGE_KEY, JSON.stringify(topMessage.value))
+    if (storedTopMessage.value) {
+      localStorage.setItem(TOP_STORAGE_KEY, JSON.stringify(storedTopMessage.value))
     } else {
       localStorage.removeItem(TOP_STORAGE_KEY)
     }
   }
 
-  const isMessagePinned = (msgId) => pinnedMessages.value.some((message) => message.msgId === msgId)
-  const isMessageTopped = (msgId) => !!topMessage.value && topMessage.value.msgId === msgId
+  const roomPinnedMessages = computed(() => (
+    pinnedMessages.value.filter((message) => message.receiver === targetUser.value)
+  ))
+
+  const activeTopMessage = computed(() => (
+    storedTopMessage.value?.receiver === targetUser.value ? storedTopMessage.value : null
+  ))
+
+  const isMessagePinned = (msgId) => roomPinnedMessages.value.some((message) => message.msgId === msgId)
+  const isMessageTopped = (msgId) => !!activeTopMessage.value && activeTopMessage.value.msgId === msgId
 
   const getLatestPinnedMessage = () => {
-    if (pinnedMessages.value.length === 0) return ''
-    const latest = pinnedMessages.value.at(-1)
+    if (roomPinnedMessages.value.length === 0) return ''
+    const latest = roomPinnedMessages.value.at(-1)
     const content = truncateContent(latest.text || latest.msg || '')
     return `${latest.sender}: ${content}`
   }
 
   const getTopMessageContent = () => {
-    if (!topMessage.value) return ''
-    const content = truncateContent(topMessage.value.text || topMessage.value.msg || '')
-    return `${topMessage.value.sender}: ${content}`
+    if (!activeTopMessage.value) return ''
+    const content = truncateContent(activeTopMessage.value.text || activeTopMessage.value.msg || '')
+    return `${activeTopMessage.value.sender}: ${content}`
   }
 
   const filteredPinnedMessages = computed(() => {
-    if (pinFilter.value === 'all') return pinnedMessages.value
+    if (pinFilter.value === 'all') return roomPinnedMessages.value
 
-    return pinnedMessages.value.filter((message) => {
+    return roomPinnedMessages.value.filter((message) => {
       if (pinFilter.value === 'text') return message.msgType === 'TEXT'
       if (pinFilter.value === 'image') return message.msgType === 'IMAGE'
       if (pinFilter.value === 'file') return message.msgType === 'FILE'
@@ -131,17 +139,17 @@ export function useMessagePin({ t, parseFileName }) {
 
   const handleTopMessage = (item) => {
     if (isMessageTopped(item.key)) {
-      topMessage.value = null
+      storedTopMessage.value = null
       ElMessage.success(t('chat.cancelTop'))
     } else {
-      topMessage.value = item.originalMsg
+      storedTopMessage.value = item.originalMsg
       ElMessage.success(t('chat.setTop'))
     }
     saveTopMessage()
   }
 
   const unTopMessage = () => {
-    topMessage.value = null
+    storedTopMessage.value = null
     saveTopMessage()
     ElMessage.success(t('chat.cancelTop'))
   }
@@ -152,7 +160,7 @@ export function useMessagePin({ t, parseFileName }) {
     pinDrawerVisible,
     pinFilter,
     pinnedMessages,
-    topMessage,
+    topMessage: activeTopMessage,
     filteredPinnedMessages,
     pinnedBubbleItems,
     isMessagePinned,

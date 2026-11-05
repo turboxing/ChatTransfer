@@ -24,14 +24,14 @@ describe('RoomManager presence', () => {
       expect.objectContaining({ sender: 'user-a', status: 'ONLINE' })
     ]);
 
-    expect(manager.removeSocket('user-a', 'socket-a')).toEqual({
+    expect(manager.removeSocket({ roomId: 'group_chat', username: 'user-a', socketId: 'socket-a' })).toEqual({
       user: expect.objectContaining({ sender: 'user-a', status: 'ONLINE' }),
       hasConnections: true
     });
     expect(manager.listUsers()[0].status).toBe('ONLINE');
 
-    expect(manager.removeSocket('user-a', 'socket-b').hasConnections).toBe(false);
-    const offline = manager.markOffline('user-a');
+    expect(manager.removeSocket({ roomId: 'group_chat', username: 'user-a', socketId: 'socket-b' }).hasConnections).toBe(false);
+    const offline = manager.markOffline({ roomId: 'group_chat', username: 'user-a' });
 
     expect(offline.becameOffline).toBe(true);
     expect(offline.user.status).toBe('OFFLINE');
@@ -42,7 +42,7 @@ describe('RoomManager presence', () => {
     const manager = new RoomManager();
 
     manager.setOnline({ username: 'user-b', socketId: 'socket-a' });
-    manager.markOffline('user-b');
+    manager.markOffline({ roomId: 'group_chat', username: 'user-b' });
     const reconnect = manager.setOnline({ username: 'user-b', socketId: 'socket-b' });
 
     expect(reconnect.becameOnline).toBe(true);

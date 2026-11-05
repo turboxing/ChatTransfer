@@ -42,7 +42,7 @@ export function useMessageDisplay({
   const bubbleItems = computed(() => (
     rawMessages.value.map((message) => {
       const isSelf = message.sender === currentUser.value
-      const isGroupChat = targetUser.value === 'group_chat'
+      const isGroupChat = true
 
       return {
         key: message.msgId,
