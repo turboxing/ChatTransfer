@@ -91,13 +91,22 @@ const getRoomPreview = (room) => {
   color: #303133;
   text-align: left;
   cursor: pointer;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: background-color 0.2s, border-color 0.2s;
 }
 
-.room-item:hover,
 .room-item.active {
   border-color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .room-item:hover {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+  }
 }
 
 .room-main {
