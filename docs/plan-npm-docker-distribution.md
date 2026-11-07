@@ -146,6 +146,8 @@ chattransfer
 | `--port` | 监听端口 | `55556` |
 | `--data-dir` | 数据目录 | 按操作系统自动选择 |
 | `--public-url` | 对外访问地址，用于二维码和页面链接 | 自动检测局域网地址 |
+| `--room-idle-retention-days` | 普通房间闲置自动删除天数，`0` 表示关闭 | `7` |
+| `--public-room-retention-days` | 公共大厅消息保留天数，`0` 表示关闭 | `7` |
 | `--no-browser` | 不打开本机浏览器 | 自动检测桌面环境 |
 | `--version` | 输出版本号 | 无 |
 | `--help` | 输出帮助信息 | 无 |
@@ -159,6 +161,8 @@ chattransfer
 | `CHATTRANSFER_DATA_DIR` | `--data-dir` |
 | `CHATTRANSFER_PUBLIC_URL` | `--public-url` |
 | `CHATTRANSFER_NO_BROWSER` | `--no-browser` |
+| `CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS` | `--room-idle-retention-days` |
+| `CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS` | `--public-room-retention-days` |
 
 优先级：
 

@@ -1,5 +1,14 @@
 const os = require('os');
 
+function isLoopbackAddress(address) {
+  if (!address) return false;
+
+  const normalized = String(address).replace(/^::ffff:/, '').trim().toLowerCase();
+  return normalized === '127.0.0.1'
+    || normalized === '::1'
+    || normalized === 'localhost';
+}
+
 function getIPAddress() {
   const interfaces = os.networkInterfaces();
 
@@ -17,5 +26,6 @@ function getIPAddress() {
 }
 
 module.exports = {
-  getIPAddress
+  getIPAddress,
+  isLoopbackAddress
 };

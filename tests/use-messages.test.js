@@ -84,4 +84,20 @@ describe('useMessages', () => {
     expect(records.map((message) => message.msgId)).toEqual(['2', '3', '4']);
     expect(rawMessages.value).toHaveLength(0);
   });
+
+  it('removes the cache of a room that was left or dissolved', () => {
+    localStorage.setItem('im_chat_record:room-a', '[{"msgId":"1"}]');
+    localStorage.setItem('im_chat_record:room-b', '[{"msgId":"2"}]');
+
+    const { rawMessages, removeRoomHistory } = useMessages({
+      currentUser: { value: 'A' },
+      targetUser: { value: 'room-a' }
+    });
+    rawMessages.value = [{ msgId: '1' }];
+    removeRoomHistory('room-a');
+
+    expect(localStorage.getItem('im_chat_record:room-a')).toBeNull();
+    expect(localStorage.getItem('im_chat_record:room-b')).not.toBeNull();
+    expect(rawMessages.value).toHaveLength(0);
+  });
 });

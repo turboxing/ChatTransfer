@@ -24,6 +24,8 @@ class MessageHistoryService {
     this.historyDir = path.dirname(this.databasePath);
     this.db = null;
     this.writeLock = Promise.resolve();
+    this.publicRoomCleanupTimer = null;
+    this.idleRetentionDays = 7;
   }
 
   init() {
@@ -50,6 +52,7 @@ class MessageHistoryService {
   }
 
   close() {
+    this.stopPublicRoomCleanup();
     if (!this.db) return Promise.resolve();
 
     return new Promise((resolve, reject) => {
@@ -112,6 +115,16 @@ class MessageHistoryService {
           normalized.fileType || null
         ]
       );
+
+      if (normalized.roomId && normalized.roomId !== DEFAULT_ROOM_ID) {
+        const activityAt = Date.now();
+        await this.run(
+          `UPDATE rooms
+           SET last_active_at = ?, updated_at = ?
+           WHERE id = ? AND status = 'active'`,
+          [activityAt, activityAt, normalized.roomId]
+        );
+      }
 
       await this.run('COMMIT');
       return normalized;
@@ -238,22 +251,100 @@ class MessageHistoryService {
     return selectedAttachments;
   }
 
-  clearHistory({ requester, roomId, chatType, targetUser }) {
+  async clearHistory({ requester, roomId, chatType, targetUser }) {
     this.ensureOpened();
 
-    return this.enqueueWrite(() => this.clearHistoryInTransaction({
-      requester,
-      roomId,
-      chatType,
-      targetUser
-    }));
+    let conversation;
+    if (roomId) {
+      if (roomId === DEFAULT_ROOM_ID) {
+        throw new Error('Public Lobby history requires administrator');
+      }
+      await this.requireRoomOwner(roomId, requester);
+      conversation = this.getRoomConversation(roomId);
+    } else {
+      conversation = this.getConversation({ requester, chatType, targetUser });
+      if (conversation.chatType === 'group') {
+        throw new Error('Public Lobby history requires administrator');
+      }
+    }
+
+    return this.enqueueWrite(() => this.clearConversationHistory(conversation));
   }
 
-  async clearHistoryInTransaction({ requester, roomId, chatType, targetUser }) {
+  async clearPublicRoomHistory() {
+    this.ensureOpened();
+    const conversation = this.getRoomConversation(DEFAULT_ROOM_ID);
+    return this.enqueueWrite(() => this.clearConversationHistory(conversation));
+  }
 
-    const conversation = roomId
-      ? await this.getVerifiedRoomConversation(roomId, requester)
-      : this.getConversation({ requester, chatType, targetUser });
+  async cleanupExpiredPublicRoomMessages({ retentionDays = 7, now = Date.now() } = {}) {
+    this.ensureOpened();
+    const days = Number(retentionDays);
+    if (!Number.isFinite(days) || days <= 0) {
+      return { deletedFiles: 0, skippedFiles: 0, failedFiles: 0 };
+    }
+
+    const cutoff = now - (days * 24 * 60 * 60 * 1000);
+
+    return this.enqueueWrite(async () => {
+      const files = await this.all(
+        `SELECT DISTINCT file_path
+         FROM messages
+         WHERE session_id = ? AND created_at < ? AND file_path IS NOT NULL`,
+        [GROUP_SESSION_ID, cutoff]
+      );
+
+      await this.run('BEGIN IMMEDIATE');
+
+      try {
+        for (const file of files) {
+          await this.run(
+            'INSERT OR IGNORE INTO file_cleanup_queue(file_path, created_at) VALUES (?, ?)',
+            [file.file_path, Date.now()]
+          );
+        }
+
+        await this.run(
+          'DELETE FROM messages WHERE session_id = ? AND created_at < ?',
+          [GROUP_SESSION_ID, cutoff]
+        );
+        await this.run('COMMIT');
+      } catch (error) {
+        await this.run('ROLLBACK').catch(() => {});
+        throw error;
+      }
+
+      const cleanup = await this.processCleanupQueue();
+      return {
+        deletedFiles: cleanup.deletedFiles,
+        skippedFiles: cleanup.skippedFiles,
+        failedFiles: cleanup.failedFiles
+      };
+    });
+  }
+
+  startPublicRoomCleanup({ retentionDays = 7, intervalMs = 6 * 60 * 60 * 1000 } = {}) {
+    this.stopPublicRoomCleanup();
+    if (!Number.isFinite(Number(retentionDays)) || Number(retentionDays) <= 0) return;
+
+    const run = () => {
+      this.cleanupExpiredPublicRoomMessages({ retentionDays }).catch((error) => {
+        console.error('[History] public room cleanup failed:', error.message);
+      });
+    };
+
+    run();
+    this.publicRoomCleanupTimer = setInterval(run, intervalMs);
+    this.publicRoomCleanupTimer.unref?.();
+  }
+
+  stopPublicRoomCleanup() {
+    if (!this.publicRoomCleanupTimer) return;
+    clearInterval(this.publicRoomCleanupTimer);
+    this.publicRoomCleanupTimer = null;
+  }
+
+  async clearConversationHistory(conversation) {
     const files = await this.all(
       'SELECT DISTINCT file_path FROM messages WHERE session_id = ? AND file_path IS NOT NULL',
       [conversation.sessionId]
@@ -376,13 +467,18 @@ class MessageHistoryService {
       name TEXT NOT NULL,
       code TEXT UNIQUE,
       created_by TEXT,
+      owner_id TEXT,
       status TEXT NOT NULL DEFAULT 'active',
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      deleted_at INTEGER,
+      last_active_at INTEGER,
+      deleted_reason TEXT
     )`);
     await this.run(`CREATE TABLE IF NOT EXISTS room_participants (
       room_id TEXT NOT NULL,
       user_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member',
       nickname TEXT,
       joined_at INTEGER NOT NULL,
       last_seen_at INTEGER,
@@ -391,11 +487,49 @@ class MessageHistoryService {
     )`);
     await this.run(`CREATE INDEX IF NOT EXISTS idx_room_participants_user
       ON room_participants(user_id, joined_at)`);
+    await this.ensureColumn('rooms', 'owner_id', 'TEXT');
+    await this.ensureColumn('rooms', 'deleted_at', 'INTEGER');
+    await this.ensureColumn('rooms', 'last_active_at', 'INTEGER');
+    await this.ensureColumn('rooms', 'deleted_reason', 'TEXT');
+    await this.ensureColumn('room_participants', 'role', "TEXT NOT NULL DEFAULT 'member'");
     await this.run(
-      `INSERT OR IGNORE INTO rooms(id, name, code, created_by, status, created_at, updated_at)
-       VALUES (?, ?, NULL, NULL, 'active', ?, ?)`,
-      [DEFAULT_ROOM_ID, 'Default Room', Date.now(), Date.now()]
+      `UPDATE rooms
+       SET owner_id = created_by
+       WHERE id <> ? AND owner_id IS NULL AND created_by IS NOT NULL`,
+      [DEFAULT_ROOM_ID]
     );
+    await this.run(
+      `UPDATE rooms
+       SET last_active_at = COALESCE(last_active_at, updated_at, created_at)
+       WHERE last_active_at IS NULL`
+    );
+    await this.run(
+      `UPDATE room_participants
+       SET role = 'owner'
+       WHERE EXISTS (
+         SELECT 1 FROM rooms
+         WHERE rooms.id = room_participants.room_id
+           AND rooms.owner_id = room_participants.user_id
+       )`
+    );
+    await this.run(
+      `INSERT OR IGNORE INTO rooms(
+        id, name, code, created_by, owner_id, status, created_at, updated_at
+      ) VALUES (?, ?, NULL, NULL, NULL, 'active', ?, ?)`,
+      [DEFAULT_ROOM_ID, 'Public Lobby', Date.now(), Date.now()]
+    );
+    await this.run(
+      `UPDATE rooms
+       SET name = 'Public Lobby'
+       WHERE id = ? AND name IN ('Default Room', 'Public Transit Station')`,
+      [DEFAULT_ROOM_ID]
+    );
+  }
+
+  async ensureColumn(table, column, definition) {
+    const columns = await this.all(`PRAGMA table_info(${table})`);
+    if (columns.some((item) => item.name === column)) return;
+    await this.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
   }
 
   getConversation({ requester, chatType, targetUser }) {
@@ -464,7 +598,7 @@ class MessageHistoryService {
     return conversation;
   }
 
-  async createRoom({ name, createdBy }) {
+  async createRoom({ name, createdBy, nickname = '' }) {
     this.ensureOpened();
 
     const roomName = String(name || '').trim();
@@ -478,9 +612,11 @@ class MessageHistoryService {
       name: roomName,
       code: null,
       createdBy: createdBy || null,
+      ownerId: createdBy || null,
       status: 'active',
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      lastActiveAt: now
     };
 
     return this.enqueueWrite(async () => {
@@ -489,19 +625,36 @@ class MessageHistoryService {
 
         try {
           await this.run(
-            `INSERT INTO rooms(id, name, code, created_by, status, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO rooms(
+              id, name, code, created_by, owner_id, status,
+              created_at, updated_at, last_active_at
+            )
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               room.id,
               room.name,
               room.code,
               room.createdBy,
+              room.ownerId,
               room.status,
               room.createdAt,
-              room.updatedAt
+              room.updatedAt,
+              room.lastActiveAt
             ]
           );
-          return this.mapRoom(room);
+          if (room.createdBy) {
+            await this.run(
+              `INSERT INTO room_participants(
+                room_id, user_id, role, nickname, joined_at, last_seen_at
+              ) VALUES (?, ?, 'owner', ?, ?, ?)
+              ON CONFLICT(room_id, user_id) DO UPDATE SET
+                role = 'owner',
+                nickname = COALESCE(room_participants.nickname, excluded.nickname),
+                last_seen_at = excluded.last_seen_at`,
+              [room.id, room.createdBy, nickname || null, now, now]
+            );
+          }
+          return { ...this.mapRoom(room), role: room.createdBy ? 'owner' : 'member' };
         } catch (error) {
           if (!String(error.message || '').includes('UNIQUE constraint failed: rooms.code')) {
             throw error;
@@ -544,7 +697,7 @@ class MessageHistoryService {
     if (!room) throw new Error('Room not found');
 
     const participant = await this.get(
-      'SELECT user_id FROM room_participants WHERE room_id = ? AND user_id = ?',
+      'SELECT user_id, role FROM room_participants WHERE room_id = ? AND user_id = ?',
       [room.id, userId]
     );
     const normalizedCode = this.normalizeRoomCode(code);
@@ -552,21 +705,29 @@ class MessageHistoryService {
     if (room.id !== DEFAULT_ROOM_ID && !participant) {
       if (!normalizedCode) throw new Error('Room code required');
       if (normalizedCode !== room.code) throw new Error('Invalid room code');
-    } else if (normalizedCode && room.code && normalizedCode !== room.code) {
-      throw new Error('Invalid room code');
     }
 
     const now = Date.now();
     await this.enqueueWrite(() => this.run(
-      `INSERT INTO room_participants(room_id, user_id, nickname, joined_at, last_seen_at)
-       VALUES (?, ?, ?, ?, ?)
+      `INSERT INTO room_participants(room_id, user_id, role, nickname, joined_at, last_seen_at)
+       VALUES (?, ?, 'member', ?, ?, ?)
        ON CONFLICT(room_id, user_id) DO UPDATE SET
          nickname = excluded.nickname,
          last_seen_at = excluded.last_seen_at`,
       [room.id, userId, nickname || null, now, now]
     ));
 
-    return room;
+    if (room.id !== DEFAULT_ROOM_ID) {
+      await this.enqueueWrite(() => this.run(
+        'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+        [now, now, room.id]
+      ));
+    }
+
+    return {
+      ...room,
+      role: participant?.role || 'member'
+    };
   }
 
   async listRoomsForUser(userId) {
@@ -574,7 +735,7 @@ class MessageHistoryService {
     if (!this.isValidUserId(userId)) throw new Error('Invalid user');
 
     const rows = await this.all(
-      `SELECT r.*, p.joined_at, p.last_seen_at
+      `SELECT r.*, p.role AS participant_role, p.joined_at, p.last_seen_at
        FROM rooms r
        INNER JOIN room_participants p ON p.room_id = r.id
        WHERE p.user_id = ? AND r.status = 'active'
@@ -596,8 +757,12 @@ class MessageHistoryService {
 
       return {
         ...room,
+        role: row.participant_role || 'member',
         joinedAt: row.joined_at,
         lastSeenAt: row.last_seen_at,
+        expiresAt: room.id !== DEFAULT_ROOM_ID && this.idleRetentionDays > 0
+          ? room.lastActiveAt + (this.idleRetentionDays * 24 * 60 * 60 * 1000)
+          : null,
         lastMessage: lastMessage ? {
           content: lastMessage.content || '',
           msgType: lastMessage.message_type,
@@ -608,38 +773,257 @@ class MessageHistoryService {
     }));
   }
 
-  async updateRoomName({ roomId, name }) {
-    this.ensureOpened();
+  configureIdleRetention(days = 7) {
+    const value = Number(days);
+    this.idleRetentionDays = Number.isFinite(value) && value >= 0 ? value : 7;
+  }
 
-    const roomName = String(name || '').trim();
-    if (!roomName || roomName.length > 60) throw new Error('Invalid room name');
+  async listInactiveRooms({ retentionDays = this.idleRetentionDays, now = Date.now() } = {}) {
+    this.ensureOpened();
+    const days = Number(retentionDays);
+    if (!Number.isFinite(days) || days <= 0) return [];
+
+    const cutoff = now - (days * 24 * 60 * 60 * 1000);
+    const rows = await this.all(
+      `SELECT *
+       FROM rooms
+       WHERE status = 'active'
+         AND id <> ?
+         AND COALESCE(last_active_at, updated_at, created_at) < ?
+       ORDER BY COALESCE(last_active_at, updated_at, created_at) ASC`,
+      [DEFAULT_ROOM_ID, cutoff]
+    );
+
+    return rows.map((row) => this.mapRoom(row));
+  }
+
+  async deleteRoomBySystem({ roomId, reason = 'inactive', cutoff = null }) {
+    this.ensureOpened();
+    if (roomId === DEFAULT_ROOM_ID) return null;
+
+    return this.enqueueWrite(async () => {
+      const room = await this.getRoom(roomId);
+      if (!room) return null;
+      if (cutoff !== null && Number(room.lastActiveAt) >= Number(cutoff)) {
+        return null;
+      }
+
+      await this.run('BEGIN IMMEDIATE');
+
+      try {
+        const dissolved = await this.dissolveRoomContentsInTransaction(room, reason);
+        await this.run('COMMIT');
+        const cleanup = await this.processCleanupQueue();
+        return {
+          roomId,
+          roomName: room.name,
+          sessionId: dissolved.sessionId,
+          deletedReason: reason,
+          ...cleanup
+        };
+      } catch (error) {
+        await this.run('ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async requireRoomOwner(roomId, requester) {
+    if (!this.isValidUserId(requester)) throw new Error('Invalid user');
+    if (roomId === DEFAULT_ROOM_ID) {
+      throw new Error('Public Lobby is managed by the server administrator');
+    }
 
     const room = await this.getRoom(roomId);
     if (!room) throw new Error('Room not found');
 
+    const participant = await this.get(
+      'SELECT role FROM room_participants WHERE room_id = ? AND user_id = ?',
+      [roomId, requester]
+    );
+    if (!participant) throw new Error('Room access denied');
+    if (participant.role !== 'owner' || room.ownerId !== requester) {
+      throw new Error('Room owner permission required');
+    }
+
+    return { ...room, role: 'owner' };
+  }
+
+  async updateRoomName({ roomId, name, requester }) {
+    this.ensureOpened();
+
+    const roomName = String(name || '').trim();
+    if (!roomName || roomName.length > 60) throw new Error('Invalid room name');
+    const room = await this.requireRoomOwner(roomId, requester);
+
     const updatedAt = Date.now();
     await this.enqueueWrite(() => this.run(
-      'UPDATE rooms SET name = ?, updated_at = ? WHERE id = ?',
-      [roomName, updatedAt, roomId]
+      'UPDATE rooms SET name = ?, updated_at = ?, last_active_at = ? WHERE id = ?',
+      [roomName, updatedAt, updatedAt, roomId]
     ));
 
     return { ...room, name: roomName, updatedAt };
   }
 
-  async regenerateRoomCode({ roomId }) {
+  async regenerateRoomCode({ roomId, requester }) {
     this.ensureOpened();
 
-    const room = await this.getRoom(roomId);
-    if (!room) throw new Error('Room not found');
+    const room = await this.requireRoomOwner(roomId, requester);
 
     const code = this.generateRoomCode();
     const updatedAt = Date.now();
     await this.enqueueWrite(() => this.run(
-      'UPDATE rooms SET code = ?, updated_at = ? WHERE id = ?',
-      [code, updatedAt, roomId]
+      'UPDATE rooms SET code = ?, updated_at = ?, last_active_at = ? WHERE id = ?',
+      [code, updatedAt, updatedAt, roomId]
     ));
 
     return { ...room, code, updatedAt };
+  }
+
+  async leaveRoom({ roomId, userId }) {
+    this.ensureOpened();
+    if (!this.isValidUserId(userId)) throw new Error('Invalid user');
+    if (roomId === DEFAULT_ROOM_ID) {
+      throw new Error('Public Lobby cannot be left');
+    }
+
+    return this.enqueueWrite(async () => {
+      const room = await this.getRoom(roomId);
+      if (!room) throw new Error('Room not found');
+
+      const participant = await this.get(
+        'SELECT role FROM room_participants WHERE room_id = ? AND user_id = ?',
+        [roomId, userId]
+      );
+      if (!participant) throw new Error('Room access denied');
+
+      await this.run('BEGIN IMMEDIATE');
+
+      try {
+        await this.run(
+          'DELETE FROM room_participants WHERE room_id = ? AND user_id = ?',
+          [roomId, userId]
+        );
+
+        const remaining = await this.all(
+          `SELECT user_id, role FROM room_participants
+           WHERE room_id = ?
+           ORDER BY joined_at ASC, user_id ASC`,
+          [roomId]
+        );
+
+        if (remaining.length === 0) {
+          const dissolved = await this.dissolveRoomContentsInTransaction(room, 'last_member_left');
+          await this.run('COMMIT');
+          const cleanup = await this.processCleanupQueue();
+          return {
+            roomId,
+            sessionId: dissolved.sessionId,
+            dissolved: true,
+            newOwnerId: null,
+            ...cleanup
+          };
+        }
+
+        let newOwnerId = room.ownerId;
+        let ownerChanged = false;
+        if (participant.role === 'owner' || room.ownerId === userId) {
+          newOwnerId = remaining[0].user_id;
+          ownerChanged = true;
+          await this.run(
+            "UPDATE room_participants SET role = 'member' WHERE room_id = ?",
+            [roomId]
+          );
+          await this.run(
+            "UPDATE room_participants SET role = 'owner' WHERE room_id = ? AND user_id = ?",
+            [roomId, newOwnerId]
+          );
+          await this.run(
+            `UPDATE rooms
+             SET owner_id = ?, updated_at = ?, last_active_at = ?
+             WHERE id = ?`,
+            [newOwnerId, Date.now(), Date.now(), roomId]
+          );
+        }
+
+        if (!ownerChanged) {
+          const activityAt = Date.now();
+          await this.run(
+            'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+            [activityAt, activityAt, roomId]
+          );
+        }
+
+        await this.run('COMMIT');
+        return {
+          roomId,
+          sessionId: this.getRoomConversation(roomId).sessionId,
+          dissolved: false,
+          newOwnerId,
+          ownerChanged
+        };
+      } catch (error) {
+        await this.run('ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async dissolveRoom({ roomId, requester }) {
+    this.ensureOpened();
+    const room = await this.requireRoomOwner(roomId, requester);
+
+    return this.enqueueWrite(async () => {
+      await this.run('BEGIN IMMEDIATE');
+
+      try {
+        const dissolved = await this.dissolveRoomContentsInTransaction(room, 'manual');
+        await this.run('COMMIT');
+        const cleanup = await this.processCleanupQueue();
+        return {
+          roomId,
+          sessionId: dissolved.sessionId,
+          ...cleanup
+        };
+      } catch (error) {
+        await this.run('ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async dissolveRoomContentsInTransaction(room, reason = 'manual') {
+    const conversation = this.getRoomConversation(room.id);
+    const files = await this.all(
+      'SELECT DISTINCT file_path FROM messages WHERE session_id = ? AND file_path IS NOT NULL',
+      [conversation.sessionId]
+    );
+    const now = Date.now();
+
+    for (const file of files) {
+      await this.run(
+        'INSERT OR IGNORE INTO file_cleanup_queue(file_path, created_at) VALUES (?, ?)',
+        [file.file_path, now]
+      );
+    }
+
+    await this.run(
+      'DELETE FROM messages WHERE session_id = ?',
+      [conversation.sessionId]
+    );
+    await this.run(
+      'DELETE FROM room_participants WHERE room_id = ?',
+      [room.id]
+    );
+    await this.run(
+      `UPDATE rooms
+       SET status = 'deleted', deleted_at = ?, updated_at = ?, code = NULL,
+           deleted_reason = ?
+       WHERE id = ?`,
+      [now, now, reason, room.id]
+    );
+
+    return { sessionId: conversation.sessionId };
   }
 
   normalizeMessage(message) {
@@ -786,9 +1170,13 @@ class MessageHistoryService {
       name: row.name,
       code: row.code,
       createdBy: row.created_by,
+      ownerId: row.owner_id || null,
       status: row.status,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      deletedAt: row.deleted_at || null,
+      deletedReason: row.deleted_reason || null,
+      lastActiveAt: row.last_active_at || row.updated_at || row.created_at || null
     };
   }
 

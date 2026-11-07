@@ -4,7 +4,7 @@ import {
   useIdentityEditor
 } from '../frontend/src/composables/use-identity-editor'
 
-const createComposable = ({ targetUser = 'group_chat' } = {}) => {
+const createComposable = ({ targetUser = 'room-a' } = {}) => {
   const socket = { emit: vi.fn() }
   const refs = {
     currentUser: { value: 'user-a' },
@@ -55,9 +55,18 @@ describe('useIdentityEditor', () => {
 
     expect(refs.groupName.value).toBe('new room')
     expect(socket.emit).toHaveBeenCalledWith('room_update_name', {
-      roomId: 'group_chat',
+      roomId: 'room-a',
       name: 'new room'
     })
     expect(notify.success).toHaveBeenCalledWith('chat.groupNameUpdated')
+  })
+
+  it('does not open the name editor for the Public Lobby', () => {
+    const { identity, socket } = createComposable({ targetUser: 'group_chat' })
+
+    identity.openGroupNameEditor()
+
+    expect(identity.editDialogVisible.value).toBe(false)
+    expect(socket.emit).not.toHaveBeenCalled()
   })
 })

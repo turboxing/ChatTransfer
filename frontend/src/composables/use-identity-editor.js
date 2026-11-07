@@ -26,6 +26,8 @@ export function useIdentityEditor({
   }
 
   const openGroupNameEditor = () => {
+    if (targetUser.value === 'group_chat') return
+
     editDialogType.value = 'groupName'
     editDialogTitle.value = t('chat.editGroupName')
     editDialogPlaceholder.value = t('chat.groupNamePlaceholder')

@@ -6,6 +6,7 @@ export function useChatTools({
   cachePathController,
   clearLocalHistory,
   clearServerHistory,
+  clearServerHistoryConfirmText,
   t,
   notify,
   alert,
@@ -83,7 +84,9 @@ export function useChatTools({
   const handleClearServerHistory = async () => {
     try {
       await confirm(
-        t('messages.confirmClearServerHistoryText'),
+        typeof clearServerHistoryConfirmText === 'function'
+          ? clearServerHistoryConfirmText()
+          : (clearServerHistoryConfirmText || t('messages.confirmClearServerHistoryText')),
         t('messages.confirmClearHistoryTitle'),
         {
           confirmButtonText: t('messages.confirmOk'),

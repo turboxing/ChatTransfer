@@ -51,6 +51,21 @@ export function useMessages({ currentUser, targetUser }) {
     rawMessages.value = [];
   };
 
+  const removeRoomHistory = (roomId) => {
+    if (!roomId) return;
+
+    try {
+      localStorage.removeItem(`im_chat_record:${roomId}`);
+    } catch (error) {
+      console.error(error);
+    }
+
+    if (targetUser.value === roomId) {
+      rawMessages.value = [];
+      historyCursor.value = null;
+    }
+  };
+
   const applyServerHistory = ({ messages = [], nextCursor = historyCursor.value }) => {
     const messageMap = new Map(rawMessages.value.map((message) => [message.msgId, message]));
 
@@ -79,6 +94,7 @@ export function useMessages({ currentUser, targetUser }) {
     loadHistory,
     saveMessage,
     clearHistory,
+    removeRoomHistory,
     applyServerHistory,
     resetHistoryCursor
   };

@@ -125,14 +125,27 @@ async function start(options = {}) {
     return;
   }
 
+  historyService.configureIdleRetention(runtimeOptions.roomIdleRetentionDays);
+  const publicRoomRetentionDays = runtimeOptions.publicRoomRetentionDays;
+  if (Number.isFinite(publicRoomRetentionDays) && publicRoomRetentionDays > 0) {
+    historyService.startPublicRoomCleanup({ retentionDays: publicRoomRetentionDays });
+  }
+
   const app = createConfiguredApp(uploadsDir, historyService, batchDownloadService);
   const server = http.createServer(app);
 
-  registerSocket(server, historyService, batchDownloadService);
+  const io = registerSocket(server, historyService, batchDownloadService, {
+    roomIdleRetentionDays: runtimeOptions.roomIdleRetentionDays
+  });
+  await io.idleCleanupReady;
 
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, runtimeOptions.host, resolve);
+  });
+
+  server.once('close', () => {
+    historyService.stopPublicRoomCleanup();
   });
 
   const homeUrl = runtimeOptions.publicUrl || `http://${clientIpAddress}:${port}`;
@@ -143,6 +156,7 @@ async function start(options = {}) {
   console.log(`CacheDir: ${uploadsDir}`);
   console.log(`Runtime: ${getRuntimeName()}`);
   console.log(`DataDir: ${path.dirname(getConfigFile())}`);
+  console.log(`Retention: idle-room=${runtimeOptions.roomIdleRetentionDays}d public-messages=${runtimeOptions.publicRoomRetentionDays}d`);
 
   trackEvent('app_start', {
     local_url: homeUrl,

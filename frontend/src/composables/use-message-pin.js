@@ -154,6 +154,23 @@ export function useMessagePin({ targetUser, t, parseFileName }) {
     ElMessage.success(t('chat.cancelTop'))
   }
 
+  const clearRoomState = (roomId) => {
+    if (!roomId) return;
+
+    const nextPinned = pinnedMessages.value.filter(
+      (message) => message.receiver !== roomId
+    );
+    if (nextPinned.length !== pinnedMessages.value.length) {
+      pinnedMessages.value = nextPinned;
+      savePinnedMessages();
+    }
+
+    if (storedTopMessage.value?.receiver === roomId) {
+      storedTopMessage.value = null;
+      saveTopMessage();
+    }
+  }
+
   load()
 
   return {
@@ -171,6 +188,7 @@ export function useMessagePin({ targetUser, t, parseFileName }) {
     unpinMessage,
     unpinLatestMessage,
     handleTopMessage,
-    unTopMessage
+    unTopMessage,
+    clearRoomState
   }
 }

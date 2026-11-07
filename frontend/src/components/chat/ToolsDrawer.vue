@@ -24,8 +24,12 @@
       <div v-if="showGroupName" class="setting-item">
         <div class="setting-label">{{ t('chat.groupName') }}</div>
         <div class="setting-value-group">
+          <span v-if="isPublicTransitStation" class="public-badge">
+            <el-icon><OfficeBuilding /></el-icon>
+            {{ t('rooms.publicBadge') }}
+          </span>
           <span class="setting-value">{{ groupName || t('chat.defaultGroupName') }}</span>
-          <el-button link size="small" @click="emit('edit-group-name')">
+          <el-button v-if="canEditGroupName" link size="small" @click="emit('edit-group-name')">
             <el-icon><EditPen /></el-icon>
           </el-button>
         </div>
@@ -69,9 +73,15 @@
         <el-icon><Brush /></el-icon>
         <span>{{ t('tools.clearLocalHistory') }}</span>
       </div>
-      <div class="danger tool-item" @click="emit('clear-server-history')">
+      <div
+        v-if="canClearServerHistory"
+        class="danger tool-item"
+        @click="emit('clear-server-history')"
+      >
         <el-icon><Delete /></el-icon>
-        <span>{{ t('tools.clearServerHistory') }}</span>
+        <span>
+          {{ isPublicTransitStation ? t('tools.clearPublicRoomHistory') : t('tools.clearServerHistory') }}
+        </span>
       </div>
     </div>
 
@@ -120,6 +130,7 @@ import {
   FolderAdd,
   FolderOpened,
   FullScreen,
+  OfficeBuilding,
   Star
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -130,6 +141,9 @@ defineProps({
   myNickname: { type: String, default: '' },
   groupName: { type: String, default: '' },
   showGroupName: { type: Boolean, default: false },
+  canEditGroupName: { type: Boolean, default: false },
+  canClearServerHistory: { type: Boolean, default: false },
+  isPublicTransitStation: { type: Boolean, default: false },
   cachePath: { type: String, default: '' },
   cachePathCustomized: { type: Boolean, default: false },
   copyright: { type: String, required: true },
@@ -210,6 +224,24 @@ const { t } = useI18n()
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.public-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid #b3d8ff;
+  border-radius: 999px;
+  background: #ecf5ff;
+  color: #409eff;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.public-badge .el-icon {
+  font-size: 11px;
 }
 
 .tools-list {

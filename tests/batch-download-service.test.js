@@ -106,4 +106,21 @@ describe('Batch download', () => {
     expect(buildUniqueZipEntryName('a.txt', usedNames)).toBe('a (2).txt');
     expect(buildUniqueZipEntryName('../a.txt', usedNames)).toBe('__a.txt');
   });
+
+  it('revokes pending download tokens for a deleted room', () => {
+    batchDownloadService.tokens.set('room-token-a', {
+      attachments: [],
+      roomId: 'room-a',
+      expiresAt: Date.now() + 1000
+    });
+    batchDownloadService.tokens.set('room-token-b', {
+      attachments: [],
+      roomId: 'room-b',
+      expiresAt: Date.now() + 1000
+    });
+
+    expect(batchDownloadService.revokeRoom('room-a')).toBe(1);
+    expect(batchDownloadService.consumeDownloadToken('room-token-a')).toBeNull();
+    expect(batchDownloadService.consumeDownloadToken('room-token-b')).not.toBeNull();
+  });
 });

@@ -6,12 +6,13 @@ Status values: `Planned`, `In progress`, `Blocked`, `Done`.
 
 ## Multi-room Conversations
 
-- Status: Planned
+- Status: In progress
 - Priority: P0
 - Estimated effort: 6.5-9 engineering days
 - Target: Unify conversations around multi-room support with QR and room-code joining
+- Implementation: Core multi-room functionality is complete and tested; pending merge and release.
 
-The full product and engineering proposal is documented in [plan-multi-room-conversations.md](./plan-multi-room-conversations.md). The existing "group chat" concept should be renamed to "room" in the product UI. The current default group chat remains backward compatible as the default room, while new rooms use independent room IDs and room codes.
+The full product and engineering proposal is documented in [plan-multi-room-conversations.md](./plan-multi-room-conversations.md). The existing "group chat" concept should be renamed to "room" in the product UI. The current default group chat remains backward compatible as the "Public Lobby" (technical ID: `group_chat`), while new rooms use independent room IDs and room codes.
 
 Key outcomes:
 
@@ -19,7 +20,28 @@ Key outcomes:
 - New devices can join by QR code or by entering a room code.
 - Messages, files, attachments, presence, and cleanup are isolated per room.
 - The conversation switcher can change rooms without refreshing the page.
-- Legacy default group links and history continue to work.
+- Legacy default group links and history continue to work through the Public Lobby.
+
+## Room Lifecycle and Public Lobby
+
+- Status: In progress
+- Priority: P0
+- Estimated effort: 1-1.5 engineering days
+- Target: Give rooms a complete exit and dissolution lifecycle without creating unsafe shared-room deletion
+- Implementation: Exit, dissolution, owner transfer, Public Lobby permissions, admin cleanup, and retention are implemented and tested; pending merge and release.
+
+The full lifecycle and permission proposal is documented in [plan-multi-room-conversations.md](./plan-multi-room-conversations.md).
+
+Key outcomes:
+
+- Any member can leave a normal room without affecting other participants.
+- Only the room owner can clear server history or dissolve the room.
+- If the owner leaves, ownership transfers to the earliest remaining member.
+- The last member leaving automatically dissolves and cleans up the room.
+- The former default room is renamed to "Public Lobby", cannot be renamed, left, or dissolved, and has no owner.
+- Normal users may only clear their local records in the Public Lobby.
+- Server-side cleanup for the Public Lobby is restricted to the instance administrator.
+- Idle non-public rooms are automatically deleted after the configured retention period, including their messages and unreferenced attachment files.
 
 ## Online Device List and Presence Notices
 

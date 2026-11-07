@@ -8,19 +8,35 @@
   >
     <div class="invite-content" :data-invite-url="inviteUrl">
       <div class="room-name">
+        <span v-if="isPublicTransitStation" class="public-badge">
+          <el-icon><OfficeBuilding /></el-icon>
+          {{ t('rooms.publicBadge') }}
+        </span>
         {{ room?.id === 'group_chat' ? t('rooms.default') : (room?.name || t('rooms.default')) }}
       </div>
       <img v-if="qrUrl" :src="qrUrl" class="invite-qr" alt="Room QR Code" />
       <div v-else v-loading="loading" class="invite-placeholder"></div>
 
-      <div class="invite-code">
+      <div v-if="!isPublicTransitStation" class="invite-code">
         {{ formattedCode }}
       </div>
 
       <div class="invite-actions">
-        <el-button :icon="CopyDocument" :disabled="!room?.code" @click="copyCode">{{ t('rooms.copyCode') }}</el-button>
+        <el-button
+          v-if="!isPublicTransitStation"
+          :icon="CopyDocument"
+          :disabled="!room?.code"
+          @click="copyCode"
+        >
+          {{ t('rooms.copyCode') }}
+        </el-button>
         <el-button :icon="Link" :disabled="!inviteUrl" @click="copyLink">{{ t('rooms.copyLink') }}</el-button>
-        <el-button :icon="Refresh" :loading="regenerating" @click="emit('regenerate')">
+        <el-button
+          v-if="!isPublicTransitStation"
+          :icon="Refresh"
+          :loading="regenerating"
+          @click="emit('regenerate')"
+        >
           {{ t('rooms.regenerate') }}
         </el-button>
       </div>
@@ -30,7 +46,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { CopyDocument, Link, Refresh } from '@element-plus/icons-vue'
+import { CopyDocument, Link, OfficeBuilding, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
@@ -44,6 +60,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'regenerate', 'copied'])
 const { t } = useI18n()
+
+const isPublicTransitStation = computed(() => props.room?.id === 'group_chat')
 
 const formattedCode = computed(() => {
   const code = props.room?.code || ''
@@ -63,9 +81,29 @@ const copyLink = () => emit('copied', 'link')
 }
 
 .room-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #303133;
   font-size: 16px;
   font-weight: 500;
+}
+
+.public-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 7px;
+  border: 1px solid #b3d8ff;
+  border-radius: 999px;
+  background: #ecf5ff;
+  color: #409eff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.public-badge .el-icon {
+  font-size: 12px;
 }
 
 .invite-qr {

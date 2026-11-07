@@ -46,6 +46,29 @@ Telemetry is disabled by default. To enable it locally:
 
 Without a key, ChatTransfer uses a no-op provider and does not send external requests.
 
+## Retention
+
+Normal rooms are deleted after 7 days without activity by default. The last
+active time is updated when a user creates/joins a room, sends a message,
+renames a room, or regenerates its room code. A running server checks every
+6 hours; on startup it checks before accepting connections.
+
+```bash
+# Keep rooms for 30 days
+chattransfer --room-idle-retention-days 30
+
+# Disable idle room deletion
+chattransfer --room-idle-retention-days 0
+
+# Public Lobby messages are kept for 14 days
+chattransfer --public-room-retention-days 14
+```
+
+The equivalent environment variables are
+`CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS` and
+`CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS`. Startup arguments take precedence
+over environment variables.
+
 ## Coding Rules
 
 - Keep files small and focused.

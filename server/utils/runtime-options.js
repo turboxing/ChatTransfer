@@ -2,6 +2,8 @@ const path = require('path');
 
 const DEFAULT_HOST = '0.0.0.0';
 const DEFAULT_PORT = 55556;
+const DEFAULT_ROOM_IDLE_RETENTION_DAYS = 7;
+const DEFAULT_PUBLIC_ROOM_RETENTION_DAYS = 7;
 
 function isTruthy(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
@@ -15,6 +17,19 @@ function parsePort(value, source) {
   }
 
   return port;
+}
+
+function parseRetentionDays(value, source, defaultValue) {
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+
+  const days = Number(value);
+  if (!Number.isInteger(days) || days < 0 || days > 365) {
+    throw new Error(`Invalid ${source}: ${value}`);
+  }
+
+  return days;
 }
 
 function normalizePublicUrl(value) {
@@ -58,6 +73,16 @@ function resolveStartOptions(overrides = {}, env = process.env) {
   const host = overrides.host ?? env.CHATTRANSFER_HOST ?? DEFAULT_HOST;
   const dataDir = overrides.dataDir ?? env.CHATTRANSFER_DATA_DIR;
   const publicUrl = normalizePublicUrl(overrides.publicUrl ?? env.CHATTRANSFER_PUBLIC_URL);
+  const roomIdleRetentionDays = parseRetentionDays(
+    overrides.roomIdleRetentionDays ?? env.CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS,
+    'room idle retention days',
+    DEFAULT_ROOM_IDLE_RETENTION_DAYS
+  );
+  const publicRoomRetentionDays = parseRetentionDays(
+    overrides.publicRoomRetentionDays ?? env.CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS,
+    'public room retention days',
+    DEFAULT_PUBLIC_ROOM_RETENTION_DAYS
+  );
   const openBrowser = shouldOpenBrowser({
     env,
     explicitValue: overrides.openBrowser
@@ -75,6 +100,8 @@ function resolveStartOptions(overrides = {}, env = process.env) {
     ),
     dataDir: dataDir ? path.resolve(String(dataDir)) : null,
     publicUrl,
+    roomIdleRetentionDays,
+    publicRoomRetentionDays,
     openBrowser
   };
 }
@@ -82,8 +109,11 @@ function resolveStartOptions(overrides = {}, env = process.env) {
 module.exports = {
   DEFAULT_HOST,
   DEFAULT_PORT,
+  DEFAULT_PUBLIC_ROOM_RETENTION_DAYS,
+  DEFAULT_ROOM_IDLE_RETENTION_DAYS,
   isTruthy,
   normalizePublicUrl,
+  parseRetentionDays,
   parsePort,
   resolveStartOptions,
   shouldOpenBrowser

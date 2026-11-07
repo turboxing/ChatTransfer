@@ -9,7 +9,10 @@
       :online-text="t('chat.online')"
       :offline-text="t('chat.offline')"
       :online-count-text="t('chat.onlineCount', { count: onlineCount })"
-      @edit-group-name="openGroupNameEditor"
+      :can-edit-group-name="canEditGroupName"
+      :is-public-room="isPublicTransitStation"
+      :public-badge-text="t('rooms.publicBadge')"
+      @edit-group-name="handleEditGroupName"
       @open-pin-drawer="openPinDrawer"
       @show-qr="showRoomInvite"
       @show-tools="showTools"
@@ -82,13 +85,16 @@
       :my-nickname="myNickname"
       :group-name="groupName"
       :show-group-name="!!targetUser"
+      :can-edit-group-name="canEditGroupName"
+      :can-clear-server-history="canClearServerHistory"
+      :is-public-transit-station="isPublicTransitStation"
       :cache-path="cachePath"
       :cache-path-customized="cachePathCustomized"
       :copyright="copyright"
       :version="version"
       @update:language-setting="handleLanguageChange"
       @edit-nickname="openNicknameEditor"
-      @edit-group-name="openGroupNameEditor"
+      @edit-group-name="handleEditGroupName"
       @show-qr="showRoomInvite"
       @copy-cache-path="copyCachePath(cachePath)"
       @open-cache-path="handleOpenCachePath"
@@ -164,10 +170,14 @@
       v-model="conversationsDrawerVisible"
       :rooms="rooms"
       :active-room-id="targetUser"
+      :current-user="currentUser"
       :loading="roomsLoading"
       @select="switchRoom"
       @create="createRoomDialogVisible = true"
       @join="joinRoomDialogVisible = true"
+      @rename="handleRoomRename"
+      @leave="handleLeaveRoom"
+      @dissolve="handleDissolveRoom"
     />
 
     <CreateRoomDialog
@@ -258,6 +268,7 @@ const onlineUsers = ref([])
 const onlineUsersDrawerVisible = ref(false)
 const rooms = ref([])
 const roomsLoading = ref(false)
+const isLocalAdmin = ref(false)
 const conversationsDrawerVisible = ref(false)
 const createRoomDialogVisible = ref(false)
 const joinRoomDialogVisible = ref(false)
@@ -270,6 +281,18 @@ const activeRoom = computed(() => (
     id: targetUser.value,
     name: groupName.value
   }
+))
+const isPublicTransitStation = computed(() => targetUser.value === 'group_chat')
+const isCurrentRoomOwner = computed(() => (
+  !isPublicTransitStation.value &&
+  (
+    activeRoom.value?.role === 'owner' ||
+    (!!currentUser.value && activeRoom.value?.ownerId === currentUser.value)
+  )
+))
+const canEditGroupName = computed(() => isCurrentRoomOwner.value)
+const canClearServerHistory = computed(() => (
+  isPublicTransitStation.value ? isLocalAdmin.value : isCurrentRoomOwner.value
 ))
 const presenceNotices = ref([])
 const presenceNoticeTimers = new Map()
@@ -292,6 +315,7 @@ const {
   loadHistory,
   saveMessage: saveMessageToLocal,
   clearHistory: clearLocalHistory,
+  removeRoomHistory,
   applyServerHistory,
   resetHistoryCursor,
 } = useMessages({ currentUser, targetUser })
@@ -382,10 +406,13 @@ const {
   listRooms,
   updateRoomName,
   regenerateRoomCode,
+  leaveRoom,
+  dissolveRoom,
   requestHistory,
   queryAttachments,
   requestBatchDownload,
   clearServerHistory,
+  clearPublicRoomHistory,
 } = useSocket({
   currentUser,
   targetUser,
@@ -413,12 +440,14 @@ const {
   },
   onGroupName: (name) => {
     if (!name) return
-    groupName.value = name
+    groupName.value = targetUser.value === 'group_chat' ? '' : name
   },
   onMessage: handleIncomingMessage,
   onHistoryCleared: handleHistoryCleared,
   onPresenceChanged: handlePresenceChanged,
   onRoomUpdated: handleRoomUpdated,
+  onRoomDeleted: handleRoomDeleted,
+  onRoomOwnerChanged: handleRoomOwnerChanged,
   onRoomError: handleRoomError,
 })
 
@@ -434,25 +463,98 @@ async function refreshRooms() {
     return
   }
 
-  rooms.value = result.data
+  const nextRooms = result.data.map(normalizeRoom)
+  const nextRoomIds = new Set(nextRooms.map((room) => room.id))
+  for (const room of rooms.value) {
+    if (room.id !== 'group_chat' && !nextRoomIds.has(room.id)) {
+      clearRoomLocalState(room.id)
+    }
+  }
+
+  rooms.value = nextRooms
 }
 
 function handleRoomUpdated(room) {
   if (!room?.id) return
+  const normalizedRoom = normalizeRoom(room)
   const index = rooms.value.findIndex((item) => item.id === room.id)
   if (index === -1) {
-    rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+    rooms.value = [...rooms.value, { ...normalizedRoom, onlineCount: 0 }]
   } else {
-    rooms.value[index] = { ...rooms.value[index], ...room }
+    rooms.value[index] = { ...rooms.value[index], ...normalizedRoom }
   }
 
   if (room.id === targetUser.value) {
-    groupName.value = room.id === 'group_chat' ? '' : room.name
+    groupName.value = room.id === 'group_chat' ? '' : normalizedRoom.name
+  }
+}
+
+function normalizeRoom(room) {
+  if (!room?.id) return room
+  const role = room.id === 'group_chat'
+    ? 'member'
+    : (
+      room.role === 'owner' || (!!currentUser.value && room.ownerId === currentUser.value)
+        ? 'owner'
+        : 'member'
+    )
+
+  return { ...room, role }
+}
+
+function clearRoomLocalState(roomId) {
+  removeRoomHistory(roomId)
+  clearRoomState(roomId)
+  roomDrafts.delete(roomId)
+}
+
+async function handleRoomDeleted(data = {}) {
+  const roomId = data.roomId
+  if (!roomId) return
+
+  const deletedRoom = rooms.value.find((room) => room.id === roomId)
+  const wasCurrentRoom = targetUser.value === roomId
+
+  clearRoomLocalState(roomId)
+  rooms.value = rooms.value.filter((room) => room.id !== roomId)
+  if (inviteRoom.value?.id === roomId) {
+    roomInviteDialogVisible.value = false
+    inviteRoom.value = null
+  }
+  batchDownloadDialogVisible.value = false
+  batchAttachments.value = []
+
+  if (wasCurrentRoom) {
+    await switchRoom('group_chat')
+    roomDrafts.delete(roomId)
+    ElMessage.warning(t('rooms.deletedNotice', {
+      name: deletedRoom?.name || t('rooms.title')
+    }))
+  }
+}
+
+function handleRoomOwnerChanged(data = {}) {
+  const room = rooms.value.find((item) => item.id === data.roomId)
+  if (!room || !data.ownerId) return
+
+  room.ownerId = data.ownerId
+  room.role = data.ownerId === currentUser.value ? 'owner' : 'member'
+  rooms.value = [...rooms.value]
+
+  if (data.ownerId === currentUser.value) {
+    ElMessage.info(t('rooms.youAreOwner'))
   }
 }
 
 function handleRoomError(result) {
-  ElMessage.error(result.message || t('rooms.joinFailed'))
+  const message = result?.message || ''
+  if (targetUser.value !== 'group_chat' && /room not found/i.test(message)) {
+    ElMessage.warning(t('rooms.roomUnavailable'))
+    void switchRoom('group_chat')
+    return
+  }
+
+  ElMessage.error(result?.message || t('rooms.joinFailed'))
 }
 
 const openConversationsDrawer = () => {
@@ -479,6 +581,10 @@ const loadServerHistory = async () => {
 }
 
 const clearServerHistoryForCurrentSession = () => {
+  if (isPublicTransitStation.value) {
+    return clearPublicRoomHistory()
+  }
+
   return clearServerHistory({
     requester: currentUser.value,
     roomId: targetUser.value
@@ -555,6 +661,11 @@ const {
   cachePathController,
   clearLocalHistory,
   clearServerHistory: clearServerHistoryForCurrentSession,
+  clearServerHistoryConfirmText: () => (
+    isPublicTransitStation.value
+      ? t('messages.confirmClearPublicRoomText')
+      : t('messages.confirmClearServerHistoryText')
+  ),
   t,
   notify: ElMessage,
   alert: ElMessageBox.alert,
@@ -596,6 +707,7 @@ const {
   unpinLatestMessage,
   handleTopMessage,
   unTopMessage,
+  clearRoomState,
 } = useMessagePin({ targetUser, t, parseFileName })
 
 const {
@@ -697,6 +809,121 @@ const showRoomInvite = async () => {
   await showQrCode(inviteRoom.value)
 }
 
+const handleEditGroupName = () => {
+  if (!canEditGroupName.value) return
+  openGroupNameEditor()
+}
+
+const ensureRoomIsActive = async (room) => {
+  if (!room?.id) return false
+  if (room.id === targetUser.value) return true
+  return switchRoom(room.id)
+}
+
+const syncRoomUrl = (room, code = null) => {
+  try {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('receiver')
+    url.searchParams.delete('roomId')
+    url.searchParams.delete('code')
+    url.searchParams.delete('roomName')
+
+    if (!room || room.id === 'group_chat') {
+      url.searchParams.set('receiver', 'group_chat')
+    } else {
+      url.searchParams.set('roomId', room.id)
+      const roomCode = code || room.code
+      if (roomCode) url.searchParams.set('code', roomCode)
+    }
+
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+const handleRoomRename = async (room) => {
+  if (normalizeRoom(room).role !== 'owner') return
+  const activated = await ensureRoomIsActive(room)
+  if (activated) handleEditGroupName()
+}
+
+const handleLeaveRoom = async (room) => {
+  if (!room?.id || room.id === 'group_chat') return
+
+  try {
+    await ElMessageBox.confirm(
+      t('rooms.leaveConfirm'),
+      t('rooms.leaveTitle'),
+      {
+        confirmButtonText: t('rooms.leave'),
+        cancelButtonText: t('messages.confirmCancel'),
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  const activated = await ensureRoomIsActive(room)
+  if (!activated) return
+
+  const result = await leaveRoom({
+    roomId: room.id,
+    username: currentUser.value
+  })
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.leaveFailed'))
+    return
+  }
+
+  if (result.data?.dissolved) {
+    await handleRoomDeleted({ roomId: room.id })
+    return
+  }
+
+  const wasCurrentRoom = targetUser.value === room.id
+  clearRoomLocalState(room.id)
+  rooms.value = rooms.value.filter((item) => item.id !== room.id)
+  if (wasCurrentRoom) {
+    await switchRoom('group_chat')
+    roomDrafts.delete(room.id)
+  }
+  ElMessage.success(t('rooms.left'))
+}
+
+const handleDissolveRoom = async (room) => {
+  if (!room?.id || room.id === 'group_chat') return
+
+  try {
+    await ElMessageBox.confirm(
+      t('rooms.dissolveConfirm'),
+      t('rooms.dissolveTitle'),
+      {
+        confirmButtonText: t('rooms.dissolve'),
+        cancelButtonText: t('messages.confirmCancel'),
+        type: 'warning'
+      }
+    )
+  } catch {
+    return
+  }
+
+  const activated = await ensureRoomIsActive(room)
+  if (!activated) return
+
+  const result = await dissolveRoom({
+    roomId: room.id,
+    username: currentUser.value
+  })
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.dissolveFailed'))
+    return
+  }
+
+  await handleRoomDeleted({ roomId: room.id })
+}
+
 const switchRoom = async (room, options = {}) => {
   const roomId = typeof room === 'string' ? room : room?.id
   if (!roomId || roomId === targetUser.value) return true
@@ -728,6 +955,10 @@ const switchRoom = async (room, options = {}) => {
 
   const joinedRoom = result.data?.room
   if (joinedRoom) handleRoomUpdated(joinedRoom)
+  const activeRoomForUrl = joinedRoom || (
+    typeof room === 'object' ? room : { id: roomId }
+  )
+  syncRoomUrl(activeRoomForUrl, options.code || joinedRoom?.code)
 
   await loadServerHistory()
   await refreshRooms()
@@ -745,7 +976,7 @@ const handleCreateRoom = async (name) => {
     return
   }
 
-  const room = result.data.room
+  const room = normalizeRoom(result.data.room)
   rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
   createRoomDialogVisible.value = false
   inviteRoom.value = room
@@ -764,7 +995,7 @@ const handleJoinRoomByCode = async (code) => {
     return
   }
 
-  const room = result.data.room
+  const room = normalizeRoom(result.data.room)
   if (!rooms.value.some((item) => item.id === room.id)) {
     rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
   }
@@ -918,6 +1149,7 @@ const { initSession } = useChatSession({
 })
 
 onMounted(() => {
+  isLocalAdmin.value = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
   initSession()
   loadSendHistory()
   document.addEventListener('keydown', handleChatKeydown)

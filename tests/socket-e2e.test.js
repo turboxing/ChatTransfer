@@ -26,7 +26,9 @@ beforeAll(async () => {
   await historyService.init();
   batchDownloadService = new BatchDownloadService({ historyService });
   registerSocket(server, historyService, batchDownloadService, {
-    presenceOfflineDebounceMs: 80
+    presenceOfflineDebounceMs: 80,
+    roomIdleRetentionDays: 7,
+    roomIdleCleanupIntervalMs: 25
   });
 
   await new Promise((resolve) => {
@@ -62,6 +64,8 @@ function createChatClient(name) {
   socket.presenceEvents = [];
   socket.roomMessages = [];
   socket.roomUpdates = [];
+  socket.roomDeleted = [];
+  socket.roomOwnerChanges = [];
   socket.on('user_list_updated', (data) => {
     socket.userLists.push(data.users || []);
   });
@@ -80,6 +84,12 @@ function createChatClient(name) {
   socket.on('room_updated', (data) => {
     socket.roomUpdates.push(data.room);
   });
+  socket.on('room_deleted', (data) => {
+    socket.roomDeleted.push(data);
+  });
+  socket.on('room_owner_changed', (data) => {
+    socket.roomOwnerChanges.push(data);
+  });
 
   clients.push(socket);
 
@@ -91,13 +101,17 @@ function waitFor(predicate, timeout = 5000) {
     const startedAt = Date.now();
 
     const check = () => {
-      if (predicate()) {
-        resolve();
-      } else if (Date.now() - startedAt >= timeout) {
-        reject(new Error('Condition timed out'));
-      } else {
-        setTimeout(check, 25);
-      }
+      Promise.resolve(predicate())
+        .then((result) => {
+          if (result) {
+            resolve();
+          } else if (Date.now() - startedAt >= timeout) {
+            reject(new Error('Condition timed out'));
+          } else {
+            setTimeout(check, 25);
+          }
+        })
+        .catch(reject);
     };
 
     check();
@@ -270,7 +284,7 @@ describe('Socket.IO multi-client chat', () => {
     });
 
     const cleared = new Promise((resolve) => userB.once('history_cleared', resolve));
-    const result = await emitWithAck(userA, 'history_clear', {
+    const result = await emitWithAck(userA, 'public_room_admin_clear', {
       chatType: 'group',
       targetUser: 'group_chat'
     });
@@ -517,7 +531,137 @@ describe('Socket.IO multi-client chat', () => {
     const listedRoom = rooms.data.find((item) => item.id === room.id);
     expect(listedRoom).toBeTruthy();
     expect(listedRoom.onlineCount).toBe(2);
+
+    const regenerated = await emitWithAck(host, 'room_regenerate_code', {
+      roomId: room.id
+    });
+    expect(regenerated.code).toBe(0);
+    const staleReconnect = await emitWithAck(joiner, 'room_online', {
+      roomId: room.id,
+      code: room.code,
+      username: 'room-joiner',
+      nickname: 'Room Joiner'
+    });
+    expect(staleReconnect.code).toBe(0);
+
+    const left = await emitWithAck(joiner, 'room_leave', { roomId: room.id });
+    expect(left.code).toBe(0);
+    expect(left.data).toMatchObject({ dissolved: false, ownerChanged: false });
+
+    const dissolved = await emitWithAck(host, 'room_dissolve', { roomId: room.id });
+    expect(dissolved.code).toBe(0);
+    await waitFor(() => host.roomDeleted.some((item) => item.roomId === room.id));
+    expect(host.roomDeleted.at(-1)).toMatchObject({
+      roomId: room.id,
+      reason: 'owner_dissolved'
+    });
+    const remainingRooms = await emitWithAck(host, 'room_list', {});
+    expect(remainingRooms.data.some((item) => item.id === room.id)).toBe(false);
+    expect(fs.existsSync(path.join(filesDir, 'room-file.txt'))).toBe(false);
+
     host.disconnect();
     joiner.disconnect();
+  });
+
+  it('transfers room ownership and enforces lifecycle permissions', { timeout: 15000 }, async () => {
+    const owner = createChatClient('LifecycleOwner');
+    const member = createChatClient('LifecycleMember');
+    await Promise.all([
+      new Promise((resolve) => owner.once('connect', resolve)),
+      new Promise((resolve) => member.once('connect', resolve))
+    ]);
+
+    await emitWithAck(owner, 'room_online', {
+      roomId: 'group_chat',
+      username: 'lifecycle-owner',
+      nickname: 'Lifecycle Owner'
+    });
+    const created = await emitWithAck(owner, 'room_create', { name: 'Lifecycle Project' });
+    const room = created.data.room;
+    await emitWithAck(owner, 'room_online', {
+      roomId: room.id,
+      username: 'lifecycle-owner',
+      nickname: 'Lifecycle Owner'
+    });
+
+    await emitWithAck(member, 'room_online', {
+      roomId: 'group_chat',
+      username: 'lifecycle-member',
+      nickname: 'Lifecycle Member'
+    });
+    await emitWithAck(member, 'room_join_by_code', { code: room.code });
+    await emitWithAck(member, 'room_online', {
+      roomId: room.id,
+      username: 'lifecycle-member',
+      nickname: 'Lifecycle Member'
+    });
+
+    const deniedRename = await emitWithAck(member, 'room_update_name', {
+      roomId: room.id,
+      name: 'Not Allowed'
+    });
+    const deniedDissolve = await emitWithAck(member, 'room_dissolve', {
+      roomId: room.id
+    });
+    expect(deniedRename.code).toBe(-1);
+    expect(deniedDissolve.code).toBe(-1);
+
+    const ownerLeft = await emitWithAck(owner, 'room_leave', { roomId: room.id });
+    expect(ownerLeft.code).toBe(0);
+    expect(ownerLeft.data).toMatchObject({
+      dissolved: false,
+      newOwnerId: 'lifecycle-member',
+      ownerChanged: true
+    });
+    await waitFor(() => member.roomOwnerChanges.some(
+      (item) => item.roomId === room.id && item.ownerId === 'lifecycle-member'
+    ));
+
+    const renamed = await emitWithAck(member, 'room_update_name', {
+      roomId: room.id,
+      name: 'Lifecycle Renamed'
+    });
+    expect(renamed.code).toBe(0);
+
+    const dissolved = await emitWithAck(member, 'room_dissolve', { roomId: room.id });
+    expect(dissolved.code).toBe(0);
+    await waitFor(() => member.roomDeleted.some((item) => item.roomId === room.id));
+
+    const listed = await emitWithAck(member, 'room_list', {});
+    expect(listed.data.some((item) => item.id === room.id)).toBe(false);
+    owner.disconnect();
+    member.disconnect();
+  });
+
+  it('schedules cleanup for rooms that exceed the idle retention period', { timeout: 15000 }, async () => {
+    const owner = createChatClient('IdleCleanupOwner');
+    await new Promise((resolve) => owner.once('connect', resolve));
+    await emitWithAck(owner, 'room_online', {
+      roomId: 'group_chat',
+      username: 'idle-cleanup-owner',
+      nickname: 'Idle Cleanup Owner'
+    });
+    const created = await emitWithAck(owner, 'room_create', { name: 'Idle Cleanup Room' });
+    const room = created.data.room;
+    await emitWithAck(owner, 'room_online', {
+      roomId: room.id,
+      username: 'idle-cleanup-owner',
+      nickname: 'Idle Cleanup Owner'
+    });
+    owner.disconnect();
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    await historyService.run(
+      'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+      [Date.now() - (8 * 24 * 60 * 60 * 1000), Date.now() - (8 * 24 * 60 * 60 * 1000), room.id]
+    );
+
+    await waitFor(async () => {
+      const persisted = await historyService.get(
+        'SELECT status, deleted_reason FROM rooms WHERE id = ?',
+        [room.id]
+      );
+      return persisted?.status === 'deleted' && persisted.deleted_reason === 'inactive';
+    }, 2000);
   });
 });

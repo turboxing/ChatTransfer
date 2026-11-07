@@ -8,9 +8,18 @@
       </div>
       <div class="header-center">
         <div class="header-title-info">
-          <h3 class="group-name-text" :title="editGroupNameTitle" @click="$emit('edit-group-name')">
+          <h3
+            class="group-name-text"
+            :class="{ editable: canEditGroupName }"
+            :title="canEditGroupName ? editGroupNameTitle : groupName"
+            @click="canEditGroupName && $emit('edit-group-name')"
+          >
+            <span v-if="isPublicRoom" class="public-room-badge">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ publicBadgeText }}
+            </span>
             {{ groupName }}
-            <el-icon class="edit-icon"><EditPen /></el-icon>
+            <el-icon v-if="canEditGroupName" class="edit-icon"><EditPen /></el-icon>
           </h3>
           <div class="header-meta">
             <span class="connection-status" :class="{ online: isConnected }">
@@ -43,7 +52,7 @@
 </template>
 
 <script setup>
-import { EditPen, FullScreen, Menu, Tools } from '@element-plus/icons-vue'
+import { EditPen, FullScreen, Menu, OfficeBuilding, Tools } from '@element-plus/icons-vue'
 
 defineProps({
   groupName: { type: String, required: true },
@@ -51,6 +60,9 @@ defineProps({
   onlineCountText: { type: String, required: true },
   isConnected: { type: Boolean, required: true },
   showOnlineCount: { type: Boolean, default: false },
+  canEditGroupName: { type: Boolean, default: false },
+  isPublicRoom: { type: Boolean, default: false },
+  publicBadgeText: { type: String, default: '' },
   editGroupNameTitle: { type: String, required: true },
   onlineText: { type: String, required: true },
   offlineText: { type: String, required: true }
@@ -103,7 +115,6 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
   margin: 0;
   font-size: 18px;
   color: #303133;
-  cursor: pointer;
   display: flex;
   align-items: center;
   max-width: min(52vw, 480px);
@@ -111,6 +122,28 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.group-name-text.editable {
+  cursor: pointer;
+}
+
+.public-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 1px 7px;
+  border: 1px solid #b3d8ff;
+  border-radius: 999px;
+  background: #ecf5ff;
+  color: #409eff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.public-room-badge .el-icon {
+  font-size: 12px;
 }
 
 .header-meta {
@@ -127,7 +160,7 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
   transition: opacity 0.2s;
 }
 
-.group-name-text:hover .edit-icon {
+.group-name-text.editable:hover .edit-icon {
   opacity: 1;
 }
 

@@ -22,6 +22,8 @@ describe('npm distribution', () => {
       '--port', '55560',
       '--data-dir', '/tmp/chattransfer-data',
       '--public-url', 'http://192.168.1.10:55560',
+      '--room-idle-retention-days', '3',
+      '--public-room-retention-days', '14',
       '--no-browser'
     ]);
 
@@ -30,6 +32,8 @@ describe('npm distribution', () => {
       port: '55560',
       'data-dir': '/tmp/chattransfer-data',
       'public-url': 'http://192.168.1.10:55560',
+      'room-idle-retention-days': '3',
+      'public-room-retention-days': '14',
       'no-browser': true,
       version: false,
       help: false
@@ -46,6 +50,8 @@ describe('npm distribution', () => {
     vi.stubEnv('CHATTRANSFER_DATA_DIR', '/tmp/chattransfer-env-data');
     vi.stubEnv('CHATTRANSFER_PUBLIC_URL', 'http://chattransfer.example');
     vi.stubEnv('CHATTRANSFER_NO_BROWSER', '1');
+    vi.stubEnv('CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS', '4');
+    vi.stubEnv('CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS', '12');
 
     const options = toStartOptions({});
 
@@ -55,6 +61,8 @@ describe('npm distribution', () => {
       explicitPort: true,
       dataDir: '/tmp/chattransfer-env-data',
       publicUrl: 'http://chattransfer.example',
+      roomIdleRetentionDays: 4,
+      publicRoomRetentionDays: 12,
       openBrowser: false
     });
 
@@ -68,6 +76,21 @@ describe('npm distribution', () => {
 
     expect(options.port).toBe(55562);
     expect(options.explicitPort).toBe(true);
+
+    vi.unstubAllEnvs();
+  });
+
+  it('gives retention CLI values precedence over environment variables', () => {
+    vi.stubEnv('CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS', '4');
+    vi.stubEnv('CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS', '12');
+
+    const options = toStartOptions({
+      'room-idle-retention-days': '3',
+      'public-room-retention-days': '14'
+    });
+
+    expect(options.roomIdleRetentionDays).toBe(3);
+    expect(options.publicRoomRetentionDays).toBe(14);
 
     vi.unstubAllEnvs();
   });
@@ -104,6 +127,10 @@ describe('npm distribution', () => {
     expect(() => resolveStartOptions({ port: 'invalid' })).toThrow('Invalid port');
     expect(() => resolveStartOptions({ port: 0 })).toThrow('Invalid port');
     expect(() => normalizePublicUrl('ftp://example.com')).toThrow('Invalid public URL');
+    expect(() => resolveStartOptions({ roomIdleRetentionDays: '1.5' }))
+      .toThrow('Invalid room idle retention days');
+    expect(() => resolveStartOptions({ publicRoomRetentionDays: '366' }))
+      .toThrow('Invalid public room retention days');
   });
 
   it('preserves a base path in public URLs', () => {

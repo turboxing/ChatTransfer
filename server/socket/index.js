@@ -5,6 +5,7 @@ const {
   decorateGroupMessage,
   decoratePrivateMessage
 } = require('../services/message-service');
+const { isLoopbackAddress } = require('../utils/network');
 
 const DEFAULT_ROOM_ID = 'group_chat';
 
@@ -27,8 +28,16 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
   const presenceOfflineDebounceMs = Number.isFinite(options.presenceOfflineDebounceMs)
     ? Math.max(0, options.presenceOfflineDebounceMs)
     : 8000;
+  const roomIdleRetentionDays = Number.isFinite(options.roomIdleRetentionDays)
+    ? Math.max(0, options.roomIdleRetentionDays)
+    : 7;
+  const roomIdleCleanupIntervalMs = Number.isFinite(options.roomIdleCleanupIntervalMs)
+    && options.roomIdleCleanupIntervalMs > 0
+    ? options.roomIdleCleanupIntervalMs
+    : 6 * 60 * 60 * 1000;
   const offlineTimers = new Map();
   const joinAttempts = new Map();
+  let roomIdleCleanupTimer = null;
 
   const socketRoomName = (roomId = DEFAULT_ROOM_ID) => (
     roomId === DEFAULT_ROOM_ID ? 'group-chat' : `room:${roomId}`
@@ -61,6 +70,20 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     offlineTimers.delete(key);
   };
 
+  const clearRoomTimers = (roomId) => {
+    for (const [key, timer] of offlineTimers.entries()) {
+      if (!key.startsWith(`${roomId}:`)) continue;
+      clearTimeout(timer);
+      offlineTimers.delete(key);
+    }
+  };
+
+  const requireActiveRoom = (socket, roomId) => {
+    if (!roomId || roomId !== socket.activeRoomId) {
+      throw new Error('Join the room before managing it');
+    }
+  };
+
   const scheduleOffline = ({ roomId, username }) => {
     clearOfflineTimer(roomId, username);
     const key = `${roomId}:${username}`;
@@ -80,20 +103,50 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     offlineTimers.set(key, timer);
   };
 
-  const leaveActiveRoom = (socket) => {
+  const leaveActiveRoom = (socket, { immediateOffline = false } = {}) => {
     const roomId = socket.activeRoomId;
     if (!roomId) return;
 
     socket.leave(socketRoomName(roomId));
+    socket.activeRoomId = null;
     const result = roomManager.removeSocket({
       roomId,
       username: socket.username,
       socketId: socket.id
     });
 
-    if (result.user && !result.hasConnections) {
+    if (result.user && !result.hasConnections && immediateOffline) {
+      clearOfflineTimer(roomId, socket.username);
+      const offline = roomManager.markOffline({ roomId, username: socket.username });
+      if (offline.becameOffline) {
+        broadcastRoomUserList(roomId);
+        emitPresenceChanged('offline', offline.user, roomId);
+      }
+    } else if (result.user && !result.hasConnections) {
       scheduleOffline({ roomId, username: socket.username });
     }
+  };
+
+  const detachRoomSockets = (roomId) => {
+    const socketIds = io.sockets.adapter.rooms.get(socketRoomName(roomId));
+    if (socketIds) {
+      for (const socketId of [...socketIds]) {
+        const memberSocket = io.sockets.sockets.get(socketId);
+        if (!memberSocket) continue;
+        memberSocket.leave(socketRoomName(roomId));
+        if (memberSocket.activeRoomId === roomId) {
+          memberSocket.activeRoomId = null;
+        }
+        roomManager.removeSocket({
+          roomId,
+          username: memberSocket.username,
+          socketId: memberSocket.id
+        });
+      }
+    }
+
+    clearRoomTimers(roomId);
+    roomManager.removeRoom(roomId);
   };
 
   const registerUserOnline = async (socket, {
@@ -106,7 +159,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     if (!userId) throw new Error('User is required');
 
     socket.username = userId;
-    await historyService.joinRoom({ roomId, code, userId, nickname });
+    const joinedRoom = await historyService.joinRoom({ roomId, code, userId, nickname });
     leaveActiveRoom(socket);
 
     socket.join(socketRoomName(roomId));
@@ -119,7 +172,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       ip: getClientIp(socket)
     });
 
-    const room = await historyService.getRoom(roomId);
+    const room = joinedRoom || await historyService.getRoom(roomId);
     if (room) roomManager.setRoomName(roomId, room.name);
     broadcastRoomUserList(roomId);
 
@@ -195,6 +248,40 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     joinAttempts.set(key, attempts);
   };
 
+  const runIdleRoomCleanup = async () => {
+    if (roomIdleRetentionDays <= 0) return;
+
+    try {
+      const now = Date.now();
+      const cutoff = now - (roomIdleRetentionDays * 24 * 60 * 60 * 1000);
+      const candidates = await historyService.listInactiveRooms({
+        retentionDays: roomIdleRetentionDays,
+        now
+      });
+      for (const room of candidates) {
+        const hasOnlineUsers = roomManager.listUsers(room.id)
+          .some((user) => user.status === roomManager.getOnline());
+        if (hasOnlineUsers) continue;
+
+        const deleted = await historyService.deleteRoomBySystem({
+          roomId: room.id,
+          reason: 'inactive',
+          cutoff
+        });
+        if (!deleted) continue;
+
+        batchDownloadService.revokeRoom(room.id);
+        io.to(socketRoomName(room.id)).emit('room_deleted', {
+          roomId: room.id,
+          reason: 'inactive'
+        });
+        detachRoomSockets(room.id);
+      }
+    } catch (error) {
+      console.error('[Room] idle cleanup failed:', error.message);
+    }
+  };
+
   io.on('connection', (socket) => {
     console.log(`[Socket] connected: ${socket.id}`);
 
@@ -225,7 +312,8 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
         if (!socket.username) throw new Error('User is required');
         const room = await historyService.createRoom({
           name: params.name,
-          createdBy: socket.username
+          createdBy: socket.username,
+          nickname: params.nickname || ''
         });
         await historyService.joinRoom({
           roomId: room.id,
@@ -290,9 +378,11 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
       try {
         const roomId = params.roomId || socket.activeRoomId;
+        requireActiveRoom(socket, roomId);
         const room = await historyService.updateRoomName({
           roomId,
-          name: params.name
+          name: params.name,
+          requester: socket.username
         });
         roomManager.setRoomName(roomId, room.name);
         io.to(socketRoomName(roomId)).emit('room_updated', { room });
@@ -309,12 +399,76 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
       try {
         const roomId = params.roomId || socket.activeRoomId;
-        const room = await historyService.regenerateRoomCode({ roomId });
+        requireActiveRoom(socket, roomId);
+        const room = await historyService.regenerateRoomCode({
+          roomId,
+          requester: socket.username
+        });
         io.to(socketRoomName(roomId)).emit('room_updated', { room });
 
         ack({ code: 0, data: { room } });
       } catch (error) {
         console.error('[Room] regenerate code failed:', error.message);
+        ack({ code: -1, message: error.message });
+      }
+    });
+
+    socket.on('room_leave', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const roomId = params.roomId || socket.activeRoomId;
+        requireActiveRoom(socket, roomId);
+        const data = await historyService.leaveRoom({
+          roomId,
+          userId: socket.username
+        });
+
+        if (data.dissolved) {
+          batchDownloadService.revokeRoom(roomId);
+          io.to(socketRoomName(roomId)).emit('room_deleted', {
+            roomId,
+            reason: 'last_member_left'
+          });
+          detachRoomSockets(roomId);
+        } else {
+          if (data.ownerChanged) {
+            io.to(socketRoomName(roomId)).emit('room_owner_changed', {
+              roomId,
+              ownerId: data.newOwnerId
+            });
+          }
+          leaveActiveRoom(socket, { immediateOffline: true });
+          broadcastRoomUserList(roomId);
+        }
+
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[Room] leave failed:', error.message);
+        ack({ code: -1, message: error.message });
+      }
+    });
+
+    socket.on('room_dissolve', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const roomId = params.roomId || socket.activeRoomId;
+        requireActiveRoom(socket, roomId);
+        const data = await historyService.dissolveRoom({
+          roomId,
+          requester: socket.username
+        });
+
+        batchDownloadService.revokeRoom(roomId);
+        io.to(socketRoomName(roomId)).emit('room_deleted', {
+          roomId,
+          reason: 'owner_dissolved'
+        });
+        detachRoomSockets(roomId);
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[Room] dissolve failed:', error.message);
         ack({ code: -1, message: error.message });
       }
     });
@@ -373,11 +527,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     });
 
     socket.on('update_group_name', ({ groupName, updatedBy }) => {
-      roomManager.setRoomName(DEFAULT_ROOM_ID, groupName);
-      io.to(socketRoomName(DEFAULT_ROOM_ID)).emit('group_name_updated', {
-        groupName,
-        updatedBy
-      });
+      console.warn('[Room] Public Lobby name cannot be changed');
     });
 
     socket.on('group_chat', async (params, ack) => {
@@ -535,6 +685,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       try {
         const requester = socket.username || params.requester;
         const roomId = params.roomId;
+        if (roomId) requireActiveRoom(socket, roomId);
         const chatType = params.chatType || (
           params.targetUser === 'group_chat' ? 'group' : 'private'
         );
@@ -558,6 +709,27 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       }
     });
 
+    socket.on('public_room_admin_clear', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        const clientIp = getClientIp(socket);
+        if (!isLoopbackAddress(clientIp)) {
+          throw new Error('Administrator access is only available from localhost');
+        }
+
+        const data = await historyService.clearPublicRoomHistory();
+        broadcastHistoryCleared({
+          roomId: DEFAULT_ROOM_ID,
+          sessionId: data.sessionId
+        }, socket);
+        ack({ code: 0, data });
+      } catch (error) {
+        console.error('[History] public room admin clear failed:', error.message);
+        ack({ code: -1, message: error.message });
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket] disconnect: ${socket.username || 'unknown'} ${socket.id}`);
       if (!socket.activeRoomId || !socket.username) return;
@@ -577,10 +749,25 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     });
   });
 
+  const idleCleanupReady = roomIdleRetentionDays > 0
+    ? runIdleRoomCleanup()
+    : Promise.resolve();
+  if (roomIdleRetentionDays > 0) {
+    roomIdleCleanupTimer = setInterval(() => {
+      void runIdleRoomCleanup();
+    }, roomIdleCleanupIntervalMs);
+    roomIdleCleanupTimer.unref?.();
+  }
+
   io.on('close', () => {
     for (const timer of offlineTimers.values()) clearTimeout(timer);
     offlineTimers.clear();
+    if (roomIdleCleanupTimer) {
+      clearInterval(roomIdleCleanupTimer);
+      roomIdleCleanupTimer = null;
+    }
   });
 
+  io.idleCleanupReady = idleCleanupReady;
   return io;
 };

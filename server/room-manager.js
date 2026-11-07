@@ -136,6 +136,13 @@ class RoomManager {
     return [...room.users.keys()].map((username) => this.getPublicUser(roomId, username));
   }
 
+  removeRoom(roomId = DEFAULT_ROOM_ID) {
+    if (roomId === DEFAULT_ROOM_ID) return false;
+    this.rooms.delete(roomId);
+    this.roomNames.delete(roomId);
+    return true;
+  }
+
   setRoomName(roomId = DEFAULT_ROOM_ID, name = '') {
     this.roomNames.set(roomId, name || '');
   }

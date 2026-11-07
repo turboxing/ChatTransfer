@@ -72,6 +72,7 @@ class BatchDownloadService {
     const token = crypto.randomBytes(24).toString('hex');
     this.tokens.set(token, {
       attachments,
+      roomId: roomId || null,
       expiresAt: Date.now() + DOWNLOAD_TOKEN_TTL
     });
     this.cleanupTokens();
@@ -103,6 +104,18 @@ class BatchDownloadService {
     for (const [token, record] of this.tokens.entries()) {
       if (now > record.expiresAt) this.tokens.delete(token);
     }
+  }
+
+  revokeRoom(roomId) {
+    if (!roomId) return 0;
+
+    let revoked = 0;
+    for (const [token, record] of this.tokens.entries()) {
+      if (record.roomId !== roomId) continue;
+      this.tokens.delete(token);
+      revoked += 1;
+    }
+    return revoked;
   }
 
   streamArchive(res, record) {

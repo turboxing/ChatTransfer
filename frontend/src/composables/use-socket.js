@@ -14,6 +14,8 @@ export function useSocket({
   onHistoryCleared,
   onPresenceChanged,
   onRoomUpdated,
+  onRoomDeleted,
+  onRoomOwnerChanged,
   onRoomError
 }) {
   const socket = ref(null);
@@ -54,6 +56,7 @@ export function useSocket({
         return
       }
 
+      if (pendingRoomCode) pendingRoomCode.value = null
       onConnect?.(result.data?.room);
     });
 
@@ -64,6 +67,8 @@ export function useSocket({
     socket.value.on('user_list_updated', (data) => onUserList?.(data.users || [], data.roomId));
     socket.value.on('group_name_updated', (data) => onGroupName?.(data.groupName || ''));
     socket.value.on('room_updated', (data) => onRoomUpdated?.(data.room));
+    socket.value.on('room_deleted', (data) => onRoomDeleted?.(data));
+    socket.value.on('room_owner_changed', (data) => onRoomOwnerChanged?.(data));
     socket.value.on('reply_private_chat', onMessage);
     socket.value.on('reply_group_chat', onMessage);
     socket.value.on('reply_room_chat', onMessage);
@@ -87,10 +92,13 @@ export function useSocket({
   const listRooms = () => emitWithAck('room_list', {});
   const updateRoomName = (payload) => emitWithAck('room_update_name', payload);
   const regenerateRoomCode = (payload) => emitWithAck('room_regenerate_code', payload);
+  const leaveRoom = (payload) => emitWithAck('room_leave', payload);
+  const dissolveRoom = (payload) => emitWithAck('room_dissolve', payload);
   const joinRoom = async (payload) => {
     const result = await emitWithAck('room_online', payload);
-    if (result.code === 0 && activeRoomId) {
-      activeRoomId.value = payload.roomId;
+    if (result.code === 0) {
+      if (pendingRoomCode) pendingRoomCode.value = null
+      if (activeRoomId) activeRoomId.value = payload.roomId;
     }
 
     return result;
@@ -99,6 +107,7 @@ export function useSocket({
   const requestBatchDownload = (payload) => emitWithAck('attachment_download', payload);
 
   const clearServerHistory = (payload) => emitWithAck('history_clear', payload);
+  const clearPublicRoomHistory = (payload = {}) => emitWithAck('public_room_admin_clear', payload);
 
   onUnmounted(() => socket.value?.disconnect());
 
@@ -112,9 +121,12 @@ export function useSocket({
     listRooms,
     updateRoomName,
     regenerateRoomCode,
+    leaveRoom,
+    dissolveRoom,
     requestHistory,
     queryAttachments,
     requestBatchDownload,
-    clearServerHistory
+    clearServerHistory,
+    clearPublicRoomHistory
   };
 }
