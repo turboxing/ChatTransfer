@@ -17,7 +17,6 @@ module.exports.getIPAddress = function () {
 
 //打开默认浏览器
 module.exports.openDefaultBrowser = function (url, callback = () => {}) {
-  console.log("使用浏览器打开首页");
   switch (process.platform) {
     case "darwin":
       execFile('open', [url], callback);
