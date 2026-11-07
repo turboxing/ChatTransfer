@@ -1,10 +1,21 @@
 # Changelog
 
-All notable changes to this project. Current version: **v2.0.18**
+All notable changes to this project. Current version: **v3.0.0**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.0.0 (2026-11-07)
+
+- Added multi-room conversations with room creation, QR or room-code joining, seamless switching, and isolated messages, files, and presence
+- Added the full room lifecycle: member leave, owner dissolution, automatic owner transfer, and cleanup after the last member leaves
+- Upgraded the default room to the Public Lobby with a public badge and disabled rename, leave, and dissolve actions
+- Added configurable idle-room deletion, enabled by default after 7 days and adjustable or disabled through CLI options or environment variables
+- Added Public Lobby message and attachment retention, with server cleanup restricted to the instance administrator
+- Improved room invitations, room-name synchronization, online counts, and batch-download isolation
+- Fixed iOS room highlighting and mobile reconnects failing with stale room codes after screen unlock
+- Added SQLite migration, room lifecycle, retention policy, and configuration regression tests
 
 ## v2.0.18 (2026-11-01)
 

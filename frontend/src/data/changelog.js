@@ -1,5 +1,31 @@
 export const changelog = [
   {
+    version: '3.0.0',
+    date: '2026-11-07',
+    changes: {
+      'zh-CN': [
+        '新增多房间会话：支持创建房间、二维码或房间码加入、无刷新切换，并按房间隔离消息、附件和在线状态',
+        '新增完整房间生命周期：成员退出、房主解散、房主自动移交，最后一名成员退出后自动清理',
+        '默认房间升级为“公共大厅”，增加公共标识，并禁止改名、退出和解散',
+        '普通房间支持闲置自动删除，默认 7 天，可通过启动参数或环境变量调整或关闭',
+        '公共大厅支持消息和附件保留期限，并将服务器清理权限收紧到实例管理员',
+        '优化房间邀请、房间名同步、在线人数统计和房间内批量下载隔离',
+        '修复 iOS 会话高亮异常，以及移动端锁屏解锁后使用旧房间码重连失败的问题',
+        '新增 SQLite 迁移、房间生命周期、保留策略和配置回归测试'
+      ],
+      en: [
+        'Added multi-room conversations with room creation, QR or room-code joining, seamless switching, and isolated messages, files, and presence',
+        'Added the full room lifecycle: member leave, owner dissolution, automatic owner transfer, and cleanup after the last member leaves',
+        'Upgraded the default room to the Public Lobby with a public badge and disabled rename, leave, and dissolve actions',
+        'Added configurable idle-room deletion, enabled by default after 7 days and adjustable or disabled through CLI options or environment variables',
+        'Added Public Lobby message and attachment retention, with server cleanup restricted to the instance administrator',
+        'Improved room invitations, room-name synchronization, online counts, and batch-download isolation',
+        'Fixed iOS room highlighting and mobile reconnects failing with stale room codes after screen unlock',
+        'Added SQLite migration, room lifecycle, retention policy, and configuration regression tests'
+      ]
+    }
+  },
+  {
     version: '2.0.18',
     date: '2026-11-01',
     changes: {
