@@ -202,13 +202,21 @@ describe('Socket.IO multi-client chat', () => {
     sender.messages = [];
     receiver.messages = [];
     receiver.on('reply_group_chat', (message) => receiver.messages.push(message));
-    sender.on('connect', () => sender.emit('group_online', 'PollA', 'Poll A'));
-    receiver.on('connect', () => receiver.emit('group_online', 'WsC', 'Ws C'));
-
     await Promise.all([
       new Promise((resolve) => sender.once('connect', resolve)),
       new Promise((resolve) => receiver.once('connect', resolve))
     ]);
+
+    await emitWithAck(sender, 'room_online', {
+      roomId: 'group_chat',
+      username: 'PollA',
+      nickname: 'Poll A'
+    });
+    await emitWithAck(receiver, 'room_online', {
+      roomId: 'group_chat',
+      username: 'WsC',
+      nickname: 'Ws C'
+    });
 
     sender.emit('group_chat', {
       sender: 'PollA',
