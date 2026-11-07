@@ -149,14 +149,20 @@ async function start(options = {}) {
   });
 
   const homeUrl = runtimeOptions.publicUrl || `http://${clientIpAddress}:${port}`;
+  const idleRoomRetention = runtimeOptions.roomIdleRetentionDays > 0
+    ? `${runtimeOptions.roomIdleRetentionDays}d`
+    : 'disabled';
+  const publicMessageRetention = runtimeOptions.publicRoomRetentionDays > 0
+    ? `${runtimeOptions.publicRoomRetentionDays}d`
+    : 'disabled';
 
   console.log(`ChatTransfer v${pkg.version}`);
-  console.log(`Server: ${homeUrl}`);
-  console.log(`Listen: ${runtimeOptions.host}:${port}`);
-  console.log(`CacheDir: ${uploadsDir}`);
   console.log(`Runtime: ${getRuntimeName()}`);
+  console.log(`Listen: ${runtimeOptions.host}:${port}`);
+  console.log(`Server: ${homeUrl}`);
   console.log(`DataDir: ${path.dirname(getConfigFile())}`);
-  console.log(`Retention: idle-room=${runtimeOptions.roomIdleRetentionDays}d public-messages=${runtimeOptions.publicRoomRetentionDays}d`);
+  console.log(`CacheDir: ${uploadsDir}`);
+  console.log(`Retention: idle-room=${idleRoomRetention} public-messages=${publicMessageRetention}`);
 
   trackEvent('app_start', {
     local_url: homeUrl,
@@ -164,11 +170,14 @@ async function start(options = {}) {
   });
 
   if (runtimeOptions.openBrowser) {
+    console.log(`Opening browser: ${homeUrl}`);
     openDefaultBrowser(homeUrl, (error) => {
       if (error) {
         console.error(`Failed to open browser: ${error.message}`);
       }
     });
+  } else {
+    console.log('Browser launch: disabled');
   }
 
   return server;
