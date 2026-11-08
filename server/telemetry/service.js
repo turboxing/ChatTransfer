@@ -115,7 +115,7 @@ class TelemetryService {
 
     if (this.enabled) {
       this.queueInstallIfNeeded();
-      this.scheduleFlush(0);
+      this.scheduleFlush(FLUSH_DELAY_MS);
     }
 
     return this;
@@ -266,6 +266,7 @@ class TelemetryService {
 
     this.flushing = true;
     const batch = this.queue.slice(0, FLUSH_BATCH_SIZE);
+    let failed = false;
 
     try {
       if (typeof this.provider.trackBatch === 'function') {
@@ -281,11 +282,12 @@ class TelemetryService {
       }
       this.persistQueue();
     } catch (error) {
+      failed = true;
       console.error('[Telemetry] send failed:', error.message);
     } finally {
       this.flushing = false;
       if (this.queue.length > 0) {
-        this.scheduleFlush(RETRY_DELAY_MS);
+        this.scheduleFlush(failed ? RETRY_DELAY_MS : FLUSH_DELAY_MS);
       }
     }
   }
