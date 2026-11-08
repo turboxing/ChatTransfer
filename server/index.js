@@ -8,7 +8,12 @@ const registerRoutes = require('./routes/index');
 const registerSocket = require('./socket/index');
 const { MessageHistoryService } = require('./services/message-history-service');
 const { BatchDownloadService } = require('./services/batch-download-service');
-const { trackEvent } = require('./telemetry/compat');
+const {
+  configureTelemetry,
+  isTelemetryEnabled,
+  shutdownTelemetry,
+  trackEvent
+} = require('./telemetry/compat');
 const {
   getDatabaseFile,
   getRuntimeName,
@@ -125,6 +130,15 @@ async function start(options = {}) {
     return;
   }
 
+  configureTelemetry({
+    dataDir: path.dirname(getConfigFile()),
+    disabled: runtimeOptions.telemetryDisabled,
+    version: pkg.version,
+    runtime: getRuntimeName(),
+    os: process.platform,
+    arch: process.arch
+  });
+
   historyService.configureIdleRetention(runtimeOptions.roomIdleRetentionDays);
   const publicRoomRetentionDays = runtimeOptions.publicRoomRetentionDays;
   if (Number.isFinite(publicRoomRetentionDays) && publicRoomRetentionDays > 0) {
@@ -146,6 +160,7 @@ async function start(options = {}) {
 
   server.once('close', () => {
     historyService.stopPublicRoomCleanup();
+    void shutdownTelemetry();
   });
 
   const homeUrl = runtimeOptions.publicUrl || `http://${clientIpAddress}:${port}`;
@@ -163,11 +178,9 @@ async function start(options = {}) {
   console.log(`DataDir: ${path.dirname(getConfigFile())}`);
   console.log(`CacheDir: ${uploadsDir}`);
   console.log(`Retention: idle-room=${idleRoomRetention} public-messages=${publicMessageRetention}`);
+  console.log(`Telemetry: ${isTelemetryEnabled() ? 'enabled' : 'disabled'}`);
 
-  trackEvent('app_start', {
-    local_url: homeUrl,
-    port
-  });
+  trackEvent('app_start', { port });
 
   if (runtimeOptions.openBrowser) {
     console.log(`Opening browser: ${homeUrl}`);

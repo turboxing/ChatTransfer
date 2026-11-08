@@ -185,8 +185,9 @@ ChatTransfer/
 - 聊天记录和文件默认仅保存在本机。
 - 传输只发生在局域网内。
 - 无账号体系，无内置云存储。
-- 埋点默认关闭，开源版本不包含任何提供方 key。
-- 如果你启用埋点，需要在 `config/local.json` 中填写自己的 API key；没有 key 时不会发起任何外部埋点请求。
+- 官方发布包默认开启匿名埋点；没有生成发布配置的源码开发环境默认关闭。
+- 可通过 `chattransfer --no-telemetry` 或 `CHATTRANSFER_TELEMETRY=off` 关闭埋点。
+- 埋点不采集消息内容、文件名、硬件指纹、主机名或系统用户名。
 
 详见 [docs/telemetry.md](./docs/telemetry.md)。
 

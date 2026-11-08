@@ -1,6 +1,6 @@
 const socketIo = require('socket.io');
 const roomManager = require('./session-manager');
-const { trackEvent } = require('../telemetry/compat');
+const { trackMessageSent, trackUserActive } = require('../telemetry/compat');
 const {
   decorateGroupMessage,
   decoratePrivateMessage
@@ -175,6 +175,9 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     const room = joinedRoom || await historyService.getRoom(roomId);
     if (room) roomManager.setRoomName(roomId, room.name);
     broadcastRoomUserList(roomId);
+    trackUserActive(userId, {
+      room_type: roomId === DEFAULT_ROOM_ID ? 'public' : 'room'
+    });
 
     if (result.becameOnline) {
       emitPresenceChanged('online', result.user, roomId, socket);
@@ -189,14 +192,15 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     return address ? address.replace(/^::ffff:/, '') : '';
   };
 
-  const trackMessage = (type, direction, params, socket) => {
-    trackEvent('message_action', {
-      chat_type: type,
-      msg_type: params.msgType || 'TEXT',
-      direction,
-      sender: params.sender,
-      visitor_id: params.visitorId || 'unknown-visitor',
-      user_agent: socket.handshake.headers['user-agent']
+  const trackMessage = (type, params, socket) => {
+    trackMessageSent({
+      userId: socket.username || params.sender,
+      chatType: type,
+      msgType: params.msgType || 'TEXT',
+      content: params.content ?? params.text ?? params.msg ?? '',
+      fileName: params.fileName || '',
+      fileSize: params.fileSize,
+      fileType: params.fileType || params.mimetype || ''
     });
   };
 
@@ -483,7 +487,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
       if (error) return;
 
-      trackMessage('private', 'send', decorated, socket);
+      trackMessage('private', decorated, socket);
 
       const receiver = roomManager.getUser(DEFAULT_ROOM_ID, savedMessage.receiver);
       if (receiver && receiver.status === roomManager.getOnline()) {
@@ -491,13 +495,6 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
           io.to(socketId).emit('reply_private_chat', savedMessage);
         }
 
-        trackEvent('message_action', {
-          chat_type: 'private',
-          msg_type: decorated.msgType || 'TEXT',
-          direction: 'receive',
-          receiver: decorated.receiver,
-          user_agent: socket.handshake.headers['user-agent']
-        });
       } else {
         console.log(`${decorated.receiver} is offline`);
       }
@@ -543,15 +540,8 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
       if (error) return;
 
-      trackMessage('group', 'send', decorated, socket);
+      trackMessage('group', decorated, socket);
       socket.broadcast.to(socketRoomName(DEFAULT_ROOM_ID)).emit('reply_group_chat', savedMessage);
-
-      trackEvent('message_action', {
-        chat_type: 'group',
-        msg_type: decorated.msgType || 'TEXT',
-        direction: 'broadcast',
-        user_agent: socket.handshake.headers['user-agent']
-      });
     });
 
     socket.on('room_chat', async (params = {}, ack) => {
@@ -578,15 +568,8 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
 
         if (error) return;
 
-        trackMessage('room', 'send', decorated, socket);
+        trackMessage('room', decorated, socket);
         socket.broadcast.to(socketRoomName(roomId)).emit('reply_room_chat', savedMessage);
-
-        trackEvent('message_action', {
-          chat_type: 'room',
-          msg_type: decorated.msgType || 'TEXT',
-          direction: 'broadcast',
-          user_agent: socket.handshake.headers['user-agent']
-        });
       } catch (error) {
         console.error('[Room] message failed:', error.message);
         ack?.({ status: 'failed', error: error.message });

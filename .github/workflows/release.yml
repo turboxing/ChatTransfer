@@ -49,6 +49,10 @@ jobs:
           cd frontend
           npm ci
           npm run build
+      - name: Generate telemetry config
+        env:
+          TELEMETRY_API_KEY: ${{ secrets.TELEMETRY_API_KEY }}
+        run: node scripts/generate-telemetry-config.js
       - name: Package executable
         shell: bash
         run: |
