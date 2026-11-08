@@ -1,10 +1,17 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.0.0**
+All notable changes to this project. Current version: **v3.0.1**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.0.1 (2026-11-08)
+
+- Added anonymous usage metrics for installations, active hosts, users per host, and message-type distribution
+- Enabled anonymous telemetry by default in official packages, with opt-out via --no-telemetry or CHATTRANSFER_TELEMETRY=off
+- Improved startup logs to show runtime, listen address, data directory, cache directory, and retention policy
+- Fixed an extra 5-second telemetry queue wait after the first batch and stabilized E2E test teardown
 
 ## v3.0.0 (2026-11-07)
 

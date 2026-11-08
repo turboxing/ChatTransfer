@@ -1,45 +1,73 @@
 {
   "latest": {
-    "version": "3.0.0",
-    "date": "2026-11-07",
+    "version": "3.0.1",
+    "date": "2026-11-08",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.0/ChatTransfer-macos-x64-v3_0_0.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.0/ChatTransfer-windows-x64-v3.0.0.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.1/ChatTransfer-macos-x64-v3_0_1.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.1/ChatTransfer-windows-x64-v3.0.1.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "新增多房间会话：支持创建房间、二维码或房间码加入、无刷新切换，并按房间隔离消息、附件和在线状态",
-        "新增完整房间生命周期：成员退出、房主解散、房主自动移交，最后一名成员退出后自动清理",
-        "默认房间升级为“公共大厅”，增加公共标识，并禁止改名、退出和解散",
-        "普通房间支持闲置自动删除，默认 7 天，可通过启动参数或环境变量调整或关闭",
-        "公共大厅支持消息和附件保留期限，并将服务器清理权限收紧到实例管理员",
-        "优化房间邀请、房间名同步、在线人数统计和房间内批量下载隔离",
-        "修复 iOS 会话高亮异常，以及移动端锁屏解锁后使用旧房间码重连失败的问题",
-        "新增 SQLite 迁移、房间生命周期、保留策略和配置回归测试"
+        "新增匿名使用统计：装机量、宿主活跃、宿主下用户数及消息类型分布",
+        "官方安装包默认启用匿名统计，可通过 --no-telemetry 或 CHATTRANSFER_TELEMETRY=off 关闭",
+        "优化启动日志，集中展示运行时、监听地址、数据目录、缓存目录和保留策略",
+        "修复遥测队列在首批发送后额外等待 5 秒的问题，并提升端到端测试稳定性"
       ],
       "en": [
-        "Added multi-room conversations with room creation, QR or room-code joining, seamless switching, and isolated messages, files, and presence",
-        "Added the full room lifecycle: member leave, owner dissolution, automatic owner transfer, and cleanup after the last member leaves",
-        "Upgraded the default room to the Public Lobby with a public badge and disabled rename, leave, and dissolve actions",
-        "Added configurable idle-room deletion, enabled by default after 7 days and adjustable or disabled through CLI options or environment variables",
-        "Added Public Lobby message and attachment retention, with server cleanup restricted to the instance administrator",
-        "Improved room invitations, room-name synchronization, online counts, and batch-download isolation",
-        "Fixed iOS room highlighting and mobile reconnects failing with stale room codes after screen unlock",
-        "Added SQLite migration, room lifecycle, retention policy, and configuration regression tests"
+        "Added anonymous usage metrics for installations, active hosts, users per host, and message-type distribution",
+        "Enabled anonymous telemetry by default in official packages, with opt-out via --no-telemetry or CHATTRANSFER_TELEMETRY=off",
+        "Improved startup logs to show runtime, listen address, data directory, cache directory, and retention policy",
+        "Fixed an extra 5-second telemetry queue wait after the first batch and stabilized E2E test teardown"
       ],
       "ar": [
-        "إضافة محادثات متعددة الغرف مع إنشاء الغرف والانضمام عبر رمز QR أو رمز الغرفة والتبديل السلس وعزل الرسائل والملفات وحالة الاتصال",
-        "إضافة دورة حياة كاملة للغرفة: مغادرة الأعضاء وحل الغرفة بواسطة المالك ونقل الملكية تلقائيًا وتنظيف الغرفة بعد مغادرة آخر عضو",
-        "ترقية الغرفة الافتراضية إلى الردهة العامة مع شارة عامة وتعطيل إعادة التسمية والمغادرة والحل",
-        "إضافة حذف تلقائي قابل للتكوين للغرف الخاملة، مفعّل افتراضيًا بعد 7 أيام ويمكن تعديله أو تعطيله عبر خيارات سطر الأوامر أو متغيرات البيئة",
-        "إضافة سياسة احتفاظ لرسائل ومرفقات الردهة العامة، مع تقييد تنظيف الخادم على مسؤول المثيل",
-        "تحسين دعوات الغرف ومزامنة أسماء الغرف وعدد المتصلين وعزل التنزيل المجمّع داخل الغرفة",
-        "إصلاح تمييز الغرفة في iOS وفشل إعادة اتصال الهاتف بسبب رمز غرفة قديم بعد فتح قفل الشاشة",
-        "إضافة اختبارات انحدار لترحيل SQLite ودورة حياة الغرفة وسياسة الاحتفاظ والتكوين"
+        "إضافة إحصاءات استخدام مجهولة: عدد عمليات التثبيت، نشاط المضيفين، عدد المستخدمين لكل مضيف، وتوزيع أنواع الرسائل",
+        "تمكين الإحصاءات المجهولة افتراضيًا في الحزم الرسمية، مع إمكانية التعطيل عبر --no-telemetry أو CHATTRANSFER_TELEMETRY=off",
+        "تحسين سجلات بدء التشغيل لعرض بيئة التشغيل وعنوان الاستماع ودليل البيانات ودليل التخزين المؤقت وسياسة الاحتفاظ",
+        "إصلاح تأخير طابور الإحصاءات 5 ثوانٍ إضافية بعد الدفعة الأولى، وتحسين استقرار اختبارات E2E"
       ]
     }
   },
   "history": [
+    {
+      "version": "3.0.0",
+      "date": "2026-11-07",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.0/ChatTransfer-macos-x64-v3_0_0.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.0/ChatTransfer-windows-x64-v3.0.0.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "新增多房间会话：支持创建房间、二维码或房间码加入、无刷新切换，并按房间隔离消息、附件和在线状态",
+          "新增完整房间生命周期：成员退出、房主解散、房主自动移交，最后一名成员退出后自动清理",
+          "默认房间升级为“公共大厅”，增加公共标识，并禁止改名、退出和解散",
+          "普通房间支持闲置自动删除，默认 7 天，可通过启动参数或环境变量调整或关闭",
+          "公共大厅支持消息和附件保留期限，并将服务器清理权限收紧到实例管理员",
+          "优化房间邀请、房间名同步、在线人数统计和房间内批量下载隔离",
+          "修复 iOS 会话高亮异常，以及移动端锁屏解锁后使用旧房间码重连失败的问题",
+          "新增 SQLite 迁移、房间生命周期、保留策略和配置回归测试"
+        ],
+        "en": [
+          "Added multi-room conversations with room creation, QR or room-code joining, seamless switching, and isolated messages, files, and presence",
+          "Added the full room lifecycle: member leave, owner dissolution, automatic owner transfer, and cleanup after the last member leaves",
+          "Upgraded the default room to the Public Lobby with a public badge and disabled rename, leave, and dissolve actions",
+          "Added configurable idle-room deletion, enabled by default after 7 days and adjustable or disabled through CLI options or environment variables",
+          "Added Public Lobby message and attachment retention, with server cleanup restricted to the instance administrator",
+          "Improved room invitations, room-name synchronization, online counts, and batch-download isolation",
+          "Fixed iOS room highlighting and mobile reconnects failing with stale room codes after screen unlock",
+          "Added SQLite migration, room lifecycle, retention policy, and configuration regression tests"
+        ],
+        "ar": [
+          "إضافة محادثات متعددة الغرف مع إنشاء الغرف والانضمام عبر رمز QR أو رمز الغرفة والتبديل السلس وعزل الرسائل والملفات وحالة الاتصال",
+          "إضافة دورة حياة كاملة للغرفة: مغادرة الأعضاء وحل الغرفة بواسطة المالك ونقل الملكية تلقائيًا وتنظيف الغرفة بعد مغادرة آخر عضو",
+          "ترقية الغرفة الافتراضية إلى الردهة العامة مع شارة عامة وتعطيل إعادة التسمية والمغادرة والحل",
+          "إضافة حذف تلقائي قابل للتكوين للغرف الخاملة، مفعّل افتراضيًا بعد 7 أيام ويمكن تعديله أو تعطيله عبر خيارات سطر الأوامر أو متغيرات البيئة",
+          "إضافة سياسة احتفاظ لرسائل ومرفقات الردهة العامة، مع تقييد تنظيف الخادم على مسؤول المثيل",
+          "تحسين دعوات الغرف ومزامنة أسماء الغرف وعدد المتصلين وعزل التنزيل المجمّع داخل الغرفة",
+          "إصلاح تمييز الغرفة في iOS وفشل إعادة اتصال الهاتف بسبب رمز غرفة قديم بعد فتح قفل الشاشة",
+          "إضافة اختبارات انحدار لترحيل SQLite ودورة حياة الغرفة وسياسة الاحتفاظ والتكوين"
+        ]
+      }
+    },
     {
       "version": "2.0.18",
       "date": "2026-11-01",

@@ -1,5 +1,23 @@
 export const changelog = [
   {
+    version: '3.0.1',
+    date: '2026-11-08',
+    changes: {
+      'zh-CN': [
+        '新增匿名使用统计：装机量、宿主活跃、宿主下用户数及消息类型分布',
+        '官方安装包默认启用匿名统计，可通过 --no-telemetry 或 CHATTRANSFER_TELEMETRY=off 关闭',
+        '优化启动日志，集中展示运行时、监听地址、数据目录、缓存目录和保留策略',
+        '修复遥测队列在首批发送后额外等待 5 秒的问题，并提升端到端测试稳定性'
+      ],
+      en: [
+        'Added anonymous usage metrics for installations, active hosts, users per host, and message-type distribution',
+        'Enabled anonymous telemetry by default in official packages, with opt-out via --no-telemetry or CHATTRANSFER_TELEMETRY=off',
+        'Improved startup logs to show runtime, listen address, data directory, cache directory, and retention policy',
+        'Fixed an extra 5-second telemetry queue wait after the first batch and stabilized E2E test teardown'
+      ]
+    }
+  },
+  {
     version: '3.0.0',
     date: '2026-11-07',
     changes: {
