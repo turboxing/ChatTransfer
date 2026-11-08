@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing tag to publish, for example v3.0.1
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -39,10 +47,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - name: Configure SQLite prebuild mirror
+        if: matrix.platform == 'windows-x64'
+        shell: bash
+        run: echo "npm_config_sqlite3_binary_host=https://registry.npmmirror.com/-/binary/sqlite3" >> "$GITHUB_ENV"
       - run: npm ci
       - name: Build frontend
         run: |
@@ -55,8 +69,10 @@ jobs:
         run: node scripts/generate-telemetry-config.js
       - name: Package executable
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          VERSION=${RELEASE_TAG#v}
           SAFE_VERSION=${VERSION//./_}
           mkdir -p dist
 
@@ -78,6 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
       - uses: actions/download-artifact@v4
         with:
           pattern: ChatTransfer-*
@@ -106,8 +124,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          name: ${{ inputs.release_tag || github.ref_name }}
           body_path: release-notes.md
           draft: false
           make_latest: legacy
