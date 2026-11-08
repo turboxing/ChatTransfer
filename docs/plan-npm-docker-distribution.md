@@ -148,6 +148,7 @@ chattransfer
 | `--public-url` | 对外访问地址，用于二维码和页面链接 | 自动检测局域网地址 |
 | `--room-idle-retention-days` | 普通房间闲置自动删除天数，`0` 表示关闭 | `7` |
 | `--public-room-retention-days` | 公共大厅消息保留天数，`0` 表示关闭 | `7` |
+| `--no-telemetry` | 关闭匿名埋点 | 官方包默认开启 |
 | `--no-browser` | 不打开本机浏览器 | 自动检测桌面环境 |
 | `--version` | 输出版本号 | 无 |
 | `--help` | 输出帮助信息 | 无 |
@@ -163,6 +164,7 @@ chattransfer
 | `CHATTRANSFER_NO_BROWSER` | `--no-browser` |
 | `CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS` | `--room-idle-retention-days` |
 | `CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS` | `--public-room-retention-days` |
+| `CHATTRANSFER_TELEMETRY=off` | `--no-telemetry` |
 
 优先级：
 

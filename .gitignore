@@ -33,6 +33,7 @@ a.json
 *.swp
 *.swo
 config/local.json
+config/default-analytics.json
 docs/*.md.swp
 codesign.sh
 genepkg.sh

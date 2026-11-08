@@ -34,6 +34,7 @@ describe('npm distribution', () => {
       'public-url': 'http://192.168.1.10:55560',
       'room-idle-retention-days': '3',
       'public-room-retention-days': '14',
+      'no-telemetry': false,
       'no-browser': true,
       version: false,
       help: false
@@ -44,6 +45,13 @@ describe('npm distribution', () => {
     expect(() => parseCliArguments(['--unknown'])).toThrow();
   });
 
+  it('supports disabling telemetry from the CLI', () => {
+    const values = parseCliArguments(['--no-telemetry']);
+
+    expect(values['no-telemetry']).toBe(true);
+    expect(toStartOptions(values).telemetryDisabled).toBe(true);
+  });
+
   it('resolves CLI options with environment variable fallback', () => {
     vi.stubEnv('CHATTRANSFER_HOST', '127.0.0.1');
     vi.stubEnv('CHATTRANSFER_PORT', '55561');
@@ -52,6 +60,7 @@ describe('npm distribution', () => {
     vi.stubEnv('CHATTRANSFER_NO_BROWSER', '1');
     vi.stubEnv('CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS', '4');
     vi.stubEnv('CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS', '12');
+    vi.stubEnv('CHATTRANSFER_TELEMETRY', 'off');
 
     const options = toStartOptions({});
 
@@ -63,6 +72,7 @@ describe('npm distribution', () => {
       publicUrl: 'http://chattransfer.example',
       roomIdleRetentionDays: 4,
       publicRoomRetentionDays: 12,
+      telemetryDisabled: true,
       openBrowser: false
     });
 

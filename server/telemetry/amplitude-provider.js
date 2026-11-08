@@ -7,9 +7,13 @@ class AmplitudeProvider {
   }
 
   async track(event) {
+    return this.trackBatch([event]);
+  }
+
+  async trackBatch(events) {
     await axios.post(this.endpoint, {
       api_key: this.apiKey,
-      events: [event]
+      events
     });
   }
 }

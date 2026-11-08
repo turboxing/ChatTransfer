@@ -32,6 +32,13 @@ function parseRetentionDays(value, source, defaultValue) {
   return days;
 }
 
+function parseTelemetryDisabled(value) {
+  if (value === undefined || value === null || value === '') return false;
+  return ['0', 'false', 'off', 'disable', 'disabled', 'no'].includes(
+    String(value).trim().toLowerCase()
+  );
+}
+
 function normalizePublicUrl(value) {
   if (!value) return null;
 
@@ -73,6 +80,9 @@ function resolveStartOptions(overrides = {}, env = process.env) {
   const host = overrides.host ?? env.CHATTRANSFER_HOST ?? DEFAULT_HOST;
   const dataDir = overrides.dataDir ?? env.CHATTRANSFER_DATA_DIR;
   const publicUrl = normalizePublicUrl(overrides.publicUrl ?? env.CHATTRANSFER_PUBLIC_URL);
+  const telemetryDisabled = typeof overrides.telemetryDisabled === 'boolean'
+    ? overrides.telemetryDisabled
+    : parseTelemetryDisabled(env.CHATTRANSFER_TELEMETRY);
   const roomIdleRetentionDays = parseRetentionDays(
     overrides.roomIdleRetentionDays ?? env.CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS,
     'room idle retention days',
@@ -100,6 +110,7 @@ function resolveStartOptions(overrides = {}, env = process.env) {
     ),
     dataDir: dataDir ? path.resolve(String(dataDir)) : null,
     publicUrl,
+    telemetryDisabled,
     roomIdleRetentionDays,
     publicRoomRetentionDays,
     openBrowser
@@ -113,6 +124,7 @@ module.exports = {
   DEFAULT_ROOM_IDLE_RETENTION_DAYS,
   isTruthy,
   normalizePublicUrl,
+  parseTelemetryDisabled,
   parseRetentionDays,
   parsePort,
   resolveStartOptions,

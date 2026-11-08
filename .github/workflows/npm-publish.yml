@@ -25,6 +25,10 @@ jobs:
           npm --prefix frontend ci
           npm --prefix frontend run build
       - run: npm test
+      - name: Generate telemetry config
+        env:
+          TELEMETRY_API_KEY: ${{ secrets.TELEMETRY_API_KEY }}
+        run: node scripts/generate-telemetry-config.js
       - name: Verify package contents
         run: npm pack --dry-run
       - name: Publish package

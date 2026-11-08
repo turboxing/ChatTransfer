@@ -7,6 +7,7 @@ const CLI_OPTIONS = {
   'public-url': { type: 'string' },
   'room-idle-retention-days': { type: 'string' },
   'public-room-retention-days': { type: 'string' },
+  'no-telemetry': { type: 'boolean', default: false },
   'no-browser': { type: 'boolean', default: false },
   version: { type: 'boolean', default: false },
   help: { type: 'boolean', default: false }
@@ -37,6 +38,7 @@ function toStartOptions(cliValues, env = process.env) {
     publicUrl: cliValues['public-url'],
     roomIdleRetentionDays: cliValues['room-idle-retention-days'],
     publicRoomRetentionDays: cliValues['public-room-retention-days'],
+    telemetryDisabled: cliValues['no-telemetry'] ? true : undefined,
     openBrowser: cliValues['no-browser'] ? false : undefined
   }, env);
 }
@@ -55,6 +57,7 @@ function getHelpText() {
     '  --public-url <url>         Public URL used by QR codes and links',
     '  --room-idle-retention-days <days>  Delete idle rooms after N days (default: 7, 0 disables)',
     '  --public-room-retention-days <days> Clear Public Lobby messages after N days (default: 7, 0 disables)',
+    '  --no-telemetry            Disable anonymous telemetry',
     '  --no-browser               Do not open the local browser',
     '  --version                  Print the version',
     '  --help                     Print this help',
@@ -65,6 +68,7 @@ function getHelpText() {
     '  CHATTRANSFER_DATA_DIR',
     '  CHATTRANSFER_PUBLIC_URL',
     '  CHATTRANSFER_NO_BROWSER',
+    '  CHATTRANSFER_TELEMETRY',
     '  CHATTRANSFER_ROOM_IDLE_RETENTION_DAYS',
     '  CHATTRANSFER_PUBLIC_ROOM_RETENTION_DAYS'
   ].join('\n');

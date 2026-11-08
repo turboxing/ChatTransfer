@@ -185,8 +185,9 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for more details.
 - Chat history and files are stored locally on your device.
 - Transfers stay inside your local network.
 - There is no account system and no built-in cloud storage.
-- Telemetry is disabled by default and never contains a provider key.
-- If you enable telemetry, you must provide your own API key in `config/local.json`; without a key, ChatTransfer makes no external telemetry request.
+- Official release packages include anonymous telemetry enabled by default; source checkouts without a generated release config remain disabled.
+- Disable telemetry with `chattransfer --no-telemetry` or `CHATTRANSFER_TELEMETRY=off`.
+- Telemetry never collects message content, file names, hardware fingerprints, hostnames, or OS usernames.
 
 See [docs/telemetry.md](./docs/telemetry.md) for details.
 
