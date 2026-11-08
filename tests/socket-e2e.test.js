@@ -13,6 +13,7 @@ const {
 } = require('../server/services/batch-download-service');
 
 let server;
+let socketServer;
 let serverUrl;
 let historyService;
 let batchDownloadService;
@@ -25,7 +26,7 @@ beforeAll(async () => {
   historyService = new MessageHistoryService({ cachePath: historyCachePath });
   await historyService.init();
   batchDownloadService = new BatchDownloadService({ historyService });
-  registerSocket(server, historyService, batchDownloadService, {
+  socketServer = registerSocket(server, historyService, batchDownloadService, {
     presenceOfflineDebounceMs: 80,
     roomIdleRetentionDays: 7,
     roomIdleCleanupIntervalMs: 25
@@ -39,6 +40,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await new Promise((resolve) => socketServer.close(resolve));
   await new Promise((resolve) => server.close(resolve));
   await historyService.close();
   fs.rmSync(historyCachePath, { recursive: true, force: true });
