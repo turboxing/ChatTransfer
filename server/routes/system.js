@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { execFile } = require('child_process');
 const {
   getCachePath,
   getConfigFile,
@@ -10,6 +9,7 @@ const {
 } = require('../config');
 const { getDefaultDataDir } = require('../utils/runtime-paths');
 const { validateCachePath } = require('../utils/cache-path-validation');
+const { openDirectory } = require('../utils/open-directory');
 const { trackEvent } = require('../telemetry/compat');
 
 module.exports = (configuredUploadsDir = getCachePath()) => {
@@ -41,7 +41,7 @@ module.exports = (configuredUploadsDir = getCachePath()) => {
     });
   });
 
-  router.post('/openCachePath', express.json(), (req, res) => {
+  router.post('/openCachePath', express.json(), async (req, res) => {
     const respond = (code, message) => res.send({
       code,
       message,
@@ -53,18 +53,11 @@ module.exports = (configuredUploadsDir = getCachePath()) => {
       return;
     }
 
-    if (process.platform === 'darwin') {
-      execFile('open', [uploadsDir], (error) => {
-        respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
-      });
-    } else if (process.platform === 'win32') {
-      execFile('explorer', [uploadsDir], (error) => {
-        respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
-      });
-    } else {
-      execFile('xdg-open', [uploadsDir], (error) => {
-        respond(error ? -1 : 0, error ? `打开失败：${error.message}` : '打开成功');
-      });
+    try {
+      await openDirectory(uploadsDir);
+      respond(0, '打开成功');
+    } catch (error) {
+      respond(-1, `打开失败：${error.message}`);
     }
   });
 
