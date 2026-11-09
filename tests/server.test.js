@@ -14,7 +14,7 @@ describe('server API', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.code).toBe(0);
-    expect(response.body.data.version).toBe('3.0.1');
+    expect(response.body.data.version).toBe('3.0.2');
     expect(response.body.data.copyright).toBe('© suncx and ChatTransfer Contributors');
   });
 

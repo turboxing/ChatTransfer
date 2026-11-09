@@ -1,5 +1,17 @@
 export const changelog = [
   {
+    version: '3.0.2',
+    date: '2026-11-09',
+    changes: {
+      'zh-CN': [
+        '修复 Windows 打开缓存目录时目录已成功打开但仍提示“打开失败”的问题'
+      ],
+      en: [
+        'Fixed a false “open failed” error on Windows when Explorer successfully opened the cache folder'
+      ]
+    }
+  },
+  {
     version: '3.0.1',
     date: '2026-11-08',
     changes: {

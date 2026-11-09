@@ -1,10 +1,14 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.0.1**
+All notable changes to this project. Current version: **v3.0.2**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.0.2 (2026-11-09)
+
+- Fixed a false “open failed” error on Windows when Explorer successfully opened the cache folder
 
 ## v3.0.1 (2026-11-08)
 
