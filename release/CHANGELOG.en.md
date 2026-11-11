@@ -1,10 +1,19 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.0.2**
+All notable changes to this project. Current version: **v3.1.0**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.1.0 (2026-11-11)
+
+- Launch directly into the Public Transfer Hub, with the centered invitation dialog auto-opened on desktop and on demand on mobile
+- Added larger QR codes, full-screen preview, toggleable device presence, and responsive device lists
+- Unified invitation dialogs for the public hub and regular rooms, including room codes, invite links, and owner-only code regeneration
+- Added per-room auto-cleanup policies with 7-day, 30-day, and permanent retention options
+- Conversation ordering now changes only on received or successfully sent messages, with full Arabic UI and RTL support
+- Added random room-name generation, clearer device labels, and expanded migration and regression coverage
 
 ## v3.0.2 (2026-11-09)
 

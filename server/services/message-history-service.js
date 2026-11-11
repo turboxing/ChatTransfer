@@ -9,6 +9,8 @@ const MAX_BATCH_ATTACHMENT_COUNT = 200;
 const MAX_BATCH_ATTACHMENT_TOTAL_SIZE = 2 * 1024 * 1024 * 1024;
 const GROUP_SESSION_ID = 'group';
 const DEFAULT_ROOM_ID = 'group_chat';
+const DEFAULT_IDLE_RETENTION_DAYS = 7;
+const ALLOWED_ROOM_RETENTION_DAYS = new Set([0, 7, 30]);
 const ROOM_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 class MessageHistoryService {
@@ -25,7 +27,7 @@ class MessageHistoryService {
     this.db = null;
     this.writeLock = Promise.resolve();
     this.publicRoomCleanupTimer = null;
-    this.idleRetentionDays = 7;
+    this.idleRetentionDays = DEFAULT_IDLE_RETENTION_DAYS;
   }
 
   init() {
@@ -92,7 +94,7 @@ class MessageHistoryService {
         );
       }
 
-      await this.run(
+      const insertedMessage = await this.run(
         `INSERT INTO messages(
           id, session_id, sender_id, receiver_id, message_type, content,
           sender_nickname, sender_ip, create_time, created_at,
@@ -116,13 +118,22 @@ class MessageHistoryService {
         ]
       );
 
-      if (normalized.roomId && normalized.roomId !== DEFAULT_ROOM_ID) {
+      if (normalized.roomId && insertedMessage.changes > 0) {
         const activityAt = Date.now();
+        const messageAt = Number(normalized.createdAt) || activityAt;
+        if (normalized.roomId !== DEFAULT_ROOM_ID) {
+          await this.run(
+            `UPDATE rooms
+             SET last_active_at = ?
+             WHERE id = ? AND status = 'active'`,
+            [activityAt, normalized.roomId]
+          );
+        }
         await this.run(
           `UPDATE rooms
-           SET last_active_at = ?, updated_at = ?
+           SET last_message_at = ?, last_message_seq = ?, updated_at = ?
            WHERE id = ? AND status = 'active'`,
-          [activityAt, activityAt, normalized.roomId]
+          [messageAt, insertedMessage.lastID, activityAt, normalized.roomId]
         );
       }
 
@@ -257,14 +268,14 @@ class MessageHistoryService {
     let conversation;
     if (roomId) {
       if (roomId === DEFAULT_ROOM_ID) {
-        throw new Error('Public Lobby history requires administrator');
+        throw new Error('Public Transfer Hub history requires administrator');
       }
       await this.requireRoomOwner(roomId, requester);
       conversation = this.getRoomConversation(roomId);
     } else {
       conversation = this.getConversation({ requester, chatType, targetUser });
       if (conversation.chatType === 'group') {
-        throw new Error('Public Lobby history requires administrator');
+        throw new Error('Public Transfer Hub history requires administrator');
       }
     }
 
@@ -307,6 +318,24 @@ class MessageHistoryService {
         await this.run(
           'DELETE FROM messages WHERE session_id = ? AND created_at < ?',
           [GROUP_SESSION_ID, cutoff]
+        );
+        await this.run(
+          `UPDATE rooms
+           SET
+             last_message_at = (
+               SELECT created_at FROM messages
+               WHERE session_id = ?
+               ORDER BY seq DESC
+               LIMIT 1
+             ),
+             last_message_seq = (
+               SELECT seq FROM messages
+               WHERE session_id = ?
+               ORDER BY seq DESC
+               LIMIT 1
+             )
+           WHERE id = ?`,
+          [GROUP_SESSION_ID, GROUP_SESSION_ID, DEFAULT_ROOM_ID]
         );
         await this.run('COMMIT');
       } catch (error) {
@@ -361,6 +390,21 @@ class MessageHistoryService {
       }
 
       await this.run('DELETE FROM messages WHERE session_id = ?', [conversation.sessionId]);
+      if (conversation.sessionId === GROUP_SESSION_ID) {
+        await this.run(
+          `UPDATE rooms
+           SET last_message_at = NULL, last_message_seq = NULL
+           WHERE id = ?`,
+          [DEFAULT_ROOM_ID]
+        );
+      } else if (conversation.sessionId.startsWith('room:')) {
+        await this.run(
+          `UPDATE rooms
+           SET last_message_at = NULL, last_message_seq = NULL
+           WHERE id = ?`,
+          [conversation.sessionId.slice('room:'.length)]
+        );
+      }
       await this.run('COMMIT');
     } catch (error) {
       await this.run('ROLLBACK').catch(() => {});
@@ -473,7 +517,10 @@ class MessageHistoryService {
       updated_at INTEGER NOT NULL,
       deleted_at INTEGER,
       last_active_at INTEGER,
-      deleted_reason TEXT
+      deleted_reason TEXT,
+      idle_retention_days INTEGER,
+      last_message_at INTEGER,
+      last_message_seq INTEGER
     )`);
     await this.run(`CREATE TABLE IF NOT EXISTS room_participants (
       room_id TEXT NOT NULL,
@@ -491,6 +538,9 @@ class MessageHistoryService {
     await this.ensureColumn('rooms', 'deleted_at', 'INTEGER');
     await this.ensureColumn('rooms', 'last_active_at', 'INTEGER');
     await this.ensureColumn('rooms', 'deleted_reason', 'TEXT');
+    await this.ensureColumn('rooms', 'idle_retention_days', 'INTEGER');
+    await this.ensureColumn('rooms', 'last_message_at', 'INTEGER');
+    await this.ensureColumn('rooms', 'last_message_seq', 'INTEGER');
     await this.ensureColumn('room_participants', 'role', "TEXT NOT NULL DEFAULT 'member'");
     await this.run(
       `UPDATE rooms
@@ -516,13 +566,51 @@ class MessageHistoryService {
       `INSERT OR IGNORE INTO rooms(
         id, name, code, created_by, owner_id, status, created_at, updated_at
       ) VALUES (?, ?, NULL, NULL, NULL, 'active', ?, ?)`,
-      [DEFAULT_ROOM_ID, 'Public Lobby', Date.now(), Date.now()]
+      [DEFAULT_ROOM_ID, 'Public Transfer Hub', Date.now(), Date.now()]
     );
     await this.run(
       `UPDATE rooms
-       SET name = 'Public Lobby'
-       WHERE id = ? AND name IN ('Default Room', 'Public Transit Station')`,
+       SET name = 'Public Transfer Hub'
+       WHERE id = ? AND name IN (
+         'Default Room',
+         'Public Lobby',
+         'Public Transit Station',
+         '公共大厅',
+         '公共中转站'
+       )`,
       [DEFAULT_ROOM_ID]
+    );
+    await this.run(
+      `UPDATE rooms
+       SET
+         last_message_at = COALESCE(
+           last_message_at,
+           (
+             SELECT m.created_at
+             FROM messages m
+             WHERE m.session_id = CASE
+               WHEN rooms.id = ? THEN ?
+               ELSE 'room:' || rooms.id
+             END
+             ORDER BY m.seq DESC
+             LIMIT 1
+           )
+         ),
+         last_message_seq = COALESCE(
+           last_message_seq,
+           (
+             SELECT m.seq
+             FROM messages m
+             WHERE m.session_id = CASE
+               WHEN rooms.id = ? THEN ?
+               ELSE 'room:' || rooms.id
+             END
+             ORDER BY m.seq DESC
+             LIMIT 1
+           )
+         )
+       WHERE last_message_at IS NULL OR last_message_seq IS NULL`,
+      [DEFAULT_ROOM_ID, GROUP_SESSION_ID, DEFAULT_ROOM_ID, GROUP_SESSION_ID]
     );
   }
 
@@ -616,7 +704,10 @@ class MessageHistoryService {
       status: 'active',
       createdAt: now,
       updatedAt: now,
-      lastActiveAt: now
+      lastActiveAt: now,
+      idleRetentionDays: DEFAULT_IDLE_RETENTION_DAYS,
+      lastMessageAt: null,
+      lastMessageSeq: null
     };
 
     return this.enqueueWrite(async () => {
@@ -627,9 +718,9 @@ class MessageHistoryService {
           await this.run(
             `INSERT INTO rooms(
               id, name, code, created_by, owner_id, status,
-              created_at, updated_at, last_active_at
+              created_at, updated_at, last_active_at, idle_retention_days
             )
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               room.id,
               room.name,
@@ -639,7 +730,8 @@ class MessageHistoryService {
               room.status,
               room.createdAt,
               room.updatedAt,
-              room.lastActiveAt
+              room.lastActiveAt,
+              room.idleRetentionDays
             ]
           );
           if (room.createdBy) {
@@ -654,7 +746,11 @@ class MessageHistoryService {
               [room.id, room.createdBy, nickname || null, now, now]
             );
           }
-          return { ...this.mapRoom(room), role: room.createdBy ? 'owner' : 'member' };
+          const createdRoom = await this.get(
+            'SELECT * FROM rooms WHERE id = ? AND status = ?',
+            [room.id, 'active']
+          );
+          return { ...this.mapRoom(createdRoom), role: room.createdBy ? 'owner' : 'member' };
         } catch (error) {
           if (!String(error.message || '').includes('UNIQUE constraint failed: rooms.code')) {
             throw error;
@@ -739,7 +835,11 @@ class MessageHistoryService {
        FROM rooms r
        INNER JOIN room_participants p ON p.room_id = r.id
        WHERE p.user_id = ? AND r.status = 'active'
-       ORDER BY p.last_seen_at DESC, p.joined_at DESC`,
+       ORDER BY
+         COALESCE(r.last_message_at, 0) DESC,
+         COALESCE(r.last_message_seq, 0) DESC,
+         r.created_at DESC,
+         r.id ASC`,
       [userId]
     );
 
@@ -760,9 +860,6 @@ class MessageHistoryService {
         role: row.participant_role || 'member',
         joinedAt: row.joined_at,
         lastSeenAt: row.last_seen_at,
-        expiresAt: room.id !== DEFAULT_ROOM_ID && this.idleRetentionDays > 0
-          ? room.lastActiveAt + (this.idleRetentionDays * 24 * 60 * 60 * 1000)
-          : null,
         lastMessage: lastMessage ? {
           content: lastMessage.content || '',
           msgType: lastMessage.message_type,
@@ -778,35 +875,62 @@ class MessageHistoryService {
     this.idleRetentionDays = Number.isFinite(value) && value >= 0 ? value : 7;
   }
 
-  async listInactiveRooms({ retentionDays = this.idleRetentionDays, now = Date.now() } = {}) {
-    this.ensureOpened();
-    const days = Number(retentionDays);
-    if (!Number.isFinite(days) || days <= 0) return [];
+  getEffectiveRetentionDays(room) {
+    if (!room || room.id === DEFAULT_ROOM_ID) return null;
 
-    const cutoff = now - (days * 24 * 60 * 60 * 1000);
+    const roomValue = room.idleRetentionDays ?? room.idle_retention_days;
+    if (roomValue !== null && roomValue !== undefined && roomValue !== '') {
+      const days = Number(roomValue);
+      return Number.isFinite(days) && days >= 0 ? days : null;
+    }
+
+    return this.idleRetentionDays;
+  }
+
+  getRoomExpiry(room, now = Date.now()) {
+    if (!room || room.id === DEFAULT_ROOM_ID) return null;
+
+    const effectiveRetentionDays = this.getEffectiveRetentionDays(room);
+    if (effectiveRetentionDays === null || effectiveRetentionDays <= 0) return null;
+
+    const lastActiveAt = Number(room.lastActiveAt || room.last_active_at || 0);
+    if (!Number.isFinite(lastActiveAt) || lastActiveAt <= 0) return null;
+
+    return {
+      effectiveRetentionDays,
+      expiresAt: lastActiveAt + (effectiveRetentionDays * 24 * 60 * 60 * 1000)
+    };
+  }
+
+  async listInactiveRooms({ now = Date.now() } = {}) {
+    this.ensureOpened();
     const rows = await this.all(
       `SELECT *
        FROM rooms
        WHERE status = 'active'
          AND id <> ?
-         AND COALESCE(last_active_at, updated_at, created_at) < ?
        ORDER BY COALESCE(last_active_at, updated_at, created_at) ASC`,
-      [DEFAULT_ROOM_ID, cutoff]
+      [DEFAULT_ROOM_ID]
     );
 
-    return rows.map((row) => this.mapRoom(row));
+    return rows
+      .map((row) => this.mapRoom(row))
+      .filter((room) => {
+        const expiry = this.getRoomExpiry(room, now);
+        return expiry !== null && expiry.expiresAt <= Number(now);
+      });
   }
 
-  async deleteRoomBySystem({ roomId, reason = 'inactive', cutoff = null }) {
+  async deleteRoomBySystem({ roomId, reason = 'inactive', now = Date.now() }) {
     this.ensureOpened();
     if (roomId === DEFAULT_ROOM_ID) return null;
 
     return this.enqueueWrite(async () => {
       const room = await this.getRoom(roomId);
       if (!room) return null;
-      if (cutoff !== null && Number(room.lastActiveAt) >= Number(cutoff)) {
-        return null;
-      }
+
+      const expiry = this.getRoomExpiry(room, now);
+      if (expiry === null || expiry.expiresAt > Number(now)) return null;
 
       await this.run('BEGIN IMMEDIATE');
 
@@ -831,7 +955,7 @@ class MessageHistoryService {
   async requireRoomOwner(roomId, requester) {
     if (!this.isValidUserId(requester)) throw new Error('Invalid user');
     if (roomId === DEFAULT_ROOM_ID) {
-      throw new Error('Public Lobby is managed by the server administrator');
+      throw new Error('Public Transfer Hub is managed by the server administrator');
     }
 
     const room = await this.getRoom(roomId);
@@ -862,7 +986,8 @@ class MessageHistoryService {
       [roomName, updatedAt, updatedAt, roomId]
     ));
 
-    return { ...room, name: roomName, updatedAt };
+    const updatedRoom = await this.getRoom(roomId);
+    return { ...updatedRoom, role: 'owner' };
   }
 
   async regenerateRoomCode({ roomId, requester }) {
@@ -877,14 +1002,38 @@ class MessageHistoryService {
       [code, updatedAt, updatedAt, roomId]
     ));
 
-    return { ...room, code, updatedAt };
+    const updatedRoom = await this.getRoom(roomId);
+    return { ...updatedRoom, role: 'owner' };
+  }
+
+  async updateRoomRetention({ roomId, retentionDays, requester }) {
+    this.ensureOpened();
+
+    const normalizedDays = Number(retentionDays);
+    if (!ALLOWED_ROOM_RETENTION_DAYS.has(normalizedDays)) {
+      throw new Error('Invalid room retention setting');
+    }
+
+    await this.requireRoomOwner(roomId, requester);
+
+    const updatedAt = Date.now();
+    await this.enqueueWrite(() => this.run(
+      `UPDATE rooms
+       SET idle_retention_days = ?, updated_at = ?, last_active_at = ?
+       WHERE id = ? AND status = 'active'`,
+      [normalizedDays, updatedAt, updatedAt, roomId]
+    ));
+
+    const updatedRoom = await this.getRoom(roomId);
+    if (!updatedRoom) throw new Error('Room not found');
+    return { ...updatedRoom, role: 'owner' };
   }
 
   async leaveRoom({ roomId, userId }) {
     this.ensureOpened();
     if (!this.isValidUserId(userId)) throw new Error('Invalid user');
     if (roomId === DEFAULT_ROOM_ID) {
-      throw new Error('Public Lobby cannot be left');
+      throw new Error('Public Transfer Hub cannot be left');
     }
 
     return this.enqueueWrite(async () => {
@@ -1165,7 +1314,10 @@ class MessageHistoryService {
   }
 
   mapRoom(row) {
-    return {
+    const idleRetentionValue = row.idle_retention_days ?? row.idleRetentionDays;
+    const lastMessageAt = row.last_message_at ?? row.lastMessageAt;
+    const lastMessageSeq = row.last_message_seq ?? row.lastMessageSeq;
+    const room = {
       id: row.id,
       name: row.name,
       code: row.code,
@@ -1176,7 +1328,25 @@ class MessageHistoryService {
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at || null,
       deletedReason: row.deleted_reason || null,
-      lastActiveAt: row.last_active_at || row.updated_at || row.created_at || null
+      lastActiveAt: row.last_active_at || row.updated_at || row.created_at || null,
+      idleRetentionDays: idleRetentionValue === null || idleRetentionValue === undefined
+        ? null
+        : Number(idleRetentionValue),
+      lastMessageAt: lastMessageAt === null || lastMessageAt === undefined
+        ? null
+        : Number(lastMessageAt),
+      lastMessageSeq: lastMessageSeq === null || lastMessageSeq === undefined
+        ? null
+        : Number(lastMessageSeq)
+    };
+
+    const expiry = this.getRoomExpiry(room);
+    return {
+      ...room,
+      effectiveRetentionDays: expiry?.effectiveRetentionDays ?? (
+        room.id === DEFAULT_ROOM_ID ? null : this.getEffectiveRetentionDays(room)
+      ),
+      expiresAt: expiry?.expiresAt ?? null
     };
   }
 
@@ -1218,7 +1388,14 @@ class MessageHistoryService {
 
   run(sql, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, (error) => (error ? reject(error) : resolve()));
+      this.db.run(sql, params, function (error) {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve({ lastID: this.lastID, changes: this.changes });
+      });
     });
   }
 

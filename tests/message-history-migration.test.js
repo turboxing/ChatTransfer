@@ -93,8 +93,20 @@ describe('MessageHistoryService migration', () => {
 
     expect(room.ownerId).toBe('legacy-owner');
     expect(room.lastActiveAt).toBeTruthy();
+    expect(room.idleRetentionDays).toBeNull();
+    expect(room.effectiveRetentionDays).toBe(7);
+    expect(room.lastMessageAt).toBeNull();
+    expect(room.lastMessageSeq).toBeNull();
     expect(roomColumns.map((column) => column.name)).toEqual(
-      expect.arrayContaining(['owner_id', 'deleted_at', 'last_active_at', 'deleted_reason'])
+      expect.arrayContaining([
+        'owner_id',
+        'deleted_at',
+        'last_active_at',
+        'deleted_reason',
+        'idle_retention_days',
+        'last_message_at',
+        'last_message_seq'
+      ])
     );
     expect(participantColumns.map((column) => column.name)).toContain('role');
     expect(participant.role).toBe('owner');

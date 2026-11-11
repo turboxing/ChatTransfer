@@ -1,11 +1,20 @@
 <template>
   <el-drawer
     :model-value="modelValue"
-    :title="t('chat.deviceListTitle')"
+    :modal="modal"
+    :z-index="3000"
+    append-to-body
     direction="rtl"
     size="min(380px, 92vw)"
     @update:model-value="emit('update:modelValue', $event)"
   >
+    <template #header>
+      <div class="device-drawer-header">
+        <strong>{{ t('chat.deviceListTitle') }}</strong>
+        <span>{{ summaryText }}</span>
+      </div>
+    </template>
+
     <div v-if="sortedUsers.length === 0" class="device-empty">
       {{ t('chat.noDevices') }}
     </div>
@@ -26,7 +35,8 @@
               </el-tag>
             </div>
             <div class="device-meta">
-              <span v-if="user.ip">{{ user.ip }}</span>
+              <span class="device-type">{{ getDeviceLabel(user) }}</span>
+              <span v-if="user.ip" :title="user.ip" class="device-ip">{{ user.ip }}</span>
               <span :title="user.sender">#{{ user.sender.slice(-8) }}</span>
             </div>
             <div v-if="user.status !== 'ONLINE' && user.lastSeenAt" class="last-seen">
@@ -45,11 +55,13 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getDeviceLabel as resolveDeviceLabel } from '../../utils/device-label'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   users: { type: Array, default: () => [] },
-  currentUser: { type: String, required: true }
+  currentUser: { type: String, required: true },
+  modal: { type: Boolean, default: true }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -58,6 +70,16 @@ const { t } = useI18n()
 const getDisplayName = (user) => user.nickname || user.sender.slice(-5)
 
 const formatTime = (value) => new Date(value).toLocaleString()
+
+const getDeviceLabel = (user) => resolveDeviceLabel(user.userAgent, t('chat.unknownDevice'))
+
+const summaryText = computed(() => {
+  const total = props.users.filter((user) => user.status === 'ONLINE').length
+  const others = props.users.filter((user) => (
+    user.status === 'ONLINE' && user.sender !== props.currentUser
+  )).length
+  return t('chat.deviceTotal', { total, others })
+})
 
 const sortedUsers = computed(() => (
   [...props.users].sort((left, right) => {
@@ -74,6 +96,23 @@ const sortedUsers = computed(() => (
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.device-drawer-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.device-drawer-header strong {
+  color: #303133;
+  font-size: 17px;
+}
+
+.device-drawer-header span {
+  color: #909399;
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .device-item {
@@ -131,6 +170,17 @@ const sortedUsers = computed(() => (
   margin-top: 4px;
   color: #909399;
   font-size: 12px;
+}
+
+.device-type {
+  color: #606266;
+}
+
+.device-ip {
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .last-seen {

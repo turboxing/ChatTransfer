@@ -40,7 +40,17 @@
         <el-button class="header-action" circle size="small" @click="$emit('open-pin-drawer')">
           <img class="pin-icon-small" src="/pin.svg" alt="pin" />
         </el-button>
-        <el-button class="header-action" circle size="small" @click="$emit('show-qr')">
+        <el-button
+          v-if="isPublicRoom"
+          class="header-action header-add-device"
+          round
+          size="small"
+          @click="$emit('show-qr')"
+        >
+          <el-icon><FullScreen /></el-icon>
+          <span class="add-device-label">{{ addDeviceText }}</span>
+        </el-button>
+        <el-button v-else class="header-action" circle size="small" @click="$emit('show-qr')">
           <el-icon><FullScreen /></el-icon>
         </el-button>
         <el-button circle size="small" @click="$emit('show-tools')">
@@ -63,6 +73,7 @@ defineProps({
   canEditGroupName: { type: Boolean, default: false },
   isPublicRoom: { type: Boolean, default: false },
   publicBadgeText: { type: String, default: '' },
+  addDeviceText: { type: String, default: '' },
   editGroupNameTitle: { type: String, required: true },
   onlineText: { type: String, required: true },
   offlineText: { type: String, required: true }
@@ -126,6 +137,14 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
 
 .group-name-text.editable {
   cursor: pointer;
+}
+
+.header-add-device {
+  gap: 4px;
+}
+
+.add-device-label {
+  font-size: 12px;
 }
 
 .public-room-badge {
@@ -223,6 +242,10 @@ defineEmits(['edit-group-name', 'open-pin-drawer', 'show-qr', 'show-tools', 'ope
 
   .header-right {
     gap: 4px;
+  }
+
+  .add-device-label {
+    display: none;
   }
 }
 </style>

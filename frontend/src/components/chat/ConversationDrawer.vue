@@ -61,6 +61,9 @@
               <el-dropdown-item v-if="isOwner(room)" command="rename" :icon="EditPen">
                 {{ t('rooms.rename') }}
               </el-dropdown-item>
+              <el-dropdown-item v-if="isOwner(room)" command="retention" :icon="Timer">
+                {{ t('rooms.autoCleanup') }}
+              </el-dropdown-item>
               <el-dropdown-item command="leave" :icon="SwitchButton">
                 {{ t('rooms.leave') }}
               </el-dropdown-item>
@@ -89,7 +92,8 @@ import {
   MoreFilled,
   OfficeBuilding,
   Plus,
-  SwitchButton
+  SwitchButton,
+  Timer
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
@@ -107,6 +111,7 @@ const emit = defineEmits([
   'create',
   'join',
   'rename',
+  'retention',
   'leave',
   'dissolve'
 ])
@@ -121,6 +126,7 @@ const hasRoomActions = (room) => room?.id !== 'group_chat'
 
 const handleCommand = (command, room) => {
   if (command === 'rename') emit('rename', room)
+  if (command === 'retention') emit('retention', room)
   if (command === 'leave') emit('leave', room)
   if (command === 'dissolve') emit('dissolve', room)
 }
@@ -134,9 +140,14 @@ const getRoomPreview = (room) => {
 }
 
 const getExpiryText = (room) => {
-  if (!room?.expiresAt || room.id === 'group_chat') return ''
+  if (!room || room.id === 'group_chat') return ''
+  if (Number(room.effectiveRetentionDays) === 0 || Number(room.idleRetentionDays) === 0) {
+    return t('rooms.retentionPermanentShort')
+  }
+  if (!room?.expiresAt) return ''
 
   const remainingMs = Number(room.expiresAt) - Date.now()
+  if (remainingMs <= 0) return t('rooms.cleanupPending')
   const days = Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)))
   return t('rooms.autoDeleteIn', { days })
 }

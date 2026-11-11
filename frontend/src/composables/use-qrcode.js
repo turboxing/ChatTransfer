@@ -22,7 +22,7 @@ export function useQrcode({ targetUser, activeRoom, t, notify }) {
     qrLoading.value = true
     try {
       const QRCode = await import('qrcode')
-      qrCodeUrl.value = await QRCode.default.toDataURL(url, { width: 300, margin: 2 })
+      qrCodeUrl.value = await QRCode.default.toDataURL(url, { width: 600, margin: 2 })
     } catch {
       notify?.error(t('chat.getQrFailed'))
     } finally {
@@ -49,7 +49,7 @@ export function useQrcode({ targetUser, activeRoom, t, notify }) {
     msgQrContent.value = content
     try {
       const QRCode = await import('qrcode')
-      msgQrCodeUrl.value = await QRCode.default.toDataURL(content, { width: 300, margin: 2 })
+      msgQrCodeUrl.value = await QRCode.default.toDataURL(content, { width: 600, margin: 2 })
       msgQrDialogVisible.value = true
     } catch (error) {
       console.error(error)

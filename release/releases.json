@@ -1,24 +1,58 @@
 {
   "latest": {
-    "version": "3.0.2",
-    "date": "2026-11-09",
+    "version": "3.1.0",
+    "date": "2026-11-11",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.2/ChatTransfer-macos-x64-v3_0_2.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.2/ChatTransfer-windows-x64-v3.0.2.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.0/ChatTransfer-macos-x64-v3_1_0.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.0/ChatTransfer-windows-x64-v3.1.0.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复 Windows 打开缓存目录时目录已成功打开但仍提示“打开失败”的问题"
+        "软件启动后直接进入公共中转站，桌面端自动打开居中邀请弹窗，手机端按需打开",
+        "新增更大的二维码、全屏预览、设备在线状态切换和响应式设备列表",
+        "统一公共中转站与普通房间的邀请弹窗，支持房间码、复制邀请链接和房主重新生成房间码",
+        "新增房间级自动清理策略，房主可选择 7 天、30 天或永久保留",
+        "会话列表仅在收到或成功发送新消息时置顶，并补充完整阿拉伯语界面与 RTL 支持",
+        "新建房间支持随机生成名称，并完善设备标识、历史迁移与回归测试"
       ],
       "en": [
-        "Fixed a false “open failed” error on Windows when Explorer successfully opened the cache folder"
+        "Launch directly into the Public Transfer Hub, with the centered invitation dialog auto-opened on desktop and on demand on mobile",
+        "Added larger QR codes, full-screen preview, toggleable device presence, and responsive device lists",
+        "Unified invitation dialogs for the public hub and regular rooms, including room codes, invite links, and owner-only code regeneration",
+        "Added per-room auto-cleanup policies with 7-day, 30-day, and permanent retention options",
+        "Conversation ordering now changes only on received or successfully sent messages, with full Arabic UI and RTL support",
+        "Added random room-name generation, clearer device labels, and expanded migration and regression coverage"
       ],
       "ar": [
-        "إصلاح ظهور رسالة فشل خاطئة على Windows رغم نجاح فتح مجلد التخزين المؤقت عبر Explorer"
+        "بدء التشغيل مباشرة داخل مركز النقل العام مع فتح نافذة الدعوة تلقائيًا على سطح المكتب وعند الطلب على الهاتف",
+        "إضافة رموز QR أكبر ومعاينة بملء الشاشة وتبديل حالة الأجهزة وقوائم أجهزة متجاوبة",
+        "توحيد نوافذ الدعوة لمركز النقل العام والغرف العادية مع رمز الغرفة ورابط الدعوة وإعادة إنشاء الرمز للمالك فقط",
+        "إضافة سياسات تنظيف تلقائي لكل غرفة مع خيارات 7 أيام و30 يومًا والاحتفاظ الدائم",
+        "أصبح ترتيب المحادثات يتغير فقط عند استلام رسالة أو إرسالها بنجاح، مع واجهة عربية كاملة ودعم RTL",
+        "إضافة توليد أسماء غرف عشوائية وتحسين تعريف الأجهزة وتوسيع اختبارات الترحيل والانحدار"
       ]
     }
   },
   "history": [
+    {
+      "version": "3.0.2",
+      "date": "2026-11-09",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.2/ChatTransfer-macos-x64-v3_0_2.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.0.2/ChatTransfer-windows-x64-v3.0.2.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复 Windows 打开缓存目录时目录已成功打开但仍提示“打开失败”的问题"
+        ],
+        "en": [
+          "Fixed a false “open failed” error on Windows when Explorer successfully opened the cache folder"
+        ],
+        "ar": [
+          "إصلاح ظهور رسالة فشل خاطئة على Windows رغم نجاح فتح مجلد التخزين المؤقت عبر Explorer"
+        ]
+      }
+    },
     {
       "version": "3.0.1",
       "date": "2026-11-08",

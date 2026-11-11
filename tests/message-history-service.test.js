@@ -217,7 +217,7 @@ describe('MessageHistoryService', () => {
     await expect(service.clearHistory({
       requester: 'protected-member',
       roomId: 'group_chat'
-    })).rejects.toThrow('Public Lobby history requires administrator');
+    })).rejects.toThrow('Public Transfer Hub history requires administrator');
   });
 
   it('lists and deletes rooms that exceeded the idle retention period', async () => {
@@ -347,6 +347,176 @@ describe('MessageHistoryService', () => {
     })).resolves.toMatchObject({
       id: room.id,
       role: 'member'
+    });
+  });
+
+  it('defaults new rooms to seven days and enforces owner retention overrides', async () => {
+    const room = await service.createRoom({
+      name: 'Retention policy room',
+      createdBy: 'retention-owner'
+    });
+    await service.joinRoom({
+      roomId: room.id,
+      code: room.code,
+      userId: 'retention-member',
+      nickname: 'Retention Member'
+    });
+
+    expect(room).toMatchObject({
+      idleRetentionDays: 7,
+      effectiveRetentionDays: 7,
+      lastMessageAt: null,
+      lastMessageSeq: null
+    });
+    expect(room.expiresAt).toBeGreaterThan(room.lastActiveAt);
+
+    await expect(service.updateRoomRetention({
+      roomId: room.id,
+      retentionDays: 14,
+      requester: 'retention-owner'
+    })).rejects.toThrow('Invalid room retention setting');
+
+    await expect(service.updateRoomRetention({
+      roomId: room.id,
+      retentionDays: 30,
+      requester: 'retention-member'
+    })).rejects.toThrow('Room owner permission required');
+
+    await expect(service.updateRoomRetention({
+      roomId: 'group_chat',
+      retentionDays: 30,
+      requester: 'retention-owner'
+    })).rejects.toThrow('Public Transfer Hub is managed by the server administrator');
+
+    const thirtyDays = await service.updateRoomRetention({
+      roomId: room.id,
+      retentionDays: 30,
+      requester: 'retention-owner'
+    });
+    expect(thirtyDays).toMatchObject({
+      idleRetentionDays: 30,
+      effectiveRetentionDays: 30
+    });
+
+    const now = Date.now();
+    await service.run(
+      'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+      [now - (31 * 24 * 60 * 60 * 1000), now, room.id]
+    );
+    expect((await service.listInactiveRooms({ now })).map((item) => item.id))
+      .toContain(room.id);
+
+    const permanent = await service.updateRoomRetention({
+      roomId: room.id,
+      retentionDays: 0,
+      requester: 'retention-owner'
+    });
+    expect(permanent).toMatchObject({
+      idleRetentionDays: 0,
+      effectiveRetentionDays: 0,
+      expiresAt: null
+    });
+
+    await service.run(
+      'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+      [now - (365 * 24 * 60 * 60 * 1000), now, room.id]
+    );
+    expect((await service.listInactiveRooms({ now })).map((item) => item.id))
+      .not.toContain(room.id);
+  });
+
+  it('keeps new-room cleanup working when the legacy global default is disabled', async () => {
+    service.configureIdleRetention(0);
+
+    try {
+      const room = await service.createRoom({
+        name: 'New room with legacy default disabled',
+        createdBy: 'legacy-default-owner'
+      });
+      expect(room).toMatchObject({
+        idleRetentionDays: 7,
+        effectiveRetentionDays: 7
+      });
+
+      const now = Date.now();
+      await service.run(
+        'UPDATE rooms SET last_active_at = ?, updated_at = ? WHERE id = ?',
+        [now - (8 * 24 * 60 * 60 * 1000), now, room.id]
+      );
+
+      expect((await service.listInactiveRooms({ now })).map((item) => item.id))
+        .toContain(room.id);
+    } finally {
+      service.configureIdleRetention(7);
+    }
+  });
+
+  it('sorts rooms by the latest message and ignores joins or last-seen changes', async () => {
+    const firstRoom = await service.createRoom({
+      name: 'Sorting room A',
+      createdBy: 'sorting-owner'
+    });
+    const secondRoom = await service.createRoom({
+      name: 'Sorting room B',
+      createdBy: 'sorting-owner'
+    });
+    const now = Date.now();
+
+    await service.saveMessage({
+      msgId: 'sorting-message-a1',
+      roomId: firstRoom.id,
+      sender: 'sorting-owner',
+      receiver: firstRoom.id,
+      msgType: 'TEXT',
+      content: 'first room message',
+      createTime: 'first',
+      createdAt: now + 1
+    });
+    await service.saveMessage({
+      msgId: 'sorting-message-b1',
+      roomId: secondRoom.id,
+      sender: 'sorting-owner',
+      receiver: secondRoom.id,
+      msgType: 'TEXT',
+      content: 'second room message',
+      createTime: 'second',
+      createdAt: now + 2
+    });
+
+    let rooms = await service.listRoomsForUser('sorting-owner');
+    let relevantRooms = rooms.filter((item) => [firstRoom.id, secondRoom.id].includes(item.id));
+    expect(relevantRooms.map((item) => item.id)).toEqual([secondRoom.id, firstRoom.id]);
+
+    await service.joinRoom({
+      roomId: firstRoom.id,
+      code: firstRoom.code,
+      userId: 'sorting-owner',
+      nickname: 'Sorting Owner'
+    });
+    rooms = await service.listRoomsForUser('sorting-owner');
+    relevantRooms = rooms.filter((item) => [firstRoom.id, secondRoom.id].includes(item.id));
+    expect(relevantRooms.map((item) => item.id)).toEqual([secondRoom.id, firstRoom.id]);
+
+    await service.saveMessage({
+      msgId: 'sorting-message-a2',
+      roomId: firstRoom.id,
+      sender: 'sorting-owner',
+      receiver: firstRoom.id,
+      msgType: 'TEXT',
+      content: 'newest message',
+      createTime: 'latest',
+      createdAt: now + 3
+    });
+    rooms = await service.listRoomsForUser('sorting-owner');
+    relevantRooms = rooms.filter((item) => [firstRoom.id, secondRoom.id].includes(item.id));
+    expect(relevantRooms.map((item) => item.id)).toEqual([firstRoom.id, secondRoom.id]);
+    const latestRow = await service.get(
+      'SELECT seq FROM messages WHERE id = ?',
+      ['sorting-message-a2']
+    );
+    expect(relevantRooms[0]).toMatchObject({
+      lastMessageAt: now + 3,
+      lastMessageSeq: latestRow.seq
     });
   });
 });

@@ -91,6 +91,7 @@ export function useSocket({
   const joinRoomByCode = (payload) => emitWithAck('room_join_by_code', payload);
   const listRooms = () => emitWithAck('room_list', {});
   const updateRoomName = (payload) => emitWithAck('room_update_name', payload);
+  const updateRoomRetention = (payload) => emitWithAck('room_update_retention', payload);
   const regenerateRoomCode = (payload) => emitWithAck('room_regenerate_code', payload);
   const leaveRoom = (payload) => emitWithAck('room_leave', payload);
   const dissolveRoom = (payload) => emitWithAck('room_dissolve', payload);
@@ -120,6 +121,7 @@ export function useSocket({
     joinRoomByCode,
     listRooms,
     updateRoomName,
+    updateRoomRetention,
     regenerateRoomCode,
     leaveRoom,
     dissolveRoom,

@@ -76,7 +76,8 @@ export function useMessages({ currentUser, targetUser }) {
     rawMessages.value = [...messageMap.values()].sort((a, b) => {
       const leftTime = Number(a.createdAt) || 0;
       const rightTime = Number(b.createdAt) || 0;
-      return leftTime - rightTime;
+      if (leftTime !== rightTime) return leftTime - rightTime;
+      return (Number(a.seq) || 0) - (Number(b.seq) || 0);
     });
 
     if (messages.length > 0 || nextCursor !== null) {
