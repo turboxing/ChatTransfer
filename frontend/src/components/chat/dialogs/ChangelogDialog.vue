@@ -9,7 +9,7 @@
           <el-tag v-if="index === 0" effect="plain" size="small" type="success">{{ latestText }}</el-tag>
         </div>
         <ul class="changelog-list">
-          <li v-for="(change, index) in release.changes[locale]" :key="index">{{ change }}</li>
+          <li v-for="(change, index) in getChanges(release)" :key="index">{{ change }}</li>
         </ul>
       </div>
     </div>
@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, required: true },
   releases: { type: Array, required: true },
@@ -26,6 +26,10 @@ defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const getChanges = (release) => (
+  release.changes[props.locale] || release.changes.en || []
+)
 </script>
 
 <style scoped>
