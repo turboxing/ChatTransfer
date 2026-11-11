@@ -126,7 +126,14 @@ describe('useSocket', () => {
   });
 
   it('emits room lifecycle events with ack', async () => {
-    const { connect, socket, leaveRoom, dissolveRoom, clearPublicRoomHistory } = useSocket({
+    const {
+      connect,
+      socket,
+      leaveRoom,
+      dissolveRoom,
+      updateRoomRetention,
+      clearPublicRoomHistory
+    } = useSocket({
       currentUser: { value: 'A' },
       targetUser: { value: 'room-a' },
       myNickname: { value: 'Tester' }
@@ -138,10 +145,19 @@ describe('useSocket', () => {
 
     await expect(leaveRoom({ roomId: 'room-a' })).resolves.toMatchObject({ code: 0 });
     await expect(dissolveRoom({ roomId: 'room-a' })).resolves.toMatchObject({ code: 0 });
+    await expect(updateRoomRetention({
+      roomId: 'room-a',
+      retentionDays: 30
+    })).resolves.toMatchObject({ code: 0 });
     await expect(clearPublicRoomHistory()).resolves.toMatchObject({ code: 0 });
 
     expect(emit).toHaveBeenCalledWith('room_leave', { roomId: 'room-a' }, expect.any(Function));
     expect(emit).toHaveBeenCalledWith('room_dissolve', { roomId: 'room-a' }, expect.any(Function));
+    expect(emit).toHaveBeenCalledWith(
+      'room_update_retention',
+      { roomId: 'room-a', retentionDays: 30 },
+      expect.any(Function)
+    );
     expect(emit).toHaveBeenCalledWith('public_room_admin_clear', {}, expect.any(Function));
   });
 });

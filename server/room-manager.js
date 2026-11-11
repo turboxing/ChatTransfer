@@ -25,13 +25,14 @@ class RoomManager {
     return OFFLINE;
   }
 
-  setOnline({ roomId = DEFAULT_ROOM_ID, username, socketId, nickname = '', ip = '' }) {
+  setOnline({ roomId = DEFAULT_ROOM_ID, username, socketId, nickname = '', ip = '', userAgent = '' }) {
     const room = this.ensureRoom(roomId);
     const existing = room.users.get(username) || {
       socketIds: new Set(),
       status: OFFLINE,
       nickname: '',
       ip: '',
+      userAgent: '',
       lastSeenAt: null,
       onlineSince: null
     };
@@ -44,6 +45,7 @@ class RoomManager {
       status: ONLINE,
       nickname: nickname || existing.nickname || '',
       ip: ip || existing.ip || '',
+      userAgent: userAgent || existing.userAgent || '',
       onlineSince: wasOnline ? existing.onlineSince : Date.now()
     };
     room.users.set(username, user);
@@ -66,6 +68,7 @@ class RoomManager {
       sender: username,
       nickname: user.nickname || '',
       ip: user.ip || '',
+      userAgent: user.userAgent || '',
       status: user.status,
       lastSeenAt: user.lastSeenAt || null,
       onlineSince: user.onlineSince || null

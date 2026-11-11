@@ -1,4 +1,11 @@
-export function useMessageEmitter({ socket, isConnected, targetUser, rawMessages, saveMessage }) {
+export function useMessageEmitter({
+  socket,
+  isConnected,
+  targetUser,
+  rawMessages,
+  saveMessage,
+  onSent
+}) {
   const emitMessage = (messageData) => {
     const eventName = 'room_chat'
     const roomMessageData = {
@@ -16,6 +23,9 @@ export function useMessageEmitter({ socket, isConnected, targetUser, rawMessages
             status: data.status === 'failed' ? 'failed' : 'success'
           }
           saveMessage(rawMessages.value[index])
+          if (rawMessages.value[index].status === 'success') {
+            onSent?.(rawMessages.value[index])
+          }
         }
       })
       return

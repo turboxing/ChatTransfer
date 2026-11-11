@@ -14,6 +14,7 @@ describe('useMessageDisplay', () => {
       myNickname: 'My Nickname',
       groupName: '',
       onlineUsers: [
+        { sender: 'user-a', nickname: 'Me', ip: '192.168.1.1', status: 'ONLINE' },
         { sender: 'user-b', nickname: 'User B', ip: '192.168.1.2', status: 'ONLINE' },
         { sender: 'user-c', nickname: 'User C', ip: '192.168.1.3', status: 'OFFLINE' }
       ],
@@ -35,7 +36,8 @@ describe('useMessageDisplay', () => {
       t: (key) => key
     })
 
-    expect(display.onlineCount.value).toBe(1)
+    expect(display.onlineCount.value).toBe(2)
+    expect(display.otherOnlineCount.value).toBe(1)
     expect(display.displayGroupName.value).toBe('chat.defaultGroupName')
     expect(display.getDisplayName(refs.rawMessages.value[0])).toBe('My Nickname')
     expect(display.getDisplayName(refs.rawMessages.value[2])).toBe('User C')

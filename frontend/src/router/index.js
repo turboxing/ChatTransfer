@@ -9,6 +9,10 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      redirect: { name: 'chat', query: { receiver: 'group_chat' } }
+    },
+    {
+      path: '/home',
       name: 'home',
       component: Home,
       meta: { titleKey: 'routes.home' }

@@ -8,6 +8,7 @@
         <el-option :label="t('common.system')" value="system" />
         <el-option :label="t('common.chinese')" value="zh-CN" />
         <el-option :label="t('common.english')" value="en" />
+        <el-option :label="t('common.arabic')" value="ar" />
       </el-select>
     </div>
 

@@ -13,7 +13,13 @@
       maxlength="60"
       show-word-limit
       @keyup.enter="submit"
-    />
+    >
+      <template #append>
+        <el-button :icon="MagicStick" @click="generateRandomName">
+          {{ t('rooms.randomName') }}
+        </el-button>
+      </template>
+    </el-input>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">{{ t('chat.cancel') }}</el-button>
       <el-button type="primary" :loading="loading" @click="submit">
@@ -25,7 +31,9 @@
 
 <script setup>
 import { nextTick, ref, watch } from 'vue'
+import { MagicStick } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { generateRoomName } from '../../../utils/room-name'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -33,7 +41,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'create'])
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const inputRef = ref(null)
 const name = ref('')
 
@@ -45,5 +53,10 @@ watch(() => props.modelValue, (visible) => {
 
 const submit = () => {
   if (name.value.trim()) emit('create', name.value.trim())
+}
+
+const generateRandomName = () => {
+  name.value = generateRoomName(locale.value)
+  nextTick(() => inputRef.value?.focus())
 }
 </script>

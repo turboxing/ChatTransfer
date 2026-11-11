@@ -64,4 +64,32 @@ describe('useChatSession', () => {
     expect(refs.pendingRoomCode.value).toBe('ABCD2345')
     expect(refs.groupName.value).toBe('Project A')
   })
+
+  it('restores the local user id when the URL has no sender', () => {
+    vi.stubGlobal('window', {
+      location: {
+        search: ''
+      }
+    })
+    const refs = {
+      currentUser: { value: '' },
+      targetUser: { value: '' },
+      myNickname: { value: '' },
+      groupName: { value: '' },
+      pendingRoomCode: { value: null }
+    }
+    const getUserId = vi.fn(() => 'local-device-id')
+
+    useChatSession({
+      ...refs,
+      loadHistory: vi.fn(),
+      connectSocket: vi.fn(),
+      fetchVersionInfo: vi.fn(),
+      getUserId
+    }).initSession()
+
+    expect(refs.currentUser.value).toBe('local-device-id')
+    expect(refs.targetUser.value).toBe('group_chat')
+    expect(getUserId).toHaveBeenCalledTimes(1)
+  })
 })

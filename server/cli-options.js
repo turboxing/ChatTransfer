@@ -56,7 +56,7 @@ function getHelpText() {
     '  --data-dir <path>          Runtime data directory',
     '  --public-url <url>         Public URL used by QR codes and links',
     '  --room-idle-retention-days <days>  Delete idle rooms after N days (default: 7, 0 disables)',
-    '  --public-room-retention-days <days> Clear Public Lobby messages after N days (default: 7, 0 disables)',
+    '  --public-room-retention-days <days> Clear Public Transfer Hub messages after N days (default: 7, 0 disables)',
     '  --no-telemetry            Disable anonymous telemetry',
     '  --no-browser               Do not open the local browser',
     '  --version                  Print the version',

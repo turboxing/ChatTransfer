@@ -1,4 +1,5 @@
 import { NICKNAME_STORAGE_KEY } from './use-identity-editor'
+import { useUserId } from './use-user-identity'
 
 export function useChatSession({
   currentUser,
@@ -8,11 +9,12 @@ export function useChatSession({
   pendingRoomCode,
   loadHistory,
   connectSocket,
-  fetchVersionInfo
+  fetchVersionInfo,
+  getUserId = null
 }) {
   const initSession = () => {
     const urlParams = new URLSearchParams(window.location.search)
-    currentUser.value = urlParams.get('sender') || 'UserA'
+    currentUser.value = urlParams.get('sender') || (getUserId ? getUserId() : useUserId().getUserId())
     targetUser.value = urlParams.get('roomId') || urlParams.get('receiver') || 'group_chat'
     pendingRoomCode.value = urlParams.get('code') || null
 

@@ -28,9 +28,6 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
   const presenceOfflineDebounceMs = Number.isFinite(options.presenceOfflineDebounceMs)
     ? Math.max(0, options.presenceOfflineDebounceMs)
     : 8000;
-  const roomIdleRetentionDays = Number.isFinite(options.roomIdleRetentionDays)
-    ? Math.max(0, options.roomIdleRetentionDays)
-    : 7;
   const roomIdleCleanupIntervalMs = Number.isFinite(options.roomIdleCleanupIntervalMs)
     && options.roomIdleCleanupIntervalMs > 0
     ? options.roomIdleCleanupIntervalMs
@@ -169,7 +166,8 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       username: userId,
       socketId: socket.id,
       nickname,
-      ip: getClientIp(socket)
+      ip: getClientIp(socket),
+      userAgent: socket.handshake.headers?.['user-agent'] || ''
     });
 
     const room = joinedRoom || await historyService.getRoom(roomId);
@@ -253,15 +251,9 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
   };
 
   const runIdleRoomCleanup = async () => {
-    if (roomIdleRetentionDays <= 0) return;
-
     try {
       const now = Date.now();
-      const cutoff = now - (roomIdleRetentionDays * 24 * 60 * 60 * 1000);
-      const candidates = await historyService.listInactiveRooms({
-        retentionDays: roomIdleRetentionDays,
-        now
-      });
+      const candidates = await historyService.listInactiveRooms({ now });
       for (const room of candidates) {
         const hasOnlineUsers = roomManager.listUsers(room.id)
           .some((user) => user.status === roomManager.getOnline());
@@ -270,7 +262,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
         const deleted = await historyService.deleteRoomBySystem({
           roomId: room.id,
           reason: 'inactive',
-          cutoff
+          now
         });
         if (!deleted) continue;
 
@@ -417,6 +409,27 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       }
     });
 
+    socket.on('room_update_retention', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+
+      try {
+        if (!socket.username) throw new Error('User is required');
+        const roomId = params.roomId || socket.activeRoomId;
+        if (!roomId) throw new Error('Room is required');
+        const room = await historyService.updateRoomRetention({
+          roomId,
+          retentionDays: params.retentionDays,
+          requester: socket.username
+        });
+        io.to(socketRoomName(roomId)).emit('room_updated', { room });
+
+        ack({ code: 0, data: { room } });
+      } catch (error) {
+        console.error('[Room] retention update failed:', error.message);
+        ack({ code: -1, message: error.message });
+      }
+    });
+
     socket.on('room_leave', async (params = {}, ack) => {
       if (typeof ack !== 'function') return;
 
@@ -524,7 +537,7 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     });
 
     socket.on('update_group_name', ({ groupName, updatedBy }) => {
-      console.warn('[Room] Public Lobby name cannot be changed');
+      console.warn('[Room] Public Transfer Hub name cannot be changed');
     });
 
     socket.on('group_chat', async (params, ack) => {
@@ -732,15 +745,11 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     });
   });
 
-  const idleCleanupReady = roomIdleRetentionDays > 0
-    ? runIdleRoomCleanup()
-    : Promise.resolve();
-  if (roomIdleRetentionDays > 0) {
-    roomIdleCleanupTimer = setInterval(() => {
-      void runIdleRoomCleanup();
-    }, roomIdleCleanupIntervalMs);
-    roomIdleCleanupTimer.unref?.();
-  }
+  const idleCleanupReady = runIdleRoomCleanup();
+  roomIdleCleanupTimer = setInterval(() => {
+    void runIdleRoomCleanup();
+  }, roomIdleCleanupIntervalMs);
+  roomIdleCleanupTimer.unref?.();
 
   io.on('close', () => {
     for (const timer of offlineTimers.values()) clearTimeout(timer);

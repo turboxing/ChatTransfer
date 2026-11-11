@@ -15,6 +15,12 @@ export function useMessageDisplay({
     onlineUsers.value.filter((user) => user.status === 'ONLINE').length
   ))
 
+  const otherOnlineCount = computed(() => (
+    onlineUsers.value.filter((user) => (
+      user.status === 'ONLINE' && user.sender !== currentUser.value
+    )).length
+  ))
+
   const displayGroupName = computed(() => (
     groupName.value || t('chat.defaultGroupName')
   ))
@@ -66,6 +72,7 @@ export function useMessageDisplay({
 
   return {
     onlineCount,
+    otherOnlineCount,
     displayGroupName,
     getDisplayName,
     getDisplayIp,

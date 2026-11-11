@@ -8,13 +8,14 @@
       :edit-group-name-title="t('chat.editGroupName')"
       :online-text="t('chat.online')"
       :offline-text="t('chat.offline')"
-      :online-count-text="t('chat.onlineCount', { count: onlineCount })"
+      :online-count-text="onlineCountText"
       :can-edit-group-name="canEditGroupName"
       :is-public-room="isPublicTransitStation"
       :public-badge-text="t('rooms.publicBadge')"
+      :add-device-text="t('publicHub.addDevice')"
       @edit-group-name="handleEditGroupName"
       @open-pin-drawer="openPinDrawer"
-      @show-qr="showRoomInvite"
+      @show-qr="handleShowQr"
       @show-tools="showTools"
       @open-online-users="onlineUsersDrawerVisible = true"
       @open-conversations="openConversationsDrawer"
@@ -95,7 +96,7 @@
       @update:language-setting="handleLanguageChange"
       @edit-nickname="openNicknameEditor"
       @edit-group-name="handleEditGroupName"
-      @show-qr="showRoomInvite"
+      @show-qr="handleShowQr"
       @copy-cache-path="copyCachePath(cachePath)"
       @open-cache-path="handleOpenCachePath"
       @open-cache-path-dialog="openCachePathDialog"
@@ -164,6 +165,7 @@
       v-model="onlineUsersDrawerVisible"
       :users="onlineUsers"
       :current-user="currentUser"
+      :modal="false"
     />
 
     <ConversationDrawer
@@ -176,8 +178,16 @@
       @create="createRoomDialogVisible = true"
       @join="joinRoomDialogVisible = true"
       @rename="handleRoomRename"
+      @retention="handleRoomRetention"
       @leave="handleLeaveRoom"
       @dissolve="handleDissolveRoom"
+    />
+
+    <RoomRetentionDialog
+      v-model="roomRetentionDialogVisible"
+      :room="retentionRoom"
+      :loading="roomActionLoading"
+      @save="handleSaveRoomRetention"
     />
 
     <CreateRoomDialog
@@ -197,9 +207,29 @@
       :room="inviteRoom"
       :qr-url="qrCodeUrl"
       :invite-url="inviteUrl"
+      :loading="qrLoading"
       :regenerating="roomActionLoading"
+      :other-count="otherOnlineCount"
+      :devices="inviteDevices"
+      :devices-open="inviteDevicesOpen"
+      :inline-device-list="viewportIsMobile"
       @regenerate="handleRegenerateRoomCode"
       @copied="handleRoomInviteCopied"
+      @toggle-devices="toggleInviteDevices"
+    />
+
+    <PublicHubWelcome
+      v-model="publicHubDialogVisible"
+      :qr-url="qrCodeUrl"
+      :invite-url="inviteUrl"
+      :loading="qrLoading"
+      :other-count="otherOnlineCount"
+      :devices="inviteDevices"
+      :devices-open="inviteDevicesOpen"
+      :inline-device-list="viewportIsMobile"
+      @copy-link="copyRoomText(inviteUrl, 'link')"
+      @retry="refreshPublicHubQr"
+      @toggle-devices="toggleInviteDevices"
     />
   </div>
 </template>
@@ -212,9 +242,11 @@ import PinDrawer from './chat/PinDrawer.vue'
 import ChatHeader from './chat/ChatHeader.vue'
 import OnlineUsersDrawer from './chat/OnlineUsersDrawer.vue'
 import ConversationDrawer from './chat/ConversationDrawer.vue'
+import PublicHubWelcome from './chat/PublicHubWelcome.vue'
 import PresenceNoticeList from './chat/PresenceNoticeList.vue'
 import CreateRoomDialog from './chat/dialogs/CreateRoomDialog.vue'
 import JoinRoomDialog from './chat/dialogs/JoinRoomDialog.vue'
+import RoomRetentionDialog from './chat/dialogs/RoomRetentionDialog.vue'
 import RoomInviteDialog from './chat/dialogs/RoomInviteDialog.vue'
 import TopBar from './chat/TopBar.vue'
 import ChatFooter from './chat/ChatFooter.vue'
@@ -246,6 +278,7 @@ import { useMessageDisplay } from '../composables/use-message-display'
 import { useMessageLocation } from '../composables/use-message-location'
 import { useChatTools } from '../composables/use-chat-tools'
 import { useChatKeyboard } from '../composables/use-chat-keyboard'
+import { getDeviceLabel } from '../utils/device-label'
 import {
   resolveSelectedAttachmentIds,
   useBatchSelection
@@ -266,6 +299,9 @@ const myNickname = ref('')
 const groupName = ref('')
 const onlineUsers = ref([])
 const onlineUsersDrawerVisible = ref(false)
+const inviteDevicesExpanded = ref(false)
+const viewportIsMobile = ref(false)
+const publicHubDialogVisible = ref(false)
 const rooms = ref([])
 const roomsLoading = ref(false)
 const isLocalAdmin = ref(false)
@@ -275,6 +311,8 @@ const joinRoomDialogVisible = ref(false)
 const roomInviteDialogVisible = ref(false)
 const inviteRoom = ref(null)
 const roomActionLoading = ref(false)
+const roomRetentionDialogVisible = ref(false)
+const retentionRoom = ref(null)
 const roomDrafts = new Map()
 const activeRoom = computed(() => (
   rooms.value.find((room) => room.id === targetUser.value) || {
@@ -349,6 +387,7 @@ const handleIncomingMessage = (data) => {
     }
 
     saveMessageToLocal(message)
+    updateRoomLastMessage(message.receiver, message)
   }
 }
 
@@ -405,6 +444,7 @@ const {
   joinRoomByCode,
   listRooms,
   updateRoomName,
+  updateRoomRetention,
   regenerateRoomCode,
   leaveRoom,
   dissolveRoom,
@@ -429,6 +469,7 @@ const {
     fetchCachePath()
     loadServerHistory()
     refreshRooms()
+    if (targetUser.value === 'group_chat') refreshPublicHubQr()
   },
   onUserList: (users, roomId) => {
     onlineUsers.value = users
@@ -463,7 +504,7 @@ async function refreshRooms() {
     return
   }
 
-  const nextRooms = result.data.map(normalizeRoom)
+  const nextRooms = sortRoomsByLastMessage(result.data.map(normalizeRoom))
   const nextRoomIds = new Set(nextRooms.map((room) => room.id))
   for (const room of rooms.value) {
     if (room.id !== 'group_chat' && !nextRoomIds.has(room.id)) {
@@ -479,7 +520,10 @@ function handleRoomUpdated(room) {
   const normalizedRoom = normalizeRoom(room)
   const index = rooms.value.findIndex((item) => item.id === room.id)
   if (index === -1) {
-    rooms.value = [...rooms.value, { ...normalizedRoom, onlineCount: 0 }]
+    rooms.value = sortRoomsByLastMessage([
+      ...rooms.value,
+      { ...normalizedRoom, onlineCount: 0 }
+    ])
   } else {
     rooms.value[index] = { ...rooms.value[index], ...normalizedRoom }
   }
@@ -500,6 +544,41 @@ function normalizeRoom(room) {
     )
 
   return { ...room, role }
+}
+
+function sortRoomsByLastMessage(items) {
+  return [...items].sort((left, right) => {
+    const leftMessageAt = Number(left.lastMessageAt) || 0
+    const rightMessageAt = Number(right.lastMessageAt) || 0
+    if (leftMessageAt !== rightMessageAt) return rightMessageAt - leftMessageAt
+
+    const leftSeq = Number(left.lastMessageSeq) || 0
+    const rightSeq = Number(right.lastMessageSeq) || 0
+    if (leftSeq !== rightSeq) return rightSeq - leftSeq
+
+    const leftCreatedAt = Number(left.createdAt) || 0
+    const rightCreatedAt = Number(right.createdAt) || 0
+    if (leftCreatedAt !== rightCreatedAt) return rightCreatedAt - leftCreatedAt
+
+    return String(left.id).localeCompare(String(right.id))
+  })
+}
+
+function updateRoomLastMessage(roomId, message) {
+  if (!roomId || !message) return
+
+  const room = rooms.value.find((item) => item.id === roomId)
+  if (!room) return
+
+  room.lastMessageAt = Number(message.createdAt) || Date.now()
+  room.lastMessageSeq = Number(message.seq) || room.lastMessageSeq || 0
+  room.lastMessage = {
+    content: message.content || message.text || '',
+    msgType: message.msgType || 'TEXT',
+    createTime: message.createTime,
+    createdAt: message.createdAt
+  }
+  rooms.value = sortRoomsByLastMessage(rooms.value)
 }
 
 function clearRoomLocalState(roomId) {
@@ -712,6 +791,7 @@ const {
 
 const {
   onlineCount,
+  otherOnlineCount,
   displayGroupName,
   getDisplayName,
   getDisplayIp,
@@ -727,6 +807,49 @@ const {
   parseFileName,
   t,
 })
+
+const onlineCountText = computed(() => {
+  if (isPublicTransitStation.value) {
+    if (!isConnected.value) return t('chat.offline')
+    return otherOnlineCount.value > 0
+      ? t('chat.otherDevicesOnline', { count: otherOnlineCount.value })
+      : t('chat.localConnected')
+  }
+
+  return t('chat.onlineCount', { count: onlineCount.value })
+})
+
+const inviteDevices = computed(() => (
+  onlineUsers.value
+    .filter((user) => user.status === 'ONLINE')
+    .map((user) => ({
+      sender: user.sender,
+      name: user.nickname || user.sender.slice(-5),
+      label: getDeviceLabel(user.userAgent, t('chat.unknownDevice')),
+      isLocal: user.sender === currentUser.value
+    }))
+    .sort((left, right) => (
+      Number(right.isLocal) - Number(left.isLocal) ||
+      left.name.localeCompare(right.name)
+    ))
+))
+
+const inviteDevicesOpen = computed(() => (
+  viewportIsMobile.value
+    ? inviteDevicesExpanded.value
+    : onlineUsersDrawerVisible.value
+))
+
+const toggleInviteDevices = () => {
+  if (viewportIsMobile.value) {
+    inviteDevicesExpanded.value = !inviteDevicesExpanded.value
+    onlineUsersDrawerVisible.value = false
+    return
+  }
+
+  inviteDevicesExpanded.value = false
+  onlineUsersDrawerVisible.value = !onlineUsersDrawerVisible.value
+}
 
 const {
   selectionMode,
@@ -760,6 +883,8 @@ const {
   notify: ElMessage
 })
 
+const refreshPublicHubQr = () => showQrCode({ id: 'group_chat', name: t('rooms.default') })
+
 const {
   copyItem,
   copyCachePath,
@@ -771,7 +896,8 @@ const { emitMessage } = useMessageEmitter({
   isConnected,
   targetUser,
   rawMessages,
-  saveMessage: saveMessageToLocal
+  saveMessage: saveMessageToLocal,
+  onSent: (message) => updateRoomLastMessage(message.receiver || targetUser.value, message)
 })
 
 const scrollToBottom = async () => {
@@ -807,6 +933,16 @@ const showRoomInvite = async () => {
   inviteRoom.value = activeRoom.value
   roomInviteDialogVisible.value = true
   await showQrCode(inviteRoom.value)
+}
+
+const handleShowQr = async () => {
+  if (isPublicTransitStation.value) {
+    publicHubDialogVisible.value = true
+    if (!qrCodeUrl.value) await refreshPublicHubQr()
+    return
+  }
+
+  await showRoomInvite()
 }
 
 const handleEditGroupName = () => {
@@ -846,6 +982,35 @@ const handleRoomRename = async (room) => {
   if (normalizeRoom(room).role !== 'owner') return
   const activated = await ensureRoomIsActive(room)
   if (activated) handleEditGroupName()
+}
+
+const handleRoomRetention = (room) => {
+  if (!room?.id || room.id === 'group_chat') return
+  if (normalizeRoom(room).role !== 'owner') return
+  retentionRoom.value = room
+  roomRetentionDialogVisible.value = true
+}
+
+const handleSaveRoomRetention = async (retentionDays) => {
+  if (!retentionRoom.value?.id) return
+
+  roomActionLoading.value = true
+  const result = await updateRoomRetention({
+    roomId: retentionRoom.value.id,
+    retentionDays
+  })
+  roomActionLoading.value = false
+
+  if (result.code !== 0) {
+    ElMessage.error(result.message || t('rooms.retentionUpdateFailed'))
+    return
+  }
+
+  const updatedRoom = normalizeRoom(result.data.room)
+  handleRoomUpdated(updatedRoom)
+  retentionRoom.value = rooms.value.find((room) => room.id === updatedRoom.id) || updatedRoom
+  roomRetentionDialogVisible.value = false
+  ElMessage.success(t('rooms.retentionUpdated'))
 }
 
 const handleLeaveRoom = async (room) => {
@@ -962,6 +1127,7 @@ const switchRoom = async (room, options = {}) => {
 
   await loadServerHistory()
   await refreshRooms()
+  if (roomId === 'group_chat') refreshPublicHubQr()
   await scrollToBottom()
   return true
 }
@@ -977,7 +1143,7 @@ const handleCreateRoom = async (name) => {
   }
 
   const room = normalizeRoom(result.data.room)
-  rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+  rooms.value = sortRoomsByLastMessage([...rooms.value, { ...room, onlineCount: 0 }])
   createRoomDialogVisible.value = false
   inviteRoom.value = room
   roomInviteDialogVisible.value = true
@@ -997,7 +1163,7 @@ const handleJoinRoomByCode = async (code) => {
 
   const room = normalizeRoom(result.data.room)
   if (!rooms.value.some((item) => item.id === room.id)) {
-    rooms.value = [...rooms.value, { ...room, onlineCount: 0 }]
+    rooms.value = sortRoomsByLastMessage([...rooms.value, { ...room, onlineCount: 0 }])
   }
 
   joinRoomDialogVisible.value = false
@@ -1135,7 +1301,27 @@ watch(selectionMode, async (active) => {
   footerRef.value?.registerHistoryNavigation?.(handleHistoryKeydown)
 })
 
-watch(targetUser, () => clearPresenceNotices())
+watch(targetUser, (roomId) => {
+  clearPresenceNotices()
+  inviteDevicesExpanded.value = false
+  if (roomId !== 'group_chat') {
+    publicHubDialogVisible.value = false
+  }
+})
+
+watch(publicHubDialogVisible, (visible) => {
+  if (!visible) {
+    onlineUsersDrawerVisible.value = false
+    inviteDevicesExpanded.value = false
+  }
+})
+
+watch(roomInviteDialogVisible, (visible) => {
+  if (!visible) {
+    onlineUsersDrawerVisible.value = false
+    inviteDevicesExpanded.value = false
+  }
+})
 
 const { initSession } = useChatSession({
   currentUser,
@@ -1148,16 +1334,31 @@ const { initSession } = useChatSession({
   fetchVersionInfo,
 })
 
+const updateViewportMode = () => {
+  const nextIsMobile = window.innerWidth <= 820
+  if (nextIsMobile !== viewportIsMobile.value) {
+    onlineUsersDrawerVisible.value = false
+    inviteDevicesExpanded.value = false
+  }
+  viewportIsMobile.value = nextIsMobile
+}
+
 onMounted(() => {
   isLocalAdmin.value = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
+  updateViewportMode()
   initSession()
+  if (targetUser.value === 'group_chat' && !viewportIsMobile.value) {
+    publicHubDialogVisible.value = true
+  }
   loadSendHistory()
   document.addEventListener('keydown', handleChatKeydown)
+  window.addEventListener('resize', updateViewportMode)
   footerRef.value?.registerHistoryNavigation?.(handleHistoryKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleChatKeydown)
+  window.removeEventListener('resize', updateViewportMode)
   footerRef.value?.unregisterHistoryNavigation?.(handleHistoryKeydown)
   clearPresenceNotices()
 })

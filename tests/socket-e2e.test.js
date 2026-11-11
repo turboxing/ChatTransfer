@@ -643,6 +643,85 @@ describe('Socket.IO multi-client chat', () => {
     member.disconnect();
   });
 
+  it('updates room retention only for the owner and broadcasts the new setting', { timeout: 15000 }, async () => {
+    const owner = createChatClient('RetentionOwner');
+    const member = createChatClient('RetentionMember');
+    await Promise.all([
+      new Promise((resolve) => owner.once('connect', resolve)),
+      new Promise((resolve) => member.once('connect', resolve))
+    ]);
+
+    await emitWithAck(owner, 'room_online', {
+      roomId: 'group_chat',
+      username: 'retention-owner',
+      nickname: 'Retention Owner'
+    });
+    const created = await emitWithAck(owner, 'room_create', { name: 'Retention Room' });
+    const room = created.data.room;
+    await emitWithAck(owner, 'room_online', {
+      roomId: room.id,
+      username: 'retention-owner',
+      nickname: 'Retention Owner'
+    });
+
+    await emitWithAck(member, 'room_online', {
+      roomId: 'group_chat',
+      username: 'retention-member',
+      nickname: 'Retention Member'
+    });
+    await emitWithAck(member, 'room_join_by_code', { code: room.code });
+    await emitWithAck(member, 'room_online', {
+      roomId: room.id,
+      username: 'retention-member',
+      nickname: 'Retention Member'
+    });
+
+    const updated = await emitWithAck(owner, 'room_update_retention', {
+      roomId: room.id,
+      retentionDays: 30
+    });
+    expect(updated.code).toBe(0);
+    expect(updated.data.room).toMatchObject({
+      idleRetentionDays: 30,
+      effectiveRetentionDays: 30
+    });
+    await waitFor(() => member.roomUpdates.some((item) => (
+      item.id === room.id && item.idleRetentionDays === 30
+    )));
+
+    const memberDenied = await emitWithAck(member, 'room_update_retention', {
+      roomId: room.id,
+      retentionDays: 0
+    });
+    expect(memberDenied.code).toBe(-1);
+
+    const publicDenied = await emitWithAck(owner, 'room_update_retention', {
+      roomId: 'group_chat',
+      retentionDays: 30
+    });
+    expect(publicDenied.code).toBe(-1);
+
+    const invalid = await emitWithAck(owner, 'room_update_retention', {
+      roomId: room.id,
+      retentionDays: 14
+    });
+    expect(invalid.code).toBe(-1);
+
+    const permanent = await emitWithAck(owner, 'room_update_retention', {
+      roomId: room.id,
+      retentionDays: 0
+    });
+    expect(permanent.code).toBe(0);
+    expect(permanent.data.room).toMatchObject({
+      idleRetentionDays: 0,
+      effectiveRetentionDays: 0,
+      expiresAt: null
+    });
+
+    owner.disconnect();
+    member.disconnect();
+  });
+
   it('schedules cleanup for rooms that exceed the idle retention period', { timeout: 15000 }, async () => {
     const owner = createChatClient('IdleCleanupOwner');
     await new Promise((resolve) => owner.once('connect', resolve));
