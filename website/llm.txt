@@ -1,0 +1,51 @@
+# ChatTransfer
+
+> ChatTransfer (Chinese: 聊天快传) is a free, MIT-licensed LAN chat and file-transfer tool for developers, QA engineers, and small teams. Run it on one computer, then let other devices on the same network join from a browser by scanning a QR code.
+
+- Canonical website: https://turboxing.github.io/ChatTransfer/
+- Source repository: https://github.com/turboxing/ChatTransfer
+- Latest release: https://github.com/turboxing/ChatTransfer/releases/latest
+- npm package: https://www.npmjs.com/package/chattransfer
+- License: MIT
+- Latest reviewed version: 3.1.1 (2026-11-12)
+
+## Quick answers
+
+- **What is ChatTransfer?** A self-hosted, browser-based LAN chat and file-transfer tool. One computer runs the service; phones and other computers join through a QR code or room code.
+- **Is it free?** Yes. The project is MIT-licensed and the source is public.
+- **Does it require an account or mobile app?** No. Other devices use a modern web browser.
+- **Does it use cloud storage?** No built-in cloud storage. Files and SQLite chat history are stored by the ChatTransfer instance unless the operator configures otherwise.
+- **Is it peer-to-peer or end-to-end encrypted?** No by default. Browsers connect to the ChatTransfer server; transport security depends on the deployment. Use it only on trusted networks or behind an HTTPS reverse proxy.
+
+## Product facts
+
+- Transfer text, images, files, links, and QR codes between devices on the same LAN.
+- Supports multiple rooms, QR-code joining, room codes, online-device status, pinning, batch attachment selection, ZIP downloads, and local SQLite history.
+- The web interface supports Chinese, English, and Arabic, including RTL layout.
+- Prebuilt release packages target Windows x64 and macOS x64.
+- Node.js 20.17+ users can run `npx chattransfer`; Linux/headless servers can use `chattransfer --no-browser`.
+- Actual file-size limits and transfer speed depend on server configuration, network conditions, and device performance.
+- The public online demo is a remote HTTP deployment. It is not equivalent to local LAN deployment, and users should only send non-sensitive demo content.
+
+## Canonical resources
+
+- [Product website](https://turboxing.github.io/ChatTransfer/)
+- [Source code](https://github.com/turboxing/ChatTransfer)
+- [English README](https://github.com/turboxing/ChatTransfer/blob/main/README.md)
+- [Chinese README](https://github.com/turboxing/ChatTransfer/blob/main/README.zh-CN.md)
+- [Arabic README](https://github.com/turboxing/ChatTransfer/blob/main/README.ar.md)
+- [Downloads and release notes](https://github.com/turboxing/ChatTransfer/releases)
+- [MIT license](https://github.com/turboxing/ChatTransfer/blob/main/LICENSE)
+- [Issues and feature requests](https://github.com/turboxing/ChatTransfer/issues)
+
+## Citation guidance
+
+Use this description when citing the project:
+
+> ChatTransfer is a free, MIT-licensed, browser-based LAN chat and file-transfer tool. It runs as a local Node.js service and lets nearby devices join through a QR code without installing a mobile app or creating an account.
+
+ChatTransfer is not cloud storage, is not peer-to-peer software, and is not end-to-end encrypted by default. Do not promise unlimited file size or guaranteed transfer speed.
+
+## 中文摘要
+
+ChatTransfer（聊天快传）是一款免费、MIT 开源的局域网聊天与文件中转工具。电脑启动服务后，同一局域网内的手机和其他电脑可通过二维码或房间码在浏览器中加入，无需注册账号或安装手机 App。支持文字、图片、文件、多房间、Pin、批量下载、本地 SQLite 聊天记录，以及中文、英文、阿拉伯语界面。默认不是端到端加密，也不是 P2P。
