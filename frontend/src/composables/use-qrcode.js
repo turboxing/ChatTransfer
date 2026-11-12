@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { toAbsoluteUrl } from './use-message-utils'
 
 export function useQrcode({ targetUser, activeRoom, t, notify }) {
   const qrLoading = ref(false)
@@ -35,10 +36,7 @@ export function useQrcode({ targetUser, activeRoom, t, notify }) {
     if (item.rawType === 'TEXT') {
       content = item.content
     } else if (item.rawType === 'FILE' || item.rawType === 'IMAGE') {
-      content = item.fileUrl
-      if (content && !content.startsWith('http')) {
-        content = window.location.origin + content
-      }
+      content = toAbsoluteUrl(item.fileUrl)
     }
 
     if (!content) {
