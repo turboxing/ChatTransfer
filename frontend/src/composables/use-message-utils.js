@@ -45,6 +45,19 @@ export function formatTextContent(text) {
   ))
 }
 
+export function toAbsoluteUrl(
+  value,
+  origin = typeof window !== 'undefined' ? window.location.origin : ''
+) {
+  if (!value) return ''
+
+  try {
+    return new URL(String(value), origin).href
+  } catch {
+    return String(value)
+  }
+}
+
 export function useClipboard({ t, notify }) {
   const copyToClipboard = async (text) => {
     if (navigator.clipboard && window.isSecureContext) {
@@ -77,9 +90,10 @@ export function useClipboard({ t, notify }) {
 
   const copyItem = async (item) => {
     try {
-      const content = item.rawType === 'FILE' || item.rawType === 'IMAGE' ? item.fileUrl : item.content
+      const isAttachment = item.rawType === 'FILE' || item.rawType === 'IMAGE'
+      const content = isAttachment ? toAbsoluteUrl(item.fileUrl) : item.content
       await copyToClipboard(content)
-      notify?.success(item.rawType === 'FILE' || item.rawType === 'IMAGE' ? t('chat.linkCopied') : t('messages.copySuccess'))
+      notify?.success(isAttachment ? t('chat.linkCopied') : t('messages.copySuccess'))
     } catch (error) {
       console.error(error)
       notify?.error(t('messages.copyFailed'))
