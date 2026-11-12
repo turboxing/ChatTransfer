@@ -1,5 +1,20 @@
 export const changelog = [
   {
+    version: '3.1.1',
+    date: '2026-11-12',
+    changes: {
+      'zh-CN': [
+        '修复文件或图片消息复制时得到相对地址的问题，现在会复制当前服务下的完整 URL'
+      ],
+      en: [
+        'Fixed copied file and image messages returning relative paths; complete URLs under the current service origin are now copied'
+      ],
+      ar: [
+        'إصلاح نسخ رسائل الملفات والصور بعناوين نسبية؛ أصبح النسخ يستخدم عنوان URL كاملاً ضمن أصل الخدمة الحالي'
+      ]
+    }
+  },
+  {
     version: '3.1.0',
     date: '2026-11-11',
     changes: {

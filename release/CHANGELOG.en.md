@@ -1,10 +1,14 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.1.0**
+All notable changes to this project. Current version: **v3.1.1**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.1.1 (2026-11-12)
+
+- Fixed copied file and image messages returning relative paths; complete URLs under the current service origin are now copied
 
 ## v3.1.0 (2026-11-11)
 
