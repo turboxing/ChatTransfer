@@ -10,6 +10,7 @@ All notable changes to this project. Current version: **v3.1.2**
 
 - Updated the app and website logos with the new device-transfer icon
 - Removed the `Telemetry: enabled` startup log while preserving the disabled-state output
+- Fixed intermittent offline status when a device reconnects during the offline debounce window
 
 ## v3.1.1 (2026-11-12)
 
