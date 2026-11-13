@@ -1,30 +1,49 @@
 {
   "latest": {
-    "version": "3.1.2",
+    "version": "3.1.3",
     "date": "2026-11-13",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-macos-x64-v3_1_2.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-windows-x64-v3.1.2.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.3/ChatTransfer-macos-x64-v3_1_3.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.3/ChatTransfer-windows-x64-v3.1.3.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "更新工具与官网 logo 为新版设备互传图标",
-        "遥测开启时不再输出启动日志，关闭时仍显示 `Telemetry: disabled`",
-        "修复设备在离线防抖窗口内快速重连时偶发显示离线的问题"
+        "修复粘贴文件后发送按钮持续转圈、无法继续发送的问题"
       ],
       "en": [
-        "Updated the app and website logos with the new device-transfer icon",
-        "Removed the `Telemetry: enabled` startup log while preserving the disabled-state output",
-        "Fixed intermittent offline status when a device reconnects during the offline debounce window"
+        "Fixed the send button remaining in a loading state and preventing further sends after pasting a file"
       ],
       "ar": [
-        "تحديث شعار التطبيق والموقع بأيقونة نقل الأجهزة الجديدة",
-        "إزالة سجل بدء التشغيل `Telemetry: enabled` مع الإبقاء على عرض حالة التعطيل",
-        "إصلاح ظهور حالة عدم الاتصال أحيانًا عند إعادة اتصال الجهاز خلال فترة تأخير عدم الاتصال"
+        "إصلاح بقاء زر الإرسال في حالة تحميل ومنع الإرسال بعد لصق ملف"
       ]
     }
   },
   "history": [
+    {
+      "version": "3.1.2",
+      "date": "2026-11-13",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-macos-x64-v3_1_2.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-windows-x64-v3.1.2.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "更新工具与官网 logo 为新版设备互传图标",
+          "遥测开启时不再输出启动日志，关闭时仍显示 `Telemetry: disabled`",
+          "修复设备在离线防抖窗口内快速重连时偶发显示离线的问题"
+        ],
+        "en": [
+          "Updated the app and website logos with the new device-transfer icon",
+          "Removed the `Telemetry: enabled` startup log while preserving the disabled-state output",
+          "Fixed intermittent offline status when a device reconnects during the offline debounce window"
+        ],
+        "ar": [
+          "تحديث شعار التطبيق والموقع بأيقونة نقل الأجهزة الجديدة",
+          "إزالة سجل بدء التشغيل `Telemetry: enabled` مع الإبقاء على عرض حالة التعطيل",
+          "إصلاح ظهور حالة عدم الاتصال أحيانًا عند إعادة اتصال الجهاز خلال فترة تأخير عدم الاتصال"
+        ]
+      }
+    },
     {
       "version": "3.1.1",
       "date": "2026-11-12",

@@ -1,5 +1,20 @@
 export const changelog = [
   {
+    version: '3.1.3',
+    date: '2026-11-13',
+    changes: {
+      'zh-CN': [
+        '修复粘贴文件后发送按钮持续转圈、无法继续发送的问题'
+      ],
+      en: [
+        'Fixed the send button remaining in a loading state and preventing further sends after pasting a file'
+      ],
+      ar: [
+        'إصلاح بقاء زر الإرسال في حالة تحميل ومنع الإرسال بعد لصق ملف'
+      ]
+    }
+  },
+  {
     version: '3.1.2',
     date: '2026-11-13',
     changes: {

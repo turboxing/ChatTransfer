@@ -13,7 +13,7 @@ describe('website discovery metadata', () => {
     expect(llms).toBe(llm)
     expect(llms.charCodeAt(0)).not.toBe(0xfeff)
     expect(llms).toContain('https://turboxing.github.io/ChatTransfer/')
-    expect(llms).toContain('Latest reviewed version: 3.1.2')
+    expect(llms).toContain('Latest reviewed version: 3.1.3')
     expect(llms).toContain('Chinese, English, and Arabic')
     expect(llms).toContain('is not peer-to-peer software, and is not end-to-end encrypted by default')
     expect(llms.toLowerCase()).not.toContain('telemetry')
@@ -47,7 +47,7 @@ describe('website discovery metadata', () => {
 
     const structuredData = JSON.parse(jsonLdMatch[1])
     const software = structuredData['@graph'].find((item) => item['@type'] === 'SoftwareApplication')
-    expect(software.softwareVersion).toBe('3.1.2')
+    expect(software.softwareVersion).toBe('3.1.3')
     expect(software.codeRepository).toBe('https://github.com/turboxing/ChatTransfer')
   })
 })

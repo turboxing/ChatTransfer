@@ -1,10 +1,14 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.1.2**
+All notable changes to this project. Current version: **v3.1.3**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.1.3 (2026-11-13)
+
+- Fixed the send button remaining in a loading state and preventing further sends after pasting a file
 
 ## v3.1.2 (2026-11-13)
 
