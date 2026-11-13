@@ -178,7 +178,9 @@ async function start(options = {}) {
   console.log(`DataDir: ${path.dirname(getConfigFile())}`);
   console.log(`CacheDir: ${uploadsDir}`);
   console.log(`Retention: idle-room=${idleRoomRetention} public-messages=${publicMessageRetention}`);
-  console.log(`Telemetry: ${isTelemetryEnabled() ? 'enabled' : 'disabled'}`);
+  if (!isTelemetryEnabled()) {
+    console.log('Telemetry: disabled');
+  }
 
   trackEvent('app_start', { port });
 
