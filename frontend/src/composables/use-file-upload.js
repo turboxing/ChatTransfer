@@ -21,26 +21,31 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
   }
 
   const uploadFile = async (file) => {
+    if (!file?.name) {
+      console.warn('Ignoring upload without a file')
+      return
+    }
+
     isUploadingCount.value += 1
 
     const tempMsgId = Date.now().toString() + Math.random().toString(36).substring(2, 9)
-    const tempMessage = {
-      msgId: tempMsgId,
-      sender: currentUser.value,
-      receiver: targetUser.value,
-      msgType: 'FILE',
-      fileName: file.name,
-      fileSize: file.size,
-      time: new Date().toLocaleString(),
-      status: 'uploading',
-      uploadProgress: 0,
-      rawFile: file
-    }
-
-    rawMessages.value.push(tempMessage)
-    scrollToBottom()
-
     try {
+      const tempMessage = {
+        msgId: tempMsgId,
+        sender: currentUser.value,
+        receiver: targetUser.value,
+        msgType: 'FILE',
+        fileName: file.name,
+        fileSize: file.size,
+        time: new Date().toLocaleString(),
+        status: 'uploading',
+        uploadProgress: 0,
+        rawFile: file
+      }
+
+      rawMessages.value.push(tempMessage)
+      scrollToBottom()
+
       const result = await uploadToServer(file, (percent) => {
         const index = rawMessages.value.findIndex((message) => message.msgId === tempMsgId)
         if (index !== -1) rawMessages.value[index].uploadProgress = percent
@@ -154,7 +159,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
   }
 
   const handlePasteFile = (file) => {
-    uploadFile(file)
+    return uploadFile(file)
   }
 
   return {

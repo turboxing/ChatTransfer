@@ -8,7 +8,7 @@
     </div>
     <Sender ref="senderRef" :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)"
       :loading="loading" :placeholder="placeholder"
-      class="chat-sender" clearable @paste-file="$emit('paste-file')" @submit="$emit('submit', $event)" />
+      class="chat-sender" clearable @paste-file="$emit('paste-file', $event)" @submit="$emit('submit', $event)" />
   </div>
 </template>
 

@@ -27,7 +27,7 @@ beforeAll(async () => {
   await historyService.init();
   batchDownloadService = new BatchDownloadService({ historyService });
   socketServer = registerSocket(server, historyService, batchDownloadService, {
-    presenceOfflineDebounceMs: 80,
+    presenceOfflineDebounceMs: 1000,
     roomIdleRetentionDays: 7,
     roomIdleCleanupIntervalMs: 25
   });
