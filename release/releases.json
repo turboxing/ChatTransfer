@@ -1,24 +1,46 @@
 {
   "latest": {
-    "version": "3.1.1",
-    "date": "2026-11-12",
+    "version": "3.1.2",
+    "date": "2026-11-13",
     "download": {
-      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.1/ChatTransfer-macos-x64-v3_1_1.zip",
-      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.1/ChatTransfer-windows-x64-v3.1.1.exe.zip"
+      "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-macos-x64-v3_1_2.zip",
+      "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.2/ChatTransfer-windows-x64-v3.1.2.exe.zip"
     },
     "changelog": {
       "zh-CN": [
-        "修复文件或图片消息复制时得到相对地址的问题，现在会复制当前服务下的完整 URL"
+        "更新工具与官网 logo 为新版设备互传图标",
+        "遥测开启时不再输出启动日志，关闭时仍显示 `Telemetry: disabled`"
       ],
       "en": [
-        "Fixed copied file and image messages returning relative paths; complete URLs under the current service origin are now copied"
+        "Updated the app and website logos with the new device-transfer icon",
+        "Removed the `Telemetry: enabled` startup log while preserving the disabled-state output"
       ],
       "ar": [
-        "إصلاح نسخ رسائل الملفات والصور بعناوين نسبية؛ أصبح النسخ يستخدم عنوان URL كاملاً ضمن أصل الخدمة الحالي"
+        "تحديث شعار التطبيق والموقع بأيقونة نقل الأجهزة الجديدة",
+        "إزالة سجل بدء التشغيل `Telemetry: enabled` مع الإبقاء على عرض حالة التعطيل"
       ]
     }
   },
   "history": [
+    {
+      "version": "3.1.1",
+      "date": "2026-11-12",
+      "download": {
+        "macos-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.1/ChatTransfer-macos-x64-v3_1_1.zip",
+        "windows-x64": "https://github.com/turboxing/ChatTransfer/releases/download/v3.1.1/ChatTransfer-windows-x64-v3.1.1.exe.zip"
+      },
+      "changelog": {
+        "zh-CN": [
+          "修复文件或图片消息复制时得到相对地址的问题，现在会复制当前服务下的完整 URL"
+        ],
+        "en": [
+          "Fixed copied file and image messages returning relative paths; complete URLs under the current service origin are now copied"
+        ],
+        "ar": [
+          "إصلاح نسخ رسائل الملفات والصور بعناوين نسبية؛ أصبح النسخ يستخدم عنوان URL كاملاً ضمن أصل الخدمة الحالي"
+        ]
+      }
+    },
     {
       "version": "3.1.0",
       "date": "2026-11-11",

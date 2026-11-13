@@ -1,5 +1,23 @@
 export const changelog = [
   {
+    version: '3.1.2',
+    date: '2026-11-13',
+    changes: {
+      'zh-CN': [
+        '更新工具与官网 logo 为新版设备互传图标',
+        '遥测开启时不再输出启动日志，关闭时仍显示 `Telemetry: disabled`'
+      ],
+      en: [
+        'Updated the app and website logos with the new device-transfer icon',
+        'Removed the `Telemetry: enabled` startup log while preserving the disabled-state output'
+      ],
+      ar: [
+        'تحديث شعار التطبيق والموقع بأيقونة نقل الأجهزة الجديدة',
+        'إزالة سجل بدء التشغيل `Telemetry: enabled` مع الإبقاء على عرض حالة التعطيل'
+      ]
+    }
+  },
+  {
     version: '3.1.1',
     date: '2026-11-12',
     changes: {

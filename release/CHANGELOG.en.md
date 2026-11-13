@@ -1,10 +1,15 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.1.1**
+All notable changes to this project. Current version: **v3.1.2**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.1.2 (2026-11-13)
+
+- Updated the app and website logos with the new device-transfer icon
+- Removed the `Telemetry: enabled` startup log while preserving the disabled-state output
 
 ## v3.1.1 (2026-11-12)
 
