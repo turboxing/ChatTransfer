@@ -155,6 +155,9 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
     const userId = username || socket.username;
     if (!userId) throw new Error('User is required');
 
+    // Cancel a pending offline transition as soon as the device reconnects.
+    clearOfflineTimer(roomId, userId);
+
     socket.username = userId;
     const joinedRoom = await historyService.joinRoom({ roomId, code, userId, nickname });
     leaveActiveRoom(socket);
