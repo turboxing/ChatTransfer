@@ -7,7 +7,7 @@
 - Latest release: https://github.com/turboxing/ChatTransfer/releases/latest
 - npm package: https://www.npmjs.com/package/chattransfer
 - License: MIT
-- Latest reviewed version: 3.1.3 (2026-11-13)
+- Latest reviewed version: 3.1.4 (2026-11-14)
 
 ## Quick answers
 

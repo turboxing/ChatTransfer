@@ -1,10 +1,14 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.1.3**
+All notable changes to this project. Current version: **v3.1.4**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.1.4 (2026-11-14)
+
+- Added message-retention information to the Public Transfer Hub conversation item, including the retention period and automatic cleanup status
 
 ## v3.1.3 (2026-11-13)
 
@@ -13,7 +17,6 @@ All notable changes to this project. Current version: **v3.1.3**
 ## v3.1.2 (2026-11-13)
 
 - Updated the app and website logos with the new device-transfer icon
-- Removed the `Telemetry: enabled` startup log while preserving the disabled-state output
 - Fixed intermittent offline status when a device reconnects during the offline debounce window
 
 ## v3.1.1 (2026-11-12)

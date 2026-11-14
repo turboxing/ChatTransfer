@@ -1,5 +1,20 @@
 export const changelog = [
   {
+    version: '3.1.4',
+    date: '2026-11-14',
+    changes: {
+      'zh-CN': [
+        '公共中转站会话新增消息保留时间提示，显示保留周期和自动清理状态'
+      ],
+      en: [
+        'Added message-retention information to the Public Transfer Hub conversation item, including the retention period and automatic cleanup status'
+      ],
+      ar: [
+        'إضافة معلومات الاحتفاظ بالرسائل إلى عنصر مركز النقل العام، بما في ذلك مدة الاحتفاظ وحالة التنظيف التلقائي'
+      ]
+    }
+  },
+  {
     version: '3.1.3',
     date: '2026-11-13',
     changes: {
@@ -20,17 +35,14 @@ export const changelog = [
     changes: {
       'zh-CN': [
         '更新工具与官网 logo 为新版设备互传图标',
-        '遥测开启时不再输出启动日志，关闭时仍显示 `Telemetry: disabled`',
         '修复设备在离线防抖窗口内快速重连时偶发显示离线的问题'
       ],
       en: [
         'Updated the app and website logos with the new device-transfer icon',
-        'Removed the `Telemetry: enabled` startup log while preserving the disabled-state output',
         'Fixed intermittent offline status when a device reconnects during the offline debounce window'
       ],
       ar: [
         'تحديث شعار التطبيق والموقع بأيقونة نقل الأجهزة الجديدة',
-        'إزالة سجل بدء التشغيل `Telemetry: enabled` مع الإبقاء على عرض حالة التعطيل',
         'إصلاح ظهور حالة عدم الاتصال أحيانًا عند إعادة اتصال الجهاز خلال فترة تأخير عدم الاتصال'
       ]
     }
