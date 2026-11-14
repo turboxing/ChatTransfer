@@ -192,6 +192,8 @@
     "default": "公共中转站",
     "publicBadge": "公共",
     "autoDeleteIn": "约 {days} 天后自动清理",
+    "publicMessagesRetention": "消息保留 {days} 天，过期自动清理",
+    "publicMessagesRetentionOff": "聊天记录不自动清理",
     "roomUnavailable": "房间已解散或已过期，已返回公共中转站",
     "owner": "房主",
     "create": "新建房间",

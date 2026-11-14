@@ -102,7 +102,8 @@ const props = defineProps({
   rooms: { type: Array, default: () => [] },
   activeRoomId: { type: String, required: true },
   currentUser: { type: String, default: '' },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  publicRoomRetentionDays: { type: Number, default: 7 }
 })
 
 const emit = defineEmits([
@@ -140,7 +141,15 @@ const getRoomPreview = (room) => {
 }
 
 const getExpiryText = (room) => {
-  if (!room || room.id === 'group_chat') return ''
+  if (!room) return ''
+  if (room.id === 'group_chat') {
+    const days = Number(props.publicRoomRetentionDays)
+    if (days === 0) return t('rooms.publicMessagesRetentionOff')
+    if (Number.isFinite(days) && days > 0) {
+      return t('rooms.publicMessagesRetention', { days })
+    }
+    return ''
+  }
   if (Number(room.effectiveRetentionDays) === 0 || Number(room.idleRetentionDays) === 0) {
     return t('rooms.retentionPermanentShort')
   }

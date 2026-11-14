@@ -192,6 +192,8 @@
     "default": "Public Transfer Hub",
     "publicBadge": "Public",
     "autoDeleteIn": "Auto-delete in about {days} days",
+    "publicMessagesRetention": "Messages are kept for {days} days; expired messages are cleaned up automatically",
+    "publicMessagesRetentionOff": "History is not auto-deleted",
     "roomUnavailable": "This room has been dissolved or expired. Returned to the Public Transfer Hub.",
     "owner": "Owner",
     "create": "New room",

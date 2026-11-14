@@ -192,6 +192,8 @@
     "default": "مركز النقل العام",
     "publicBadge": "عام",
     "autoDeleteIn": "حذف تلقائي بعد نحو {days} يومًا",
+    "publicMessagesRetention": "تُحفظ الرسائل لمدة {days} أيام، وتُحذف الرسائل منتهية الصلاحية تلقائيًا",
+    "publicMessagesRetentionOff": "لا يتم حذف سجل المحادثة تلقائيًا",
     "roomUnavailable": "تم حل الغرفة أو انتهت صلاحيتها. تمت العودة إلى مركز النقل العام.",
     "owner": "المالك",
     "create": "غرفة جديدة",

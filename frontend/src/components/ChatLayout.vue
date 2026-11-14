@@ -174,6 +174,7 @@
       :active-room-id="targetUser"
       :current-user="currentUser"
       :loading="roomsLoading"
+      :public-room-retention-days="publicRoomRetentionDays"
       @select="switchRoom"
       @create="createRoomDialogVisible = true"
       @join="joinRoomDialogVisible = true"
@@ -1287,6 +1288,7 @@ const openPinDrawer = () => {
 const {
   version,
   copyright,
+  publicRoomRetentionDays,
   fetchVersionInfo,
 } = useVersionInfo()
 

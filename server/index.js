@@ -32,8 +32,17 @@ function createApp() {
   return app;
 }
 
-function createConfiguredApp(cachePath, historyService = null, batchDownloadService = null) {
+function createConfiguredApp(
+  cachePath,
+  historyService = null,
+  batchDownloadService = null,
+  appOptions = {}
+) {
   const app = createApp();
+  const resolvedOptions = resolveStartOptions();
+  app.locals.publicRoomRetentionDays = Number.isFinite(Number(appOptions.publicRoomRetentionDays))
+    ? Number(appOptions.publicRoomRetentionDays)
+    : resolvedOptions.publicRoomRetentionDays;
   const safeCachePath = cachePath
     ? { path: path.resolve(cachePath), changed: false }
     : getSafeStartupCachePath({
@@ -145,7 +154,9 @@ async function start(options = {}) {
     historyService.startPublicRoomCleanup({ retentionDays: publicRoomRetentionDays });
   }
 
-  const app = createConfiguredApp(uploadsDir, historyService, batchDownloadService);
+  const app = createConfiguredApp(uploadsDir, historyService, batchDownloadService, {
+    publicRoomRetentionDays
+  });
   const server = http.createServer(app);
 
   const io = registerSocket(server, historyService, batchDownloadService, {

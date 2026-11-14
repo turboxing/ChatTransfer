@@ -36,7 +36,8 @@ module.exports = (configuredUploadsDir = getCachePath()) => {
       data: {
         version: require('../../package.json').version,
         copyright: '© suncx and ChatTransfer Contributors',
-        deviceId: 'anonymous'
+        deviceId: 'anonymous',
+        publicRoomRetentionDays: req.app.locals.publicRoomRetentionDays ?? 7
       }
     });
   });

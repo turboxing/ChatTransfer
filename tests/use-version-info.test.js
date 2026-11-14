@@ -10,14 +10,19 @@ describe('useVersionInfo', () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       json: async () => ({
         code: 0,
-        data: { version: '2.1.0', copyright: 'ChatTransfer' }
+        data: {
+          version: '2.1.0',
+          copyright: 'ChatTransfer',
+          publicRoomRetentionDays: 14
+        }
       })
     })))
 
-    const { version, copyright, fetchVersionInfo } = useVersionInfo()
+    const { version, copyright, publicRoomRetentionDays, fetchVersionInfo } = useVersionInfo()
     await fetchVersionInfo()
 
     expect(version.value).toBe('2.1.0')
     expect(copyright.value).toBe('ChatTransfer')
+    expect(publicRoomRetentionDays.value).toBe(14)
   })
 })

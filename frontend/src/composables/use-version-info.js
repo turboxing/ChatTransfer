@@ -3,6 +3,7 @@ import { ref } from 'vue'
 export function useVersionInfo() {
   const version = ref('1.0.0')
   const copyright = ref('© suncx and ChatTransfer Contributors')
+  const publicRoomRetentionDays = ref(7)
 
   const fetchVersionInfo = async () => {
     try {
@@ -11,11 +12,14 @@ export function useVersionInfo() {
       if (result.code === 0) {
         version.value = result.data.version
         copyright.value = result.data.copyright
+        if (Number.isFinite(Number(result.data.publicRoomRetentionDays))) {
+          publicRoomRetentionDays.value = Number(result.data.publicRoomRetentionDays)
+        }
       }
     } catch (error) {
       console.error('获取版本信息失败', error)
     }
   }
 
-  return { version, copyright, fetchVersionInfo }
+  return { version, copyright, publicRoomRetentionDays, fetchVersionInfo }
 }
