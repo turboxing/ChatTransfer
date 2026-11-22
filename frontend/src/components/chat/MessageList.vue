@@ -41,22 +41,24 @@
           'is-selected-message': selectionMode && selectedMessageIds.has(item.key)
         }"
         @click="handleContentClick(item, $event)">
-        <div v-if="item.rawType === 'TEXT'" class="content-text" v-html="formatTextContent(item.content)"></div>
+        <div v-if="item.rawType === 'TEXT'" class="content-text text-reader-trigger" tabindex="0"
+          :aria-label="t('textReader.open')" @keydown.enter.self="openText(item, $event)"
+          v-html="formatTextContent(item.content)"></div>
 
         <div v-else-if="item.rawType === 'IMAGE'" class="content-image">
           <el-image :src="item.fileUrl" :preview-src-list="selectionMode ? [] : [item.fileUrl]" fit="cover" class="message-image" />
+          <div class="attachment-size">{{ formatFileSize(item.fileSize, t('preview.unknownSize')) }}</div>
         </div>
 
         <div v-else-if="item.rawType === 'FILE' || item.status === 'uploading'" class="content-file">
-          <FilesCard :name="item.fileName" :file-size="item.fileSize"
-            :status="item.status === 'success' ? 'done' : (item.status === 'failed' ? 'error' : 'uploading')"
-            :percent="item.originalMsg.uploadProgress" :error-tip="t('chat.uploadFailed')" />
+          <AttachmentMessageCard :item="item" :disabled="selectionMode"
+            @open="$emit('open', $event)" @download="$emit('download', $event)" />
         </div>
       </div>
     </template>
 
     <template #footer="{ item }">
-      <div class="footer-wrapper" :class="{ 'is-sender': item.placement === 'end' }">
+      <div class="footer-wrapper" :class="{ 'is-sender': item.placement === 'end' }" @pointerdown.capture="textTrigger.cancel">
         <div v-if="!selectionMode" class="footer-actions">
           <el-button type="primary" link size="small" class="pin-btn"
             :class="{ 'is-pinned': isMessagePinned(item.key) }" @click="$emit('pin', item)">
@@ -83,6 +85,9 @@
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item v-if="item.rawType === 'TEXT'" :icon="View" @click="$emit('read-text', item)">
+                  {{ t('textReader.open') }}
+                </el-dropdown-item>
                 <el-dropdown-item v-if="isSelectableMessage(item)" :icon="Select" @click="$emit('start-select', item)">
                   {{ t('chat.multiSelect') }}
                 </el-dropdown-item>
@@ -106,11 +111,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { BubbleList, FilesCard } from 'vue-element-plus-x'
+import { onBeforeUnmount, ref } from 'vue'
+import { BubbleList } from 'vue-element-plus-x'
+import AttachmentMessageCard from './AttachmentMessageCard.vue'
 import { Top, CopyDocument, Grid, Download, View, RefreshRight, MoreFilled, Select } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { getColorByName, formatTextContent } from '../../composables/use-message-utils'
+import { getColorByName, formatTextContent, formatFileSize } from '../../composables/use-message-utils'
+import { createTextReaderTrigger } from '../../composables/text-message-preview'
 import {
   hasMessageMobileActions,
   isAttachmentMessage
@@ -147,20 +154,32 @@ const props = defineProps({
   },
   isSelectableMessage: {
     type: Function,
-    required: true
+    default: () => false
   }
 })
 
-const emit = defineEmits(['pin', 'top', 'copy', 'qr', 'open', 'download', 'retry', 'start-select', 'toggle-select'])
+const emit = defineEmits(['pin', 'top', 'copy', 'qr', 'open', 'download', 'retry', 'start-select', 'toggle-select', 'read-text'])
 
 const { t } = useI18n()
 
 const isAttachment = isAttachmentMessage
 
 const bubbleListRef = ref(null)
+const textTrigger = createTextReaderTrigger({
+  isSelecting: () => props.selectionMode,
+  getSelection: () => window.getSelection()?.toString(),
+  isCurrent: item => props.items.some(current => current.key === item.key && current.content === item.content),
+  onOpen: item => emit('read-text', item)
+})
+const openText = textTrigger.handle
+onBeforeUnmount(textTrigger.cancel)
 
 const handleContentClick = (item, event) => {
-  if (!props.selectionMode || !props.isSelectableMessage(item)) return
+  if (!props.selectionMode) {
+    openText(item, event)
+    return
+  }
+  if (!props.isSelectableMessage(item)) return
   event.stopPropagation()
   emit('toggle-select', item)
 }
@@ -173,3 +192,10 @@ const scrollToBottom = () => {
 
 defineExpose({ scrollToBottom })
 </script>
+
+<style scoped>
+.attachment-size { margin-top: 6px; font-size: 12px; color: #606266; white-space: nowrap; }
+.text-reader-trigger { cursor: pointer; }
+.text-reader-trigger:focus-visible { outline: 2px solid #409eff; outline-offset: 3px; }
+.content-file, .content-image { flex-direction: column; min-width: 0; max-width: min(340px, 70vw); }
+</style>

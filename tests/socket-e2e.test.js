@@ -132,6 +132,30 @@ async function createConnectedClient(name) {
 }
 
 describe('Socket.IO multi-client chat', () => {
+  it('issues preview links only to the connected user in the active room', async () => {
+    const user = await createConnectedClient('preview');
+    await waitFor(() => user.userLists.length > 0);
+    const filesDir = path.join(historyCachePath, 'files');
+    fs.mkdirSync(filesDir, { recursive: true });
+    fs.writeFileSync(path.join(filesDir, 'socket-preview.txt'), 'preview');
+    await historyService.saveMessage({
+      msgId: 'socket-preview', sender: 'batch-preview', receiver: 'group_chat',
+      msgType: 'FILE', fileName: 'socket-preview.txt', fileUrl: '/files/socket-preview.txt'
+    });
+    const result = await emitWithAck(user, 'attachment_preview', {
+      roomId: 'group_chat', messageId: 'socket-preview'
+    });
+    expect(result.code).toBe(0);
+    expect(result.data.fileSize).toBe(7);
+    expect(result.data.kind).toBe('text');
+    const denied = await emitWithAck(user, 'attachment_preview', {
+      roomId: 'not-active', requester: 'owner', messageId: 'socket-preview'
+    });
+    expect(denied.code).toBe(-1);
+    user.disconnect();
+    await waitFor(() => require('../server/socket/session-manager').getUser('group_chat', 'batch-preview')?.status !== 'ONLINE');
+  });
+
   it('broadcasts group messages and sends private messages to the target only', { timeout: 15000 }, async () => {
     const userA = createChatClient('A');
     const userB = createChatClient('B');

@@ -1,5 +1,32 @@
 export const changelog = [
   {
+    "version": "3.2.0",
+    "date": "2026-11-22",
+    "changes": {
+      "zh-CN": [
+        "新增附件内容预览，支持文本、源码、配置文件、PDF 和常见音视频",
+        "新增语法高亮与 Markdown 阅读模式，支持搜索和复制原文",
+        "新增文本消息全屏阅读，可按需选择渲染模式并复制或生成二维码",
+        "优化文件消息展示，独立显示格式和大小，支持音频原位播放和视频弹窗播放",
+        "修复 LOG、CJS 等文件拖拽时被误判为文件夹的问题，并保留空文件大小"
+      ],
+      "en": [
+        "Added attachment previews for text, source code, configuration files, PDFs, and common audio and video formats",
+        "Added syntax highlighting and Markdown reading modes with search and source-text copying",
+        "Added a fullscreen text message reader with opt-in rendering, original-text copying, and QR code generation",
+        "Improved file messages with separate format and size labels, inline audio playback, and video playback dialogs",
+        "Fixed dragged files such as LOG and CJS being mistaken for folders and preserved empty-file sizes"
+      ],
+      "ar": [
+        "إضافة معاينة المرفقات للنصوص والشيفرات وملفات الإعداد وملفات PDF وتنسيقات الصوت والفيديو الشائعة",
+        "إضافة تلوين الصياغة ووضع قراءة Markdown مع البحث ونسخ النص الأصلي",
+        "إضافة قارئ رسائل نصية بملء الشاشة مع عرض اختياري ونسخ النص الأصلي وإنشاء رموز QR",
+        "تحسين رسائل الملفات بعرض التنسيق والحجم بشكل مستقل وتشغيل الصوت داخل الرسالة والفيديو في نافذة معاينة",
+        "إصلاح اعتبار الملفات المسحوبة مثل LOG وCJS مجلدات مع الاحتفاظ بأحجام الملفات الفارغة"
+      ]
+    }
+  },
+  {
     version: '3.1.4',
     date: '2026-11-14',
     changes: {

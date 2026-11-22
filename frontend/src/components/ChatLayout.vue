@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-container" ref="chatContainerRef">
+  <div class="chat-container" ref="chatContainerRef" @drop.capture="captureDropEntries">
     <ChatHeader
       :group-name="displayGroupName"
       :online-count="onlineCount"
@@ -47,6 +47,7 @@
         @copy="copyItem"
         @qr="showItemQrCode"
         @open="handleOpen"
+        @read-text="openTextReader"
         @download="handleDownload"
         @retry="handleRetry"
         @start-select="enterSelection"
@@ -138,7 +139,12 @@
       :cancel-text="t('chat.cancel')"
       :download-text="t('batchDownload.download')"
       @download="handleBatchDownload"
+      @preview="openAttachmentPreview"
     />
+
+    <AttachmentPreviewDialog :attachment="previewAttachment" :room-id="targetUser"
+      :request-preview="requestAttachmentPreview" @close="previewAttachment = null" />
+    <TextMessageReader v-if="textReaderMessage" :key="textReaderMessage.key" :message="textReaderMessage" @close="textReaderMessage = null" />
 
     <PinDrawer
       v-model="pinDrawerVisible"
@@ -154,6 +160,7 @@
       @copy="copyItem"
       @qr="showItemQrCode"
       @open="handleOpen"
+      @read-text="openTextReader"
       @download="handleDownload"
       @locate="scrollToMessage($event)"
     />
@@ -236,7 +243,8 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick, watch, provide } from 'vue'
+import { attachmentMediaKey, createMediaPlayback } from '../composables/use-attachment-media'
 import { Attachments } from 'vue-element-plus-x'
 import MessageList from './chat/MessageList.vue'
 import PinDrawer from './chat/PinDrawer.vue'
@@ -257,6 +265,8 @@ import QrCodeDialog from './chat/dialogs/QrCodeDialog.vue'
 import InputDialog from './chat/dialogs/InputDialog.vue'
 import CachePathDialog from './chat/dialogs/CachePathDialog.vue'
 import BatchDownloadDialog from './chat/dialogs/BatchDownloadDialog.vue'
+import AttachmentPreviewDialog from './chat/dialogs/AttachmentPreviewDialog.vue'
+import TextMessageReader from './chat/dialogs/TextMessageReader.vue'
 import ChangelogDialog from './chat/dialogs/ChangelogDialog.vue'
 import { changelog } from '../data/changelog.js'
 import { useI18n } from 'vue-i18n'
@@ -398,6 +408,9 @@ const handleHistoryCleared = (data) => {
 
   if (!isCurrentRoom && !isCurrentPrivate) return
 
+  previewAttachment.value = null
+  batchDownloadDialogVisible.value = false
+  batchAttachments.value = []
   clearLocalHistory()
   resetHistoryCursor()
 }
@@ -452,6 +465,7 @@ const {
   requestHistory,
   queryAttachments,
   requestBatchDownload,
+  requestAttachmentPreview,
   clearServerHistory,
   clearPublicRoomHistory,
 } = useSocket({
@@ -1197,6 +1211,7 @@ const {
   removeUploadCard,
   uploadFile,
   handleUploadDrop,
+  captureDropEntries,
   handleFileSelect,
   handlePasteFile,
 } = useFileUpload({
@@ -1229,7 +1244,6 @@ const {
 const {
   handleSend,
   handleRetry,
-  handleOpen,
   handleDownload,
 } = useMessageActions({
   currentUser,
@@ -1245,6 +1259,19 @@ const {
 })
 
 const { scrollToMessage } = useMessageLocation({ t, notify: ElMessage })
+
+const previewAttachment = ref(null)
+const textReaderMessage = ref(null)
+const openTextReader = (item) => { if (!selectionMode.value) textReaderMessage.value = item }
+const mediaPlayback = createMediaPlayback()
+provide(attachmentMediaKey, {
+  playback: mediaPlayback,
+  requestPreview: ({ messageId }) => requestAttachmentPreview({ roomId: targetUser.value, messageId })
+})
+watch([targetUser, selectionMode, previewAttachment, pinDrawerVisible, textReaderMessage], () => mediaPlayback.stop())
+onUnmounted(() => mediaPlayback.stop())
+const openAttachmentPreview = (item) => { previewAttachment.value = item }
+const handleOpen = openAttachmentPreview
 
 const handleSelectedBatchDownload = async () => {
   const selectedItems = selectableItems.value.filter((item) => selectedIds.value.has(item.key))
@@ -1304,6 +1331,9 @@ watch(selectionMode, async (active) => {
 })
 
 watch(targetUser, (roomId) => {
+  textReaderMessage.value = null
+  previewAttachment.value = null
+  batchDownloadDialogVisible.value = false
   clearPresenceNotices()
   inviteDevicesExpanded.value = false
   if (roomId !== 'group_chat') {

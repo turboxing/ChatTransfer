@@ -48,10 +48,11 @@
               <el-icon><component :is="getFileIcon(attachment)" /></el-icon>
             </button>
           </div>
-          <div class="attachment-info">
+          <div class="attachment-info" @click.stop.prevent="previewAttachment(attachment)">
             <span class="attachment-name" :title="attachment.fileName">{{ attachment.fileName }}</span>
             <span class="attachment-meta">
-              {{ formatFileSize(Number(attachment.fileSize) || 0) }} · {{ attachment.createTime }}
+              {{ getFileExtension(attachment.fileName, t('batchDownload.unknown')) }} ·
+              {{ formatFileSize(attachment.fileSize, t('preview.unknownSize')) }} · {{ attachment.createTime }}
               <template v-if="!attachment.available"> · {{ t('batchDownload.missing') }}</template>
             </span>
           </div>
@@ -89,77 +90,13 @@
     </template>
   </el-dialog>
 
-  <el-dialog
-    v-model="previewDialogVisible"
-    :title="previewAttachmentValue?.fileName || t('batchDownload.preview')"
-    append-to-body
-    align-center
-    width="min(720px, 94vw)"
-  >
-    <div v-if="previewAttachmentValue" v-loading="previewLoading" class="preview-content">
-      <el-alert v-if="previewError" type="error" :title="previewError" show-icon :closable="false" />
-
-      <img
-        v-else-if="previewKind === 'image'"
-        :src="previewAttachmentValue.fileUrl"
-        :alt="previewAttachmentValue.fileName"
-        class="preview-image"
-      />
-      <video
-        v-else-if="previewKind === 'video'"
-        :src="previewAttachmentValue.fileUrl"
-        controls
-        playsinline
-        class="preview-media"
-      />
-      <audio
-        v-else-if="previewKind === 'audio'"
-        :src="previewAttachmentValue.fileUrl"
-        controls
-        class="preview-audio"
-      />
-      <iframe
-        v-else-if="previewKind === 'pdf'"
-        :src="previewAttachmentValue.fileUrl"
-        :title="previewAttachmentValue.fileName"
-        class="preview-pdf"
-      />
-      <pre v-else-if="previewKind === 'text'" class="preview-text">{{ textPreview }}</pre>
-
-      <dl v-else class="preview-metadata">
-        <div>
-          <dt>{{ t('batchDownload.fileName') }}</dt>
-          <dd>{{ previewAttachmentValue.fileName }}</dd>
-        </div>
-        <div>
-          <dt>{{ t('batchDownload.fileType') }}</dt>
-          <dd>{{ previewAttachmentValue.fileType || t('batchDownload.unknown') }}</dd>
-        </div>
-        <div>
-          <dt>{{ t('batchDownload.fileSize') }}</dt>
-          <dd>{{ formatFileSize(Number(previewAttachmentValue.fileSize) || 0) }}</dd>
-        </div>
-        <div>
-          <dt>{{ t('batchDownload.sender') }}</dt>
-          <dd>{{ previewAttachmentValue.senderNickname || previewAttachmentValue.sender }}</dd>
-        </div>
-        <div>
-          <dt>{{ t('batchDownload.sentAt') }}</dt>
-          <dd>{{ previewAttachmentValue.createTime }}</dd>
-        </div>
-      </dl>
-    </div>
-    <template #footer>
-      <el-button @click="previewDialogVisible = false">{{ t('batchDownload.close') }}</el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Document, Headset, Picture, VideoPlay } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { formatFileSize } from '../../../composables/use-message-utils'
+import { formatFileSize, getFileExtension } from '../../../composables/use-message-utils'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -172,16 +109,10 @@ const props = defineProps({
   downloadText: { type: String, required: true }
 })
 
-const emit = defineEmits(['update:modelValue', 'download'])
+const emit = defineEmits(['update:modelValue', 'download', 'preview'])
 const { t } = useI18n()
 const filter = ref('all')
 const selectedIds = ref(new Set())
-const previewDialogVisible = ref(false)
-const previewAttachmentValue = ref(null)
-const previewLoading = ref(false)
-const previewError = ref('')
-const textPreview = ref('')
-
 const filteredAttachments = computed(() => props.attachments.filter((attachment) => {
   if (filter.value === 'all') return true
   return attachment.msgType === (filter.value === 'image' ? 'IMAGE' : 'FILE')
@@ -229,63 +160,15 @@ const toggleFilteredAvailable = (selected) => {
   selectedIds.value = nextSelectedIds
 }
 
-const getPreviewKind = (attachment) => {
-  const mimeType = String(attachment.fileType || '').toLowerCase();
-  const fileName = String(attachment.fileName || '').toLowerCase();
-
-  if (attachment.msgType === 'IMAGE' || mimeType.startsWith('image/')) return 'image';
-  if (mimeType.startsWith('video/')) return 'video';
-  if (mimeType.startsWith('audio/')) return 'audio';
-  if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) return 'pdf';
-  if (
-    mimeType.startsWith('text/') ||
-    mimeType === 'application/json' ||
-    /\.(txt|log|md|csv|xml|yml|yaml|json)$/i.test(fileName)
-  ) {
-    return 'text';
-  }
-
-  return 'metadata';
-}
-
-const previewKind = computed(() => (
-  previewAttachmentValue.value ? getPreviewKind(previewAttachmentValue.value) : 'metadata'
-))
-
 const getFileIcon = (attachment) => {
-  const kind = getPreviewKind(attachment);
-  if (kind === 'image') return Picture;
-  if (kind === 'video') return VideoPlay;
-  if (kind === 'audio') return Headset;
-  return Document;
+  if (attachment.msgType === 'IMAGE') return Picture
+  if (String(attachment.fileType).startsWith('video/')) return VideoPlay
+  if (String(attachment.fileType).startsWith('audio/')) return Headset
+  return Document
 }
 
-const previewAttachment = async (attachment) => {
-  if (!attachment.available || !attachment.fileUrl) return;
-
-  previewAttachmentValue.value = attachment;
-  previewDialogVisible.value = true;
-  previewError.value = '';
-  textPreview.value = '';
-
-  if (getPreviewKind(attachment) !== 'text') return;
-
-  if ((Number(attachment.fileSize) || 0) > 1024 * 1024) {
-    previewError.value = t('batchDownload.previewTooLarge');
-    return;
-  }
-
-  previewLoading.value = true;
-  try {
-    const response = await fetch(attachment.fileUrl);
-    if (!response.ok) throw new Error(t('batchDownload.previewFailed'));
-    const content = await response.text();
-    textPreview.value = content.slice(0, 20000);
-  } catch (error) {
-    previewError.value = t('batchDownload.previewFailed');
-  } finally {
-    previewLoading.value = false;
-  }
+const previewAttachment = (attachment) => {
+  if (attachment.available) emit('preview', attachment)
 }
 
 watch(() => props.attachments, () => {
@@ -392,66 +275,6 @@ watch(() => props.modelValue, (visible) => {
 .preview-button {
   flex: none;
   margin-left: auto;
-}
-
-.preview-content {
-  min-height: 160px;
-}
-
-.preview-image,
-.preview-media,
-.preview-pdf {
-  display: block;
-  width: 100%;
-  max-height: 70vh;
-  border-radius: 6px;
-}
-
-.preview-media,
-.preview-pdf {
-  border: 1px solid #ebeef5;
-}
-
-.preview-audio {
-  width: 100%;
-  margin-top: 40px;
-}
-
-.preview-text {
-  max-height: 60vh;
-  overflow: auto;
-  margin: 0;
-  padding: 12px;
-  border: 1px solid #ebeef5;
-  border-radius: 6px;
-  background: #f5f7fa;
-  font-size: 12px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.preview-metadata {
-  margin: 0;
-}
-
-.preview-metadata > div {
-  display: grid;
-  grid-template-columns: 96px 1fr;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.preview-metadata dt {
-  margin: 0;
-  color: #909399;
-}
-
-.preview-metadata dd {
-  margin: 0;
-  color: #303133;
-  word-break: break-word;
 }
 
 .attachment-summary {

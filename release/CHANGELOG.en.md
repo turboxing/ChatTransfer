@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to this project. Current version: **v3.1.4**
+All notable changes to this project. Current version: **v3.2.0**
 
 [中文](./CHANGELOG.md) | [English](./CHANGELOG.en.md) | [العربية](./CHANGELOG.ar.md)
 
 ---
+
+## v3.2.0 (2026-11-22)
+
+- Added attachment previews for text, source code, configuration files, PDFs, and common audio and video formats
+- Added syntax highlighting and Markdown reading modes with search and source-text copying
+- Added a fullscreen text message reader with opt-in rendering, original-text copying, and QR code generation
+- Improved file messages with separate format and size labels, inline audio playback, and video playback dialogs
+- Fixed dragged files such as LOG and CJS being mistaken for folders and preserved empty-file sizes
 
 ## v3.1.4 (2026-11-14)
 

@@ -658,6 +658,22 @@ module.exports = function registerSocket(server, historyService, batchDownloadSe
       }
     });
 
+    socket.on('attachment_preview', async (params = {}, ack) => {
+      if (typeof ack !== 'function') return;
+      try {
+        if (!socket.username) throw new Error('Login required');
+        requireActiveRoom(socket, params.roomId);
+        const data = await batchDownloadService.previewService.createToken({
+          requester: socket.username,
+          roomId: params.roomId,
+          messageId: params.messageId
+        });
+        ack({ code: 0, data });
+      } catch {
+        ack({ code: -1, message: 'Attachment unavailable or access denied' });
+      }
+    });
+
     socket.on('attachment_download', async (params = {}, ack) => {
       if (typeof ack !== 'function') return;
 

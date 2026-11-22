@@ -3,6 +3,7 @@ export const isAttachmentMessage = (item) => (
 )
 
 export const hasMessageMobileActions = (item) => (
+  item?.rawType === 'TEXT' ||
   (isAttachmentMessage(item) && item?.status === 'success') ||
   item?.role === 'user'
 )

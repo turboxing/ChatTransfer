@@ -113,7 +113,7 @@ class MessageHistoryService {
           normalized.createdAt,
           normalized.filePath || null,
           normalized.fileName || null,
-          normalized.fileSize || null,
+          normalized.fileSize ?? null,
           normalized.fileType || null
         ]
       );
@@ -221,6 +221,24 @@ class MessageHistoryService {
     }
 
     return { attachments };
+  }
+
+  async getPreviewAttachment({ requester, roomId, messageId }) {
+    this.ensureOpened();
+    const conversation = await this.getVerifiedRoomConversation(roomId, requester);
+    const row = await this.get(
+      'SELECT * FROM messages WHERE session_id = ? AND id = ? AND file_path IS NOT NULL',
+      [conversation.sessionId, messageId]
+    );
+    const physicalPath = row && this.resolveExistingFilePath(row.file_path);
+    if (!physicalPath) throw new Error('Attachment unavailable');
+    const stats = await fs.promises.stat(physicalPath);
+    if (!stats.isFile()) throw new Error('Attachment unavailable');
+    return {
+      fileName: row.file_name || path.basename(physicalPath),
+      fileSize: stats.size,
+      physicalPath
+    };
   }
 
   async getBatchAttachments({ requester, roomId, chatType, targetUser, messageIds }) {
@@ -1195,7 +1213,9 @@ class MessageHistoryService {
       createdAt,
       filePath,
       fileName: message.fileName || null,
-      fileSize: Number(message.fileSize) || null,
+      fileSize: message.fileSize !== null && message.fileSize !== undefined && message.fileSize !== ''
+        && Number.isFinite(Number(message.fileSize)) && Number(message.fileSize) >= 0
+        ? Number(message.fileSize) : null,
       fileType: message.fileType || message.mimetype || null
     };
   }
@@ -1222,6 +1242,14 @@ class MessageHistoryService {
       message.fileUrl = `/files/${encodeURIComponent(physicalFileName)}`;
       message.fileName = row.file_name || physicalFileName;
       message.fileSize = row.file_size;
+      if (message.fileSize === null || message.fileSize === undefined) {
+        const physicalPath = this.resolveExistingFilePath(row.file_path);
+        try {
+          message.fileSize = physicalPath ? fs.statSync(physicalPath).size : null;
+        } catch {
+          message.fileSize = null;
+        }
+      }
       message.fileType = row.file_mime_type;
     }
 

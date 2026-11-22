@@ -42,6 +42,7 @@ module.exports = function registerRoutes(
   app.use(require('./files')(uploadsDir));
   if (sharedBatchDownloadService) {
     app.use(require('./batch-download')(sharedBatchDownloadService));
+    app.use(require('./attachment-preview')(sharedBatchDownloadService.previewService));
   }
 
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));

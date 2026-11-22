@@ -146,6 +146,21 @@
   border-radius: 8px;
 }
 
+.content-wrapper.is-pinned-content .attachment-message .elx-files-card {
+  background-color: #fffbe6;
+  border-color: #f5d48c;
+}
+
+.content-wrapper.is-topped-content .attachment-message .elx-files-card {
+  background-color: #ecf5ff;
+  border-color: #b3d8ff;
+}
+
+.content-wrapper.is-selected-message .attachment-message .elx-files-card {
+  background-color: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary);
+}
+
 .file-card {
   width: 240px;
   border-radius: 8px;

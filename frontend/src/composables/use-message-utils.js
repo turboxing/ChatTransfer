@@ -9,13 +9,22 @@ export function parseFileName(url) {
   }
 }
 
-export function formatFileSize(bytes) {
+export function formatFileSize(bytes, unknown = '—') {
+  if (bytes === null || bytes === undefined || bytes === '' || !Number.isFinite(Number(bytes)) || Number(bytes) < 0) return unknown
+  bytes = Number(bytes)
   if (bytes === 0) return '0 B'
 
   const unit = 1024
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const index = Math.floor(Math.log(bytes) / Math.log(unit))
-  return `${parseFloat((bytes / Math.pow(unit, index)).toFixed(2))} ${sizes[index]}`
+  const index = Math.max(0, Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(unit))))
+  return `${parseFloat((bytes / Math.pow(unit, index)).toFixed(1))} ${sizes[index]}`
+}
+
+export function getFileExtension(fileName, unknown = '—') {
+  const name = String(fileName || '').split(/[\\/]/).pop()
+  const index = name.lastIndexOf('.')
+  if (index <= 0 || index === name.length - 1) return unknown
+  return name.slice(index + 1).toUpperCase()
 }
 
 export function getColorByName(name) {
