@@ -47,6 +47,7 @@
         @copy="copyItem"
         @qr="showItemQrCode"
         @open="handleOpen"
+        @read-text="openTextReader"
         @download="handleDownload"
         @retry="handleRetry"
         @start-select="enterSelection"
@@ -143,6 +144,7 @@
 
     <AttachmentPreviewDialog :attachment="previewAttachment" :room-id="targetUser"
       :request-preview="requestAttachmentPreview" @close="previewAttachment = null" />
+    <TextMessageReader v-if="textReaderMessage" :key="textReaderMessage.key" :message="textReaderMessage" @close="textReaderMessage = null" />
 
     <PinDrawer
       v-model="pinDrawerVisible"
@@ -158,6 +160,7 @@
       @copy="copyItem"
       @qr="showItemQrCode"
       @open="handleOpen"
+      @read-text="openTextReader"
       @download="handleDownload"
       @locate="scrollToMessage($event)"
     />
@@ -263,6 +266,7 @@ import InputDialog from './chat/dialogs/InputDialog.vue'
 import CachePathDialog from './chat/dialogs/CachePathDialog.vue'
 import BatchDownloadDialog from './chat/dialogs/BatchDownloadDialog.vue'
 import AttachmentPreviewDialog from './chat/dialogs/AttachmentPreviewDialog.vue'
+import TextMessageReader from './chat/dialogs/TextMessageReader.vue'
 import ChangelogDialog from './chat/dialogs/ChangelogDialog.vue'
 import { changelog } from '../data/changelog.js'
 import { useI18n } from 'vue-i18n'
@@ -1257,12 +1261,14 @@ const {
 const { scrollToMessage } = useMessageLocation({ t, notify: ElMessage })
 
 const previewAttachment = ref(null)
+const textReaderMessage = ref(null)
+const openTextReader = (item) => { if (!selectionMode.value) textReaderMessage.value = item }
 const mediaPlayback = createMediaPlayback()
 provide(attachmentMediaKey, {
   playback: mediaPlayback,
   requestPreview: ({ messageId }) => requestAttachmentPreview({ roomId: targetUser.value, messageId })
 })
-watch([targetUser, selectionMode, previewAttachment, pinDrawerVisible], () => mediaPlayback.stop())
+watch([targetUser, selectionMode, previewAttachment, pinDrawerVisible, textReaderMessage], () => mediaPlayback.stop())
 onUnmounted(() => mediaPlayback.stop())
 const openAttachmentPreview = (item) => { previewAttachment.value = item }
 const handleOpen = openAttachmentPreview
@@ -1325,6 +1331,7 @@ watch(selectionMode, async (active) => {
 })
 
 watch(targetUser, (roomId) => {
+  textReaderMessage.value = null
   previewAttachment.value = null
   batchDownloadDialogVisible.value = false
   clearPresenceNotices()

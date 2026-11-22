@@ -1,4 +1,13 @@
 {
+  "textReader": {
+    "title": "قراءة النص",
+    "open": "قراءة بملء الشاشة",
+    "language": "لغة تلوين الصياغة",
+    "autoLanguage": "كشف تلقائي: {language}",
+    "unknown": "غير معروفة",
+    "markdownHint": "قد يكون هذا النص Markdown. يمكنك التبديل إلى وضع القراءة.",
+    "qrTooLong": "النص أطول من سعة رمز QR واحد. انسخه أو انقله عبر الغرفة."
+  },
   "preview": {
     "displayMode": "وضع العرض",
     "rawMode": "النص الأصلي",

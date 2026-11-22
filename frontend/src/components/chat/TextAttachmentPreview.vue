@@ -2,21 +2,26 @@
   <div class="text-controls">
     <el-radio-group v-model="mode" size="small" :aria-label="t('preview.displayMode')">
       <el-radio-button value="plain">{{ t('preview.rawMode') }}</el-radio-button>
-      <el-radio-button v-if="language" value="highlight" :disabled="!canRenderRich(content, 'highlight')">{{ t('preview.highlightMode') }}</el-radio-button>
+      <el-radio-button v-if="language || messageMode" value="highlight" :disabled="!language || !canRenderRich(content, 'highlight')">{{ t('preview.highlightMode') }}</el-radio-button>
       <el-radio-button v-if="isMarkdown" value="reading" :disabled="!canRenderRich(content, 'reading')">{{ t('preview.readingMode') }}</el-radio-button>
     </el-radio-group>
-    <el-select v-model="encoding" :aria-label="t('preview.encoding')" class="encoding-select">
+    <el-select v-if="messageMode" v-model="selectedLanguage" :aria-label="t('textReader.language')" class="language-select">
+      <el-option :label="t('textReader.autoLanguage', { language: suggestion.language || t('textReader.unknown') })" value="auto" />
+      <el-option v-for="option in previewLanguages" :key="option" :label="option" :value="option" />
+    </el-select>
+    <el-select v-else v-model="encoding" :aria-label="t('preview.encoding')" class="encoding-select">
       <el-option :label="t('preview.autoEncoding')" value="auto" />
       <el-option v-for="option in ['utf-8', 'gb18030', 'utf-16le', 'utf-16be']" :key="option" :label="option.toUpperCase()" :value="option" />
     </el-select>
     <el-checkbox v-if="!reading" v-model="wrap">{{ t('preview.wrap') }}</el-checkbox>
     <el-checkbox v-if="isJson && !truncated" v-model="formatted">{{ t('preview.formatJson') }}</el-checkbox>
-    <el-button :disabled="!!decodeError" @click="copy">{{ t('preview.copy') }}</el-button>
+    <el-button v-if="!messageMode" :disabled="!!decodeError" @click="copy">{{ t('preview.copy') }}</el-button>
     <el-checkbox v-if="mode === 'reading'" v-model="loadImages">{{ t('preview.loadImages') }}</el-checkbox>
   </div>
   <el-alert v-if="truncated" :title="t('preview.truncated')" type="warning" :closable="false" />
   <el-alert v-if="decodeError" :title="t('preview.binary')" type="warning" :closable="false" />
   <template v-else>
+    <p v-if="messageMode && mode === 'plain' && suggestion.markdown" class="reader-hint">{{ t('textReader.markdownHint') }}</p>
     <p v-if="richLoading" role="status">{{ t('preview.renderLoading') }}</p>
     <p v-if="largeContent" role="status">{{ t('preview.richTooLarge') }}</p>
     <p v-if="richFailed" role="status">{{ t('preview.richFailed') }}</p>
@@ -42,10 +47,11 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { useClipboard } from '../../composables/use-message-utils'
 import { decodePreview, searchPreview } from '../../composables/attachment-preview-utils'
-import { canRenderRich, decorateCode, previewLanguage } from '../../composables/preview-render-utils'
+import { canRenderRich, decorateCode, previewLanguage, previewLanguages } from '../../composables/preview-render-utils'
+import { detectMessageContent } from '../../composables/text-message-preview'
 import { usePreviewRenderer } from '../../composables/use-preview-renderer'
 
-const props = defineProps({ buffer: { required: true }, truncated: Boolean, fileName: String })
+const props = defineProps({ buffer: ArrayBuffer, truncated: Boolean, fileName: String, sourceText: String, messageMode: Boolean })
 const { t } = useI18n()
 const { copyToClipboard } = useClipboard({ t, notify: ElMessage })
 const encoding = ref('auto')
@@ -55,6 +61,7 @@ const query = ref('')
 const activeIndex = ref(-1)
 const contentRef = ref(null)
 const decoded = computed(() => {
+  if (props.messageMode) return { text: props.sourceText || '' }
   try { return { text: decodePreview(props.buffer, encoding.value, props.truncated) } }
   catch { return { text: '', error: true } }
 })
@@ -67,9 +74,13 @@ const json = computed(() => {
 })
 const invalidJson = computed(() => json.value?.error)
 const content = computed(() => formatted.value && json.value?.text ? json.value.text : decoded.value.text)
-const language = computed(() => previewLanguage(props.fileName))
-const isMarkdown = computed(() => /\.(md|markdown)$/i.test(props.fileName || ''))
-const mode = ref(isMarkdown.value && canRenderRich(content.value, 'reading') ? 'reading'
+const suggestion = computed(() => props.messageMode ? detectMessageContent(content.value) : { language: '', markdown: false })
+const selectedLanguage = ref('auto')
+const language = computed(() => props.messageMode
+  ? selectedLanguage.value === 'auto' ? suggestion.value.language : selectedLanguage.value
+  : previewLanguage(props.fileName))
+const isMarkdown = computed(() => props.messageMode || /\.(md|markdown)$/i.test(props.fileName || ''))
+const mode = ref(props.messageMode ? 'plain' : isMarkdown.value && canRenderRich(content.value, 'reading') ? 'reading'
   : language.value && canRenderRich(content.value, 'highlight') ? 'highlight' : 'plain')
 const loadImages = ref(false)
 const { tokens, html, loading: richLoading, failed: richFailed, reset: resetRender, render } = usePreviewRenderer()
@@ -103,6 +114,8 @@ const searchOriginal = async () => {
 <style scoped>
 .text-controls, .text-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
 .encoding-select { width: 150px; }
+.language-select { width: 220px; max-width: 100%; }
+.reader-hint { color: #606266; font-size: 12px; }
 .text-search .el-input { flex: 1; min-width: 140px; }
 .text-search span { font-size: 12px; }
 .text-content { margin: 0; padding: 12px; overflow: auto; max-height: 52vh; min-height: 180px; background: #f5f7fa; color: #303133; border-radius: 6px; font: 13px/1.6 monospace; white-space: pre; }

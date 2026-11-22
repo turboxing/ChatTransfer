@@ -8,6 +8,7 @@ const LANGUAGES = {
   ps1: 'powershell', bat: 'bat', sql: 'sql', md: 'markdown', markdown: 'markdown'
 }
 const NAMES = { dockerfile: 'dockerfile', makefile: 'makefile', '.editorconfig': 'ini' }
+export const previewLanguages = [...new Set([...Object.values(LANGUAGES), ...Object.values(NAMES)])].sort()
 export const HIGHLIGHT_LIMIT = 64 * 1024
 export const MARKDOWN_LIMIT = 128 * 1024
 

@@ -10,7 +10,7 @@ const createRefs = (values) => Object.fromEntries(
 
 describe('useMessageActions', () => {
   it('shows mobile more actions only when an action is available', () => {
-    expect(hasMessageMobileActions({ role: 'ai', rawType: 'TEXT' })).toBe(false)
+    expect(hasMessageMobileActions({ role: 'ai', rawType: 'TEXT' })).toBe(true)
     expect(hasMessageMobileActions({ role: 'user', rawType: 'TEXT' })).toBe(true)
     expect(hasMessageMobileActions({ role: 'ai', rawType: 'FILE', status: 'success' })).toBe(true)
     expect(hasMessageMobileActions({ role: 'user', rawType: 'FILE', status: 'success' })).toBe(true)

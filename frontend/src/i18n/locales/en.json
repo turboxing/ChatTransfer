@@ -1,4 +1,13 @@
 {
+  "textReader": {
+    "title": "Text reader",
+    "open": "Read fullscreen",
+    "language": "Highlight language",
+    "autoLanguage": "Auto detect: {language}",
+    "unknown": "Unknown",
+    "markdownHint": "This may be Markdown. You can switch to Read mode.",
+    "qrTooLong": "This text is too long for one QR code. Copy it or transfer it through the room."
+  },
   "preview": {
     "displayMode": "Display mode",
     "rawMode": "Source",

@@ -12,7 +12,8 @@
       <MessageList :items="items" :get-display-name="getDisplayName" :get-display-ip="getDisplayIp"
         :is-message-pinned="isMessagePinned" :is-message-topped="isMessageTopped"
         @pin="emit('locate', $event.key)" @top="emit('top', $event)" @copy="emit('copy', $event)"
-        @qr="emit('qr', $event)" @open="emit('open', $event)" @download="emit('download', $event)" />
+        @qr="emit('qr', $event)" @open="emit('open', $event)" @download="emit('download', $event)"
+        @read-text="emit('read-text', $event)" />
     </div>
   </el-drawer>
 </template>
@@ -33,7 +34,7 @@ defineProps({
   isMessageTopped: { type: Function, required: true }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:filter', 'top', 'copy', 'qr', 'open', 'download', 'locate'])
+const emit = defineEmits(['update:modelValue', 'update:filter', 'top', 'copy', 'qr', 'open', 'download', 'locate', 'read-text'])
 
 const { t } = useI18n()
 
