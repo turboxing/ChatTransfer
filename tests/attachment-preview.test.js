@@ -7,7 +7,7 @@ const path = require('node:path');
 const express = require('express');
 const request = require('supertest');
 const { MessageHistoryService } = require('../server/services/message-history-service');
-const { AttachmentPreviewService, TEXT_PREVIEW_LIMIT } = require('../server/services/attachment-preview-service');
+const { AttachmentPreviewService, TEXT_PREVIEW_LIMIT, previewFormat } = require('../server/services/attachment-preview-service');
 const routes = require('../server/routes/attachment-preview');
 
 let root;
@@ -42,6 +42,62 @@ async function attachment(name, content, roomId = 'group_chat') {
 }
 
 describe('attachment preview routes and permissions', () => {
+  it('recognizes source, configuration and Markdown names without changing existing media formats', () => {
+    const extensions = [
+      'js', 'cjs', 'mjs', 'jsx', 'ts', 'tsx', 'py', 'java', 'kt', 'swift', 'go', 'rs',
+      'c', 'cpp', 'h', 'cs', 'css', 'scss', 'less', 'vue', 'svelte', 'yaml', 'yml',
+      'toml', 'ini', 'conf', 'cfg', 'xml', 'properties', 'sh', 'bash', 'zsh', 'ps1',
+      'bat', 'sql', 'md', 'markdown'
+    ];
+    for (const extension of extensions) {
+      expect(previewFormat(`sample.${extension}`)).toEqual(['text', 'text/plain']);
+      expect(previewFormat(`中文.sample.${extension.toUpperCase()}`)).toEqual(['text', 'text/plain']);
+    }
+    for (const name of ['Dockerfile', 'Makefile', 'README', '.gitignore', '.editorconfig']) {
+      expect(previewFormat(name)).toEqual(['text', 'text/plain']);
+      expect(previewFormat(name.toUpperCase())).toEqual(['text', 'text/plain']);
+    }
+    for (const name of ['.env', '.env.local', 'unknown', 'script.js.exe', 'page.html', 'icon.svg']) {
+      expect(previewFormat(name)[0]).toBe('metadata');
+    }
+    expect(previewFormat('doc.PDF')).toEqual(['pdf', 'application/pdf']);
+    expect(previewFormat('audio.mp3')[0]).toBe('audio');
+    expect(previewFormat('video.mp4')[0]).toBe('video');
+    expect(previewFormat('photo.png')[0]).toBe('image');
+  });
+
+  it('returns source and Markdown as original text without executing or rendering it', async () => {
+    const cases = [
+      ['source.cjs', 'module.exports = { message: "中文", enabled: true };\n'],
+      ['source.py', 'def hello():\n    return "中文"\n'],
+      ['settings.yaml', 'name: ChatTransfer\nsettings:\n  enabled: true\n'],
+      ['notes.md', '# 标题\n<script>window.previewExecuted = true</script>\n![image](https://example.invalid/image.png)\n'],
+      ['Dockerfile', 'FROM node:22\nWORKDIR /app\n'],
+      ['.gitignore', '*.log\nnode_modules/\n']
+    ];
+    for (const [name, content] of cases) {
+      const file = await attachment(name, Buffer.from(content));
+      expect(file.kind).toBe('text');
+      const response = await request(app).get(file.url + '?text=1').expect(200);
+      expect(response.body.toString('utf8')).toBe(content);
+      expect(response.headers['x-preview-truncated']).toBe('false');
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+    }
+    const response = await request(app).get((await attachment('inline.js', Buffer.from('alert(1)'))).url).expect(200);
+    expect(response.headers['content-type']).toMatch(/^text\/plain/);
+    expect(response.headers['content-security-policy']).toContain("default-src 'none'");
+  });
+
+  it('bounds large source previews and preserves binary detection for a disguised source file', async () => {
+    const file = await attachment('large-source.py', Buffer.alloc(TEXT_PREVIEW_LIMIT + 200, 65));
+    const response = await request(app).get(file.url + '?text=1').expect(200);
+    expect(response.body.length).toBe(TEXT_PREVIEW_LIMIT);
+    expect(response.headers['x-preview-truncated']).toBe('true');
+    const binary = await attachment('binary-source.js', Buffer.from([0, 1, 2, 3, 4]));
+    const data = await request(app).get(binary.url + '?text=1').expect(200);
+    expect(() => decodePreview(data.body)).toThrow('binary');
+  });
+
   it('reads at most 1 MiB and returns full file size, including legacy messages', async () => {
     const file = await attachment('large.log', Buffer.alloc(TEXT_PREVIEW_LIMIT + 40, 65));
     await history.run('UPDATE messages SET file_size = NULL WHERE id = ?', ['large.log']);

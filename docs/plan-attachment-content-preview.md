@@ -199,14 +199,18 @@ PDF 与音视频复用受访问校验保护的流式接口。核对 Range 支持
 - 本次保护新增预览入口，未改造旧 `/files` 静态访问机制，也不声称为既有附件链接引入全面身份认证。
 - 自测范围及尚未覆盖的真机环境见 [附件预览自测记录](./testing-report-attachment-preview.md)。
 
-## 13. 源代码预览扩展方案（待确认，未启用）
+## 13. 源代码与配置原文预览（已实现，待提交）
 
 源码可以复用纯文本预览，不需要在服务端执行代码或加载编程语言运行时。
 
-1. 增加严格扩展名白名单，建议首批覆盖 JS、CJS、MJS、TS、TSX、JSX、PY、GO、RS、JAVA、C、H、CPP、CS、SWIFT、KT、SH、SQL、CSS、VUE、MD、YAML、YML、TOML、INI、XML。
-2. 所有这些类型统一通过受权限保护、最多读取 1 MiB 的文本接口读取，沿用搜索、复制、编码切换和截断提示。上传不依赖浏览器是否提供 MIME；CJS 等类型当前允许上传，但扩展预览尚未启用。
+1. 使用严格扩展名白名单，覆盖 JS、CJS、MJS、JSX、TS、TSX、PY、JAVA、KT、SWIFT、GO、RS、C、CPP、H、CS、CSS、SCSS、LESS、VUE、SVELTE、YAML、YML、TOML、INI、CONF、CFG、XML、PROPERTIES、SH、BASH、ZSH、PS1、BAT、SQL、MD、MARKDOWN，并保留已有 TXT、LOG、JSON、CSV。
+2. 明确支持 Dockerfile、Makefile、README、.gitignore、.editorconfig 文件名，匹配忽略大小写；其他无扩展名文件和 .env、.env.local 暂不默认启用预览。所有支持类型统一通过受权限保护、最多读取 1 MiB 的文本接口读取，沿用搜索、复制、编码切换和截断提示。上传不依赖浏览器是否提供 MIME；旧附件只要仍可访问，升级后也可预览。
 3. 第一版只展示源码，不执行 JS、Python、Shell 等内容；Markdown 先显示原文，不解析 HTML 或加载外部图片，避免引入网络访问和脚本执行。
 4. 语法高亮与 Markdown 渲染作为独立后续阶段：高亮组件按需加载，限制支持语言和处理内容长度；渲染 Markdown 时关闭原始 HTML，限制链接协议及外部资源，并补充安全与性能测试。
 5. 扩展名未知、无扩展名或疑似二进制仍提供元数据和下载，不能仅因 MIME 为 text 就执行或渲染主动内容。
 
 成本估算：纯文本扩展和回归约 0.5–1 天；语法高亮约 1–2 天；安全 Markdown 渲染约 1–2 天。无需数据库迁移，不改变房间消息模型。
+
+本次复用现有文本组件，仅扩展服务端集中格式规则和回归测试；不增加依赖，不修改消息或数据库结构。只有现有 JSON 继续提供格式化开关，源码、配置和 Markdown 保留原文。HTML、SVG 仍不作为网页渲染。
+
+后续阶段再评估 Shiki 语法高亮及 markdown-it 阅读模式，并优先核对现有组件能力；本次不引入高亮器、Markdown 解析器或外部 CDN。

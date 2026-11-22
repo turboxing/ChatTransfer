@@ -3,9 +3,16 @@ const path = require('path');
 
 const TEXT_PREVIEW_LIMIT = 1024 * 1024;
 const PREVIEW_TTL = 10 * 60 * 1000;
+const TEXT_EXTENSIONS = new Set([
+  'txt', 'log', 'json', 'csv',
+  'js', 'cjs', 'mjs', 'jsx', 'ts', 'tsx',
+  'py', 'java', 'kt', 'swift', 'go', 'rs', 'c', 'cpp', 'h', 'cs',
+  'css', 'scss', 'less', 'vue', 'svelte',
+  'yaml', 'yml', 'toml', 'ini', 'conf', 'cfg', 'xml', 'properties',
+  'sh', 'bash', 'zsh', 'ps1', 'bat', 'sql', 'md', 'markdown'
+]);
+const TEXT_FILE_NAMES = new Set(['dockerfile', 'makefile', 'readme', '.gitignore', '.editorconfig']);
 const FORMATS = {
-  txt: ['text', 'text/plain'], log: ['text', 'text/plain'],
-  json: ['text', 'text/plain'], csv: ['text', 'text/plain'],
   pdf: ['pdf', 'application/pdf'],
   mp3: ['audio', 'audio/mpeg'], wav: ['audio', 'audio/wav'],
   m4a: ['audio', 'audio/mp4'], ogg: ['audio', 'audio/ogg'], flac: ['audio', 'audio/flac'],
@@ -17,7 +24,12 @@ const FORMATS = {
 };
 
 function previewFormat(fileName) {
-  return FORMATS[path.extname(fileName || '').slice(1).toLowerCase()] || ['metadata', 'application/octet-stream'];
+  const name = path.basename(String(fileName || '')).toLowerCase();
+  const extension = path.extname(name).slice(1);
+  if (TEXT_FILE_NAMES.has(name) || TEXT_EXTENSIONS.has(extension)) {
+    return ['text', 'text/plain'];
+  }
+  return FORMATS[extension] || ['metadata', 'application/octet-stream'];
 }
 
 class AttachmentPreviewService {
