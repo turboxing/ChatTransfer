@@ -1,5 +1,16 @@
 {
   "preview": {
+    "displayMode": "Display mode",
+    "rawMode": "Source",
+    "highlightMode": "Syntax",
+    "readingMode": "Read",
+    "loadImages": "Load external images (online)",
+    "renderLoading": "Rendering preview…",
+    "richTooLarge": "This file is large. Showing source for better performance.",
+    "richFailed": "Enhanced preview failed. Showing source instead.",
+    "copyMarkdownHint": "Copy preserves the Markdown source.",
+    "searchOriginal": "Search source",
+    "imageBlocked": "Image not loaded",
     "clickPreview": "Click to preview",
     "clickPlay": "Click to play",
     "loadingAudio": "Loading audio…",

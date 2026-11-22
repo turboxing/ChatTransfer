@@ -1,5 +1,16 @@
 {
   "preview": {
+    "displayMode": "显示模式",
+    "rawMode": "原文",
+    "highlightMode": "语法高亮",
+    "readingMode": "阅读",
+    "loadImages": "允许加载外部图片（联网）",
+    "renderLoading": "正在生成预览…",
+    "richTooLarge": "文件较大，使用原文预览以保持流畅。",
+    "richFailed": "增强预览失败，已显示原文。",
+    "copyMarkdownHint": "复制将保留 Markdown 原文。",
+    "searchOriginal": "搜索原文",
+    "imageBlocked": "图片未加载",
     "clickPreview": "点击预览",
     "clickPlay": "点击播放",
     "loadingAudio": "正在加载音频…",

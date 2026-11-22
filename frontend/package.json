@@ -12,6 +12,8 @@
     "@element-plus/icons-vue": "^2.3.2",
     "element-plus": "^2.13.2",
     "qrcode": "^1.5.4",
+    "shiki": "3.22.0",
+    "markdown-it": "15.0.3",
     "sass": "^1.97.3",
     "socket.io-client": "^4.8.3",
     "unplugin-auto-import": "^21.0.0",
