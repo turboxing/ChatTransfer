@@ -1,4 +1,28 @@
 {
+  "preview": {
+    "clickPreview": "点击预览",
+    "clickPlay": "点击播放",
+    "loadingAudio": "正在加载音频…",
+    "collapseAudio": "收起播放器",
+    "title": "预览",
+    "unknownSize": "大小未知",
+    "encoding": "文本编码",
+    "autoEncoding": "自动识别",
+    "wrap": "自动换行",
+    "formatJson": "格式化 JSON",
+    "copy": "复制预览内容",
+    "truncated": "仅预览文件前 1 MiB，搜索和复制仅针对当前预览内容。下载可查看完整文件。",
+    "binary": "该内容可能是二进制文件，无法作为文本预览，请下载查看。",
+    "search": "搜索预览内容（最多高亮 500 处）",
+    "previous": "上一个匹配",
+    "next": "下一个匹配",
+    "invalidJson": "JSON 格式不完整或不合法，已按原文展示。",
+    "unsupported": "暂不支持此格式的内容预览，可下载后查看。",
+    "pdfHint": "如果 PDF 未显示，请在新窗口打开或下载。",
+    "mediaError": "浏览器无法显示或播放此文件，请下载后查看。",
+    "openWindow": "在新窗口打开",
+    "unavailable": "附件已被清理、不存在、无权访问或预览链接已过期。请关闭后重试。"
+  },
   "app": {
     "title": "ChatTransfer"
   },

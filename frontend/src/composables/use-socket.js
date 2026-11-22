@@ -106,6 +106,12 @@ export function useSocket({
   };
   const queryAttachments = (payload) => emitWithAck('attachment_query', payload);
   const requestBatchDownload = (payload) => emitWithAck('attachment_download', payload);
+  const requestAttachmentPreview = (payload) => new Promise((resolve) => {
+    if (!socket.value?.connected) return resolve({ code: -1 });
+    socket.value.timeout(10000).emit('attachment_preview', payload, (error, result) => {
+      resolve(error ? { code: -1 } : result);
+    });
+  });
 
   const clearServerHistory = (payload) => emitWithAck('history_clear', payload);
   const clearPublicRoomHistory = (payload = {}) => emitWithAck('public_room_admin_clear', payload);
@@ -128,6 +134,7 @@ export function useSocket({
     requestHistory,
     queryAttachments,
     requestBatchDownload,
+    requestAttachmentPreview,
     clearServerHistory,
     clearPublicRoomHistory
   };

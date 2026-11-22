@@ -5,6 +5,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
   const chatContainerRef = ref(null)
   const lastUploadTime = ref(0)
   const uploadFileKeys = new Set()
+  const droppedDirectories = new Set()
   const isUploadingCount = ref(0)
   const isUploading = computed(() => isUploadingCount.value > 0)
 
@@ -21,6 +22,10 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
   }
 
   const uploadFile = async (file) => {
+    if (file?.isDirectory === true) {
+      notify?.error(t('chat.folderUploadNotAllowed'))
+      return
+    }
     if (!file?.name) {
       console.warn('Ignoring upload without a file')
       return
@@ -62,7 +67,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
         msgId: tempMsgId,
         sender: currentUser.value,
         receiver: targetUser.value,
-        msgType: mimetype.includes('image') ? 'IMAGE' : 'FILE',
+        msgType: String(mimetype || '').startsWith('image/') ? 'IMAGE' : 'FILE',
         fileUrl,
         fileType: mimetype,
         fileName: file.name,
@@ -123,7 +128,29 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
     if (index !== -1) rawMessages.value[index].status = 'failed'
   }
 
+  const captureDropEntries = (event) => {
+    droppedDirectories.clear()
+    for (const item of Array.from(event.dataTransfer?.items || [])) {
+      try {
+        const entry = item.webkitGetAsEntry?.()
+        if (entry?.isDirectory) droppedDirectories.add(entry.name)
+      } catch {
+        continue
+      }
+    }
+  }
+
   const handleUploadDrop = async (files) => {
+    if (!files || files.length === 0) {
+      droppedDirectories.clear()
+      return
+    }
+    const acceptedFiles = Array.from(files).filter((file) => (
+      file.isDirectory !== true && !droppedDirectories.has(file.name)
+    ))
+    droppedDirectories.clear()
+    if (acceptedFiles.length !== files.length) notify?.error(t('chat.folderUploadNotAllowed'))
+    if (acceptedFiles.length === 0) return
     const now = Date.now()
     if (now - lastUploadTime.value < 500) {
       console.log('Ignoring duplicate upload-drop event')
@@ -131,14 +158,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
     }
     lastUploadTime.value = now
 
-    if (!files || files.length === 0) return
-
-    if (files[0].type === '') {
-      notify?.error(t('chat.folderUploadNotAllowed'))
-      return
-    }
-
-    for (const file of files) {
+    for (const file of acceptedFiles) {
       const fileKey = `${file.name}-${file.size}`
       if (uploadFileKeys.has(fileKey)) {
         console.log('Skipping duplicate file:', file.name)
@@ -171,6 +191,7 @@ export function useFileUpload({ currentUser, targetUser, rawMessages, saveMessag
     removeUploadCard,
     uploadFile,
     handleUploadDrop,
+    captureDropEntries,
     handleFileSelect,
     handlePasteFile
   }

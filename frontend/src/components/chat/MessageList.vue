@@ -45,12 +45,12 @@
 
         <div v-else-if="item.rawType === 'IMAGE'" class="content-image">
           <el-image :src="item.fileUrl" :preview-src-list="selectionMode ? [] : [item.fileUrl]" fit="cover" class="message-image" />
+          <div class="attachment-size">{{ formatFileSize(item.fileSize, t('preview.unknownSize')) }}</div>
         </div>
 
         <div v-else-if="item.rawType === 'FILE' || item.status === 'uploading'" class="content-file">
-          <FilesCard :name="item.fileName" :file-size="item.fileSize"
-            :status="item.status === 'success' ? 'done' : (item.status === 'failed' ? 'error' : 'uploading')"
-            :percent="item.originalMsg.uploadProgress" :error-tip="t('chat.uploadFailed')" />
+          <AttachmentMessageCard :item="item" :disabled="selectionMode"
+            @open="$emit('open', $event)" @download="$emit('download', $event)" />
         </div>
       </div>
     </template>
@@ -107,10 +107,11 @@
 
 <script setup>
 import { ref } from 'vue'
-import { BubbleList, FilesCard } from 'vue-element-plus-x'
+import { BubbleList } from 'vue-element-plus-x'
+import AttachmentMessageCard from './AttachmentMessageCard.vue'
 import { Top, CopyDocument, Grid, Download, View, RefreshRight, MoreFilled, Select } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { getColorByName, formatTextContent } from '../../composables/use-message-utils'
+import { getColorByName, formatTextContent, formatFileSize } from '../../composables/use-message-utils'
 import {
   hasMessageMobileActions,
   isAttachmentMessage
@@ -160,7 +161,10 @@ const isAttachment = isAttachmentMessage
 const bubbleListRef = ref(null)
 
 const handleContentClick = (item, event) => {
-  if (!props.selectionMode || !props.isSelectableMessage(item)) return
+  if (!props.selectionMode) {
+    return
+  }
+  if (!props.isSelectableMessage(item)) return
   event.stopPropagation()
   emit('toggle-select', item)
 }
@@ -173,3 +177,8 @@ const scrollToBottom = () => {
 
 defineExpose({ scrollToBottom })
 </script>
+
+<style scoped>
+.attachment-size { margin-top: 6px; font-size: 12px; color: #606266; white-space: nowrap; }
+.content-file, .content-image { flex-direction: column; min-width: 0; max-width: min(340px, 70vw); }
+</style>

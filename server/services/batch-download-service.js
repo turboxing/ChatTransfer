@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const yazl = require('yazl');
+const { AttachmentPreviewService } = require('./attachment-preview-service');
 
 const DOWNLOAD_TOKEN_TTL = 10 * 60 * 1000;
 
@@ -58,6 +59,7 @@ class BatchDownloadService {
     if (!historyService) throw new Error('historyService is required');
     this.historyService = historyService;
     this.tokens = new Map();
+    this.previewService = new AttachmentPreviewService({ historyService });
   }
 
   async createDownloadToken({ requester, roomId, chatType, targetUser, messageIds }) {
